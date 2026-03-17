@@ -1,0 +1,168 @@
+============================================================
+ DANH SÁCH MONSTER CÒN THIẾU ẢNH
+ Tổng: 70 ảnh
+ Format: ZONE | FILE | PROMPT
+============================================================
+
+──── LAVA CAVERNS (6 ảnh) ────────────────────────────────
+
+lava_caverns | lava_hound | A lava hound dog monster, large dog-like creature made of molten rock and magma, fiery mane, glowing ember eyes, dripping magma from paws, rocky volcanic cave background, fantasy RPG game art style
+
+lava_caverns | lava_slime | A lava slime monster, round molten rock slime with glowing orange lava core visible inside, dripping magma body, rocky volcanic ground, fantasy RPG game art style, chibi style
+
+lava_caverns | magma_golem | A magma golem monster, large humanoid stone golem with body cracked revealing flowing magma underneath, glowing ember eyes, lava cavern background, fantasy RPG game art style
+
+lava_caverns | magma_turtle | A magma turtle monster, enormous turtle with volcanic rock shell cracked with glowing lava lines, fire-breathing head, lava pool background, fantasy RPG game art style
+
+lava_caverns | obsidian_golem | An obsidian golem monster, giant humanoid shaped from sharp black obsidian volcanic glass, glowing red eyes, jagged crystalline body, lava cavern background, fantasy RPG game art style
+
+lava_caverns | vulcan_warrior | A vulcan warrior monster, muscular fire warrior clad in volcanic armor with magma flowing through cracks, wielding a flaming sword, volcano background, fantasy RPG game art style
+
+──── CRYSTAL SANCTUARY (10 ảnh) ──────────────────────────
+
+crystal_sanctuary | crystal_leopard | A crystal leopard monster, sleek leopard with crystalline transparent body, rainbow prismatic refractions, gemstone rosette patterns, crystal cave background, fantasy RPG game art style
+
+crystal_sanctuary | crystal_spirit | A crystal spirit elemental, translucent humanoid spirit made of pure crystal energy, prismatic light refractions inside, floating gracefully, crystal sanctuary background, fantasy RPG game art style
+
+crystal_sanctuary | crystalline_knight | A crystalline knight monster, armored warrior entirely made of crystal, prismatic light reflecting from armor, holding a crystal sword, crystal cave background, fantasy RPG game art style
+
+crystal_sanctuary | diamond_dragon | A diamond dragon boss monster, enormous majestic dragon made of pure diamond, light refracting spectacularly through its body creating rainbow aura, crystal cave background, fantasy RPG epic art style
+
+crystal_sanctuary | diamond_stinger | A diamond stinger monster, giant scorpion-like insect with diamond-hard transparent exoskeleton, razor stinger tail, glinting in crystal cave light, fantasy RPG game art style
+
+crystal_sanctuary | mirror_specter | A mirror specter ghost monster, flat reflective ghost that mimics the viewer, ghostly figure made of mirror shards, multiple reflections inside it, crystal sanctuary background, fantasy RPG game art style
+
+crystal_sanctuary | prism_guard | A prism guard monster, crystal golem guardian with body made of geometric prism shapes, rainbow light beams emitting from its joints, guarding crystal gate, fantasy RPG game art style
+
+crystal_sanctuary | prism_weaver | A prism weaver spider monster, large spider with translucent crystal body, weaving webs of solidified light, rainbow prism effects, crystal cave background, fantasy RPG game art style
+
+crystal_sanctuary | prismatic_hydra | A prismatic hydra boss monster, multi-headed serpent with each head made of different colored crystal, rainbow energy breath attacks, crystal sanctuary background, fantasy RPG epic boss art style
+
+crystal_sanctuary | shard_golem | A shard golem monster, large golem made of thousands of sharp floating crystal shards orbiting a glowing core, crystal shards spinning dangerously, crystal cave background, fantasy RPG game art style
+
+──── SKY ISLANDS (15 ảnh) ────────────────────────────────
+
+sky_islands | cloud_spirit | A cloud spirit elemental, fluffy white cloud that has formed a face and wispy arms, lightning sparking within its body, floating among sky islands, fantasy RPG game art style
+
+sky_islands | floating_mimic_s | A floating mimic monster, treasure chest with wings that flies through sky islands, toothy grin revealing fangs, wings flapping, sky island clouds background, fantasy RPG game art style
+
+sky_islands | gust_demon | A gust demon wind monster, swirling tornado-formed demonic entity with a fierce face in the center, wind blades around body, floating sky islands background, fantasy RPG game art style
+
+sky_islands | harpy_scout | A harpy scout monster, fierce winged woman with eagle talons and wings, sharp armor, holding a spear, scouting on sky island cliff edge, fantasy RPG game art style
+
+sky_islands | icarus_shadow | An Icarus shadow ghost monster, spectral silhouette of a figure with burned wax wings, sorrowful glowing eyes, trailing ethereal feathers, high sky background, fantasy RPG game art style
+
+sky_islands | odin_crow | An Odin crow monster, enormous mystical raven with runic markings on feathers, one glowing eye, storm clouds and sky island background, fantasy RPG game art style, Norse mythology inspired
+
+sky_islands | pegasus_wild_s | A wild pegasus monster, powerful wild white winged horse with stormy mane, lightning hooves, fierce eyes, sky island background, fantasy RPG game art style
+
+sky_islands | sky_lion | A sky lion monster, majestic golden lion with cloud-white wings, wind swirling around mane, standing proudly on floating sky island, fantasy RPG game art style
+
+sky_islands | sky_slime | A sky slime monster, round light blue translucent slime with wispy cloud texture, tiny wings, floating among clouds, big cute glowing eyes, fantasy RPG game art style, chibi style
+
+sky_islands | sky_wyvern | A sky wyvern monster, sleek lightning-fast wyvern with electric blue scales, crackling lightning on wings, sky island background with storm clouds, fantasy RPG game art style
+
+sky_islands | thunder_bird | A thunderbird monster, giant legendary eagle with lightning bolt feathers, crackling electricity on spread wings, storm cloud background, fantasy RPG game art style, epic composition
+
+sky_islands | valkyrie_warrior_s | A valkyrie warrior monster, powerful armored female warrior with golden winged helmet and spear, flying through clouds, sky island background, fantasy RPG game art style, Norse mythology inspired
+
+sky_islands | wind_wisp_s | A wind wisp elemental, small swirling orb of pure wind energy with tiny glowing face, little tornado body, floating among sky islands, fantasy RPG game art style, cute chibi style
+
+sky_islands | wing_ghost | A wing ghost monster, ethereal translucent ghost with massive feathered wings, hollow glowing eyes, drifting silently through sky island clouds, fantasy RPG game art style
+
+sky_islands | zeus_herald | A Zeus herald divine monster, divine messenger warrior in gleaming white armor with golden eagle wings, holding a thunder bolt, storm cloud sky island background, fantasy RPG game art style
+
+──── ABYSS OCEAN (15 ảnh) ────────────────────────────────
+
+abyss_ocean | abyssal_crab_o | An abyssal crab monster, enormous deep-sea crab with glowing bioluminescent claws, crushing pincers, emerging from ocean abyss depths, dark deep ocean background, fantasy RPG game art style
+
+abyss_ocean | abyssal_god | An abyssal god boss monster, incomprehensibly large eldritch entity from the ocean depths, multiple glowing eyes, mass of writhing tentacles, crushing dark abyss background, fantasy RPG epic boss art style
+
+abyss_ocean | bubble_slime | A bubble slime monster, translucent round ocean slime filled with bubbles, deep sea blue-green coloring, floating jellyfish-like, cute big eyes, deep ocean background, fantasy RPG game art style, chibi style
+
+abyss_ocean | coral_beast | A coral beast sea monster, large creature with body made of living colorful coral, barnacles and sea anemones growing on it, glowing eyes, deep ocean floor background, fantasy RPG game art style
+
+abyss_ocean | deep_sea_angler_o | A deep sea angler fish monster, terrifying enormous anglerfish with massive jaws, bioluminescent lure, rows of sharp curved teeth, pitch black abyss ocean background, fantasy RPG game art style
+
+abyss_ocean | deep_shark | A deep shark monster, monstrous prehistoric megalodon-like shark with glowing abyssal eyes, scarred armored skin, deep dark ocean background, fantasy RPG game art style
+
+abyss_ocean | drowned_pirate_o | A drowned pirate undead monster, zombie pirate covered in seaweed and barnacles, waterlogged ragged pirate outfit, glowing green ghost eyes, sunken ship background, fantasy RPG game art style
+
+abyss_ocean | electric_eel_o | An electric eel monster, enormous serpentine electric eel crackling with blue lightning, glowing electric patterns along body, dark abyss ocean background, fantasy RPG game art style
+
+abyss_ocean | kraken_tentacle_o | A kraken tentacle monster, massive tentacle of a giant kraken breaking ocean surface, enormous suction cups and barnacles, glowing eye on tentacle tip, deep sea background, fantasy RPG game art style
+
+abyss_ocean | leviathan_fragment_o | A leviathan fragment boss monster, massive piece of an ancient leviathan sea creature, enormous armored scales, glowing ancient runes, surrounding dark abyss ocean, fantasy RPG game art style
+
+abyss_ocean | ocean_spirit | An ocean spirit elemental, graceful luminous spirit made of swirling ocean water, glowing blue-green bioluminescent energy, long flowing watery form, deep sea background, fantasy RPG game art style
+
+abyss_ocean | sea_serpent_o | A sea serpent monster, enormous coiling sea serpent with emerald green scales, rising from ocean depths, glowing amber eyes, stormy ocean surface background, fantasy RPG game art style
+
+abyss_ocean | siren_o | A siren ocean monster, beautiful but deadly mermaid-like creature with glowing hypnotic eyes, sharp claws, iridescent fish tail, luring pose on underwater rock, deep ocean background, fantasy RPG game art style
+
+abyss_ocean | triton_soldier | A triton soldier monster, blue-skinned merman warrior with shark-fin helmet, trident weapon, fish scale armor, underwater ruins battle background, fantasy RPG game art style
+
+abyss_ocean | void_whale_o | A void whale monster, enormous black whale-like creature partially phased into another dimension, dark energy trailing behind it, glowing purple eyes, deep ocean abyss background, fantasy RPG game art style
+
+──── THE VOID (14 ảnh) ───────────────────────────────────
+
+the_void | antigravity_core_v | An antigravity core void monster, floating geometric shape with inverted gravity physics, reality bending around it, stars and void energy patterns, pure black void background, fantasy RPG game art style
+
+the_void | black_hole | A black hole creature monster, living singularity that devours light, gravitational lensing visible around it, swirling accretion disk, pure void background, fantasy RPG game art style, cosmic horror
+
+the_void | cosmic_horror | A cosmic horror eldritch monster, incomprehensible lovecraftian entity, non-euclidean geometry body, hundreds of eyes, writhing tendrils, stars visible through its translucent body, void background, fantasy RPG game art style
+
+the_void | dark_matter_v | A dark matter void elemental, invisible force given shape as dark swirling mass, gravity distortion visible around edges, deep void space background, fantasy RPG game art style
+
+the_void | entropy_glitch_v | An entropy glitch monster, reality-breaking glitched creature, body appears pixelated and corrupted with static, fragments of deleted reality around it, void background with glitch effects, fantasy RPG game art style
+
+the_void | nothingness | A nothingness void entity monster, entity of pure absence and void, barely visible shadowy form with areas of complete darkness where eyes should be, reality dissolving around it, void background, fantasy RPG game art style
+
+the_void | shadow_stalker_v | A shadow stalker void monster, predatory shadow creature from the void, barely visible black-on-black form with glowing purple void eyes, stalking through void darkness, fantasy RPG game art style
+
+the_void | star_eater_v | A star eater cosmic monster, enormous entity that consumes stars, mouth like a black hole, half-eaten star visible in cosmos behind it, void space background, fantasy RPG game art style, cosmic scale
+
+the_void | universal_end_v | A universal end boss monster, apocalyptic entity representing the end of all existence, massive incomprehensible form, universe crumbling around it, void space background, fantasy RPG ultimate boss art style
+
+the_void | void_beast_v | A void beast monster, quadruped predator made of living darkness with glowing void eyes, void energy rippling off body, pure black void background, fantasy RPG game art style
+
+the_void | void_crawler | A void crawler monster, many-legged spider-like creature that moves through void dimensions, body phasing between realities, glowing eyes in darkness, void black background, fantasy RPG game art style
+
+the_void | void_dragon_v | A void dragon boss monster, enormous dragon made of pure void darkness, body absorbing light around it, glowing purple void eyes, constellation patterns visible inside body, cosmic void background, fantasy RPG epic art style
+
+the_void | void_eye_v | A void eye monster, massive floating eye that sees all realities, pupil is a black hole, dark void tentacles extending from eye socket, cosmic void background, fantasy RPG game art style, eldritch horror
+
+the_void | void_slime | A void slime monster, dark purple-black slime that absorbs light, swirling cosmos visible inside translucent body, floating in void, big eerie glowing eyes, fantasy RPG game art style, chibi style
+
+──── HEAVENLY GATES (10 ảnh) ─────────────────────────────
+
+heavenly_gates | angel_warrior | An angel warrior monster, powerful divine soldier with gleaming white and gold armor, large white feathered wings, holy sword, heavenly cloud background, fantasy RPG game art style
+
+heavenly_gates | archangel_michael_s | An archangel Michael monster, supreme archangel in golden divine armor, enormous wings, wielding flaming sword of judgment, heavenly gates background, fantasy RPG epic boss art style
+
+heavenly_gates | cherub_scout | A cherub scout monster, small but surprisingly fierce cherub angel with tiny wings, shooting divine energy arrows, cute but dangerous, celestial cloud background, fantasy RPG game art style
+
+heavenly_gates | god_rpg | An ultimate God boss monster for RPG, divine golden radiant figure of immense power, blinding divine light aura, sitting on heavenly throne above clouds, fantasy RPG ultimate boss art style
+
+heavenly_gates | judgment_guard | A judgment guard angel monster, stern divine guardian angel in silver armor holding scales of judgment, standing at heaven gates, fantasy RPG game art style
+
+heavenly_gates | light_spirit | A light spirit elemental, pure radiant spirit made of divine light, glowing warm golden form, angelic energy wings, heavenly cloud background, fantasy RPG game art style
+
+heavenly_gates | seraphim | A seraphim six-winged angel monster, ancient seraphim angel with six blazing wings, human face, covered in divine fire, floating above heavenly clouds, fantasy RPG game art style, biblical inspired
+
+heavenly_gates | seraphim_warrior | A seraphim warrior angel monster, battle-ready seraphim with six wings in full divine armor, divine sword and shield, heavenly battlefield background, fantasy RPG game art style
+
+heavenly_gates | throne_watcher | A throne watcher divine monster, ancient heavenly guardian with wheel-like body covered in eyes, ophanim angel design, glowing divine fire rings, heavenly gates background, fantasy RPG game art style
+
+heavenly_gates | virtue_shield | A virtue shield angel monster, angelic guardian who embodies divine virtue, shining crystalline shield and armor, holy light radiating in all directions, heavenly cloud background, fantasy RPG game art style
+
+============================================================
+ HƯỚNG DẪN DÙNG VỚI generate_monster_images.js
+============================================================
+Script tự động tạo ảnh cho tất cả các file còn là placeholder.
+Chỉ cần set GEMINI_API_KEY trong .env rồi chạy:
+
+  node generate_monster_images.js
+
+Script sẽ tự bỏ qua các ảnh đã có và chỉ tạo những ảnh còn thiếu.
+============================================================
