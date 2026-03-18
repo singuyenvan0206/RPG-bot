@@ -8,6 +8,24 @@ module.exports = {
             return handleButton(interaction);
         }
 
+        // Context Menu Commands (User / Message)
+        if (interaction.isUserContextMenuCommand() || interaction.isMessageContextMenuCommand()) {
+            const command = interaction.client.commands.get(interaction.commandName);
+            if (!command) return;
+            try {
+                await command.execute(interaction);
+            } catch (error) {
+                console.error(error);
+                const { MessageFlags } = require('discord.js');
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp({ content: 'Có lỗi xảy ra!', flags: MessageFlags.Ephemeral });
+                } else {
+                    await interaction.reply({ content: 'Có lỗi xảy ra!', flags: MessageFlags.Ephemeral });
+                }
+            }
+            return;
+        }
+
         if (!interaction.isChatInputCommand()) return;
 
         const command = interaction.client.commands.get(interaction.commandName);
@@ -267,8 +285,10 @@ async function handleButton(interaction) {
 
         if (pHp <= 0) {
             pHp = 0;
-            log += `\n💀 **Tử Dận!** Bạn gục ngã trước ${monster.name}. Hãy đợi hồi sinh.`;
-            await db.execute('UPDATE players SET hp = 0 WHERE user_id = $1', [userId]);
+            const RESPAWN_MS = 5 * 60 * 1000; // 5 phút
+            const deadUntil = Date.now() + RESPAWN_MS;
+            log += `\n💀 **Tử Dận!** Bạn gục ngã trước ${monster.name}. Hồi sinh sau **5 phút**.`;
+            await db.execute('UPDATE players SET hp = 0, dead_until = $1 WHERE user_id = $2', [deadUntil, userId]);
             const loseEmbed = new EmbedBuilder().setColor('#000000').setDescription(log);
             const loseFiles = [];
             if (monster.image) {

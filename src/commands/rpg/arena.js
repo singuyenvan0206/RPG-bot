@@ -54,6 +54,15 @@ module.exports = {
         }
 
         if (sub === 'match') {
+            // Block if player is dead/respawning
+            const nowMs = Date.now();
+            if (player.dead_until && player.dead_until > nowMs) {
+                const secsLeft = Math.ceil((player.dead_until - nowMs) / 1000);
+                const mins = Math.floor(secsLeft / 60);
+                const secs = secsLeft % 60;
+                return interaction.reply({ content: `💀 Bạn đang hồi sinh... Còn **${mins} phút ${secs} giây** nữa.`, flags: require('discord.js').MessageFlags.Ephemeral });
+            }
+
             const myStats = await db.queryOne('SELECT * FROM arena_stats WHERE user_id = $1', [userId]);
             const myElo = parseInt(myStats.elo);
 

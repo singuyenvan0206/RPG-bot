@@ -1,11 +1,13 @@
 const { Events } = require('discord.js');
-
-const PREFIX = '$';
+const { getPrefix } = require('../utils/serverConfig');
 
 module.exports = {
     name: Events.MessageCreate,
     async execute(message, client) {
-        if (message.author.bot || !message.content.startsWith(PREFIX)) return;
+        if (message.author.bot) return;
+
+        const PREFIX = await getPrefix(message.guild?.id);
+        if (!message.content.startsWith(PREFIX)) return;
 
         const args = message.content.slice(PREFIX.length).trim().split(/ +/);
         const commandName = args.shift().toLowerCase();
@@ -29,7 +31,12 @@ module.exports = {
             channel: message.channel,
             guild: message.guild,
             options: {
-                getSubcommand: (required) => args[0] || null,
+                getSubcommand: (required) => {
+                    const baseName = command.data.name;
+                    // For shop, always route to 'buy' when args are provided
+                    if (baseName === 'shop' && args[0]) return 'buy';
+                    return args[0] || null;
+                },
                 getString: (name) => {
                     const baseName = command.data.name;
                     if (baseName === 'forge' && name === 'slot') {

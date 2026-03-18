@@ -23,8 +23,20 @@ module.exports = {
             return interaction.reply({ content: '❌ Bạn chưa chọn Class! Gõ `/start` trước.', flags: require('discord.js').MessageFlags.Ephemeral });
         }
 
-        if (player.hp <= 0) {
-            return interaction.reply({ content: '💀 Bạn đang trọng thương (HP = 0). Hãy chờ hồi máu hoặc dùng vật phẩm.', flags: require('discord.js').MessageFlags.Ephemeral });
+        if (player.hp <= 0 || (player.dead_until && player.dead_until > 0)) {
+            const nowCheck = Date.now();
+            if (player.dead_until && player.dead_until > nowCheck) {
+                const secsLeft = Math.ceil((player.dead_until - nowCheck) / 1000);
+                const mins = Math.floor(secsLeft / 60);
+                const secs = secsLeft % 60;
+                return interaction.reply({
+                    content: `💀 Bạn đang hồi sinh... Còn **${mins} phút ${secs} giây** nữa trước khi tỉnh dậy.`,
+                    flags: require('discord.js').MessageFlags.Ephemeral
+                });
+            }
+            // Timer đã hết → tự hồi HP đầy
+            await db.execute('UPDATE players SET hp = max_hp, dead_until = 0 WHERE user_id = $1', [userId]);
+            player.hp = player.max_hp;
         }
 
         const now = Date.now();

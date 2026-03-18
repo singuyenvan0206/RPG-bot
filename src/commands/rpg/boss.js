@@ -20,7 +20,15 @@ module.exports = {
         
         const player = await db.getPlayer(userId);
         if (!player) return interaction.reply({ content: '❌ Bạn chưa chọn Class! Gõ `/start`.', flags: require('discord.js').MessageFlags.Ephemeral });
-        if (player.hp <= 0) return interaction.reply({ content: '💀 Bạn đang trọng thương.', flags: require('discord.js').MessageFlags.Ephemeral });
+
+        // Respawn check
+        const nowMs = Date.now();
+        if (player.dead_until && player.dead_until > nowMs) {
+            const secsLeft = Math.ceil((player.dead_until - nowMs) / 1000);
+            const mins = Math.floor(secsLeft / 60);
+            const secs = secsLeft % 60;
+            return interaction.reply({ content: `💀 Bạn đang hồi sinh... Còn **${mins} phút ${secs} giây** nữa.`, flags: require('discord.js').MessageFlags.Ephemeral });
+        }
 
         const region = player.current_region;
         const bData = bossData[region];
@@ -118,8 +126,10 @@ module.exports = {
 
         if (pHp <= 0) {
             pHp = 0;
-            log += `\n💀 **Gục Ngã!** Sức mạnh của Boss là quá sức tưởng tượng.`;
-            await db.execute('UPDATE players SET hp = 0 WHERE user_id = $1', [userId]);
+            const RESPAWN_MS = 5 * 60 * 1000;
+            const deadUntil = Date.now() + RESPAWN_MS;
+            log += `\n💀 **Gục Ngã!** Sức mạnh của Boss là quá sức tưởng tượng. Hồi sinh sau **5 phút**.`;
+            await db.execute('UPDATE players SET hp = 0, dead_until = $1 WHERE user_id = $2', [deadUntil, userId]);
             const loseEmbed = new EmbedBuilder().setColor('#000000').setDescription(log);
             return msg.edit({ embeds: [loseEmbed] });
         }

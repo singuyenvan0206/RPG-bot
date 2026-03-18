@@ -19,6 +19,7 @@ async function initSchema() {
             current_region TEXT NOT NULL DEFAULT 'whispering_forest',
             last_explore BIGINT DEFAULT 0,
             last_daily BIGINT DEFAULT 0,
+            dead_until BIGINT NOT NULL DEFAULT 0,
             last_mine BIGINT DEFAULT 0,
             daily_streak INTEGER NOT NULL DEFAULT 0,
             created_at BIGINT NOT NULL DEFAULT (extract(epoch from now()))
@@ -147,6 +148,19 @@ async function initSchema() {
     // Migration: add equipped_slot column if it doesn't exist
     await pool.query(`
         ALTER TABLE player_skills ADD COLUMN IF NOT EXISTS equipped_slot INTEGER DEFAULT NULL
+    `);
+
+    // Migration: add dead_until column if it doesn't exist
+    await pool.query(`
+        ALTER TABLE players ADD COLUMN IF NOT EXISTS dead_until BIGINT NOT NULL DEFAULT 0
+    `);
+
+    // Server Config (prefix per-guild)
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS server_config (
+            guild_id TEXT PRIMARY KEY,
+            prefix TEXT NOT NULL DEFAULT '$'
+        )
     `);
 
     console.log('[Database] EchoWorld RPG Schema initialized successfully.');
