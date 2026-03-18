@@ -3,7 +3,7 @@ const db = require('../database');
 // In-memory cache: { guildId -> prefix }
 const prefixCache = new Map();
 
-const DEFAULT_PREFIX = '$';
+const DEFAULT_PREFIX = '.';
 
 /**
  * Lấy prefix của server. Dùng cache để tránh query DB mỗi tin nhắn.

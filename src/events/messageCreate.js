@@ -47,7 +47,11 @@ module.exports = {
                     }
                     if (baseName === 'dismantle' && (name === 'item_id' || name === 'item_ids')) return args[0];
                     if (baseName === 'equip' && name === 'item_id') return args[0];
-                    if (baseName === 'shop' && name === 'item_id') return args[0];
+                    if (baseName === 'shop' && name === 'item_id') {
+                        // $shop buy <id> → args[0]='buy', id at args[1]
+                        // $mua <id>      → args[0]=id directly
+                        return args[0] === 'buy' ? args[1] : args[0];
+                    }
                     if (baseName === 'forge' && name === 'slots') return args[0];
                     if (baseName === 'market' && name === 'item_id') return args[1];
                     if (baseName === 'help' && name === 'command') return args[0];
@@ -67,7 +71,11 @@ module.exports = {
                     if (baseName === 'market' && name === 'listing_id') return parseArgs(1);
                     if (baseName === 'slots' && name === 'bet') return parseArgs(0);
                     if (baseName === 'flip' && name === 'bet') return parseArgs(0);
-                    if (baseName === 'shop' && name === 'amount') return parseArgs(1);
+                    if (baseName === 'shop' && name === 'amount') {
+                        // $shop buy <id> [amount] → amount at args[2]
+                        // $mua <id> [amount]      → amount at args[1]
+                        return args[0] === 'buy' ? parseArgs(2) : parseArgs(1);
+                    }
                     return null;
                 },
                 getUser: (name) => {

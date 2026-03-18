@@ -6,7 +6,7 @@ const materialsData = require('../../utils/materialsData');
 
 module.exports = {
     category: 'Economy',
-    aliases: ['s', 'store', 'mua'],
+    aliases: ['s', 'store', 'buy'],
     data: new SlashCommandBuilder()
         .setName('shop')
         .setDescription('Cửa hàng vật phẩm EchoWorld — Gõ /shop để xem hàng, /shop buy để mua')
@@ -26,7 +26,7 @@ module.exports = {
         ),
     help: {
         usage: '/shop | /shop buy <item_id> [amount]',
-        examples: ['/shop', '/shop buy iron_ore 10', '$mua iron_ore'],
+        examples: ['/shop', '/shop buy iron_ore 10', '$buy iron_ore'],
         description: 'Gõ /shop để xem cửa hàng. Dùng /shop buy <ID> [số lượng] để mua.'
     },
     async execute(interaction) {
