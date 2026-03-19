@@ -75,17 +75,29 @@ async function handleButton(interaction) {
         return;
     }
 
-    if (customId.startsWith('battle_')) {
+    if (customId.startsWith('battle_') || customId.startsWith('use_hp_') || customId.startsWith('use_mana_')) {
+        let action = 'attack';
         let monsterId = '';
         let mHpStr = '';
         let isShiny = 0;
-        const match = customId.match(/^battle_(.+)_(\d+)(?:_(\d+))?$/);
+        
+        let match;
+        if (customId.startsWith('battle_')) {
+            match = customId.match(/^battle_(.+)_(\d+)(?:_(\d+))?$/);
+        } else if (customId.startsWith('use_hp_')) {
+            action = 'heal';
+            match = customId.match(/^use_hp_(.+)_(\d+)(?:_(\d+))?$/);
+        } else if (customId.startsWith('use_mana_')) {
+            action = 'mana';
+            match = customId.match(/^use_mana_(.+)_(\d+)(?:_(\d+))?$/);
+        }
+
         if (match) {
             monsterId = match[1];
             mHpStr = match[2];
             if (match[3]) isShiny = parseInt(match[3], 10);
         } else {
-            monsterId = customId.replace('battle_', '');
+            monsterId = customId.split('_').slice(1, -2).join('_'); // rough fallback
         }
         
         const player = await db.getPlayer(userId);
@@ -164,45 +176,75 @@ async function handleButton(interaction) {
         let pMaxHp = regionBuff.hp_bonus ? Math.floor(player.max_hp * (1 + regionBuff.hp_bonus)) : player.max_hp;
         let pCritRate = regionBuff.crit_bonus ? stats.crit_rate + regionBuff.crit_bonus : stats.crit_rate;
 
-        // Player attacks first
-        let isCrit = Math.random() < pCritRate;
-        let pDmg = isCrit ? Math.floor(pBaseDmg * stats.crit_damage) : pBaseDmg;
-        
-        // Determine element: if skill was triggered and has element, use skill's element; otherwise use weapon's
-        const effectiveAttackElement = (pSkill && pSkill.effect === 'attack' && pSkill.element) ? pSkill.element : pElement;
-        pElemMult = combatLogic.getElementalMultiplier(effectiveAttackElement, mElement);
-        
-        // Apply Elemental & Skill
-        pDmg = Math.floor(pDmg * pElemMult);
+        if (action === 'attack') {
+            // Player attacks first
+            let isCrit = Math.random() < pCritRate;
+            let pDmg = isCrit ? Math.floor(pBaseDmg * stats.crit_damage) : pBaseDmg;
+            
+            // Determine element: if skill was triggered and has element, use skill's element; otherwise use weapon's
+            const effectiveAttackElement = (pSkill && pSkill.effect === 'attack' && pSkill.element) ? pSkill.element : pElement;
+            pElemMult = combatLogic.getElementalMultiplier(effectiveAttackElement, mElement);
+            
+            // Apply Elemental & Skill
+            pDmg = Math.floor(pDmg * pElemMult);
 
-        if (pSkill) {
-            if (pSkill.effect === 'attack') {
-                pDmg = Math.floor(pDmg * pSkill.multiplier);
-                log += `✨ **${pSkill.name}**: ${pSkill.msg}\n`;
-            } else if (pSkill.effect === 'heal') {
-                const healAmt = Math.floor(pMaxHp * pSkill.heal_pct);
-                pHp = Math.min(pMaxHp, pHp + healAmt);
-                log += `💚 **${pSkill.name}**: ${pSkill.msg} Hồi **${healAmt} HP**!\n`;
-            } else if (pSkill.effect === 'drain') {
-                pDmg = Math.floor(pDmg * (pSkill.multiplier || 1.0));
-                const drainAmt = Math.floor(pMaxHp * pSkill.heal_pct);
-                pHp = Math.min(pMaxHp, pHp + drainAmt);
-                log += `🩸 **${pSkill.name}**: ${pSkill.msg} Gây **${pDmg}** sát thương và hồi **${drainAmt} HP**!\n`;
-            } else if (pSkill.effect === 'dot') {
-                // Apply base attack + dot damage
-                const dotDmg = pSkill.dot_dmg || 0;
-                mHp -= dotDmg;
-                log += `🐍 **${pSkill.name}**: ${pSkill.msg} Gây thêm **${dotDmg}** độc!\n`;
+            if (pSkill) {
+                if (pSkill.effect === 'attack') {
+                    pDmg = Math.floor(pDmg * pSkill.multiplier);
+                    log += `✨ **${pSkill.name}**: ${pSkill.msg}\n`;
+                } else if (pSkill.effect === 'heal') {
+                    const healAmt = Math.floor(pMaxHp * pSkill.heal_pct);
+                    pHp = Math.min(pMaxHp, pHp + healAmt);
+                    log += `💚 **${pSkill.name}**: ${pSkill.msg} Hồi **${healAmt} HP**!\n`;
+                } else if (pSkill.effect === 'drain') {
+                    pDmg = Math.floor(pDmg * (pSkill.multiplier || 1.0));
+                    const drainAmt = Math.floor(pMaxHp * pSkill.heal_pct);
+                    pHp = Math.min(pMaxHp, pHp + drainAmt);
+                    log += `🩸 **${pSkill.name}**: ${pSkill.msg} Gây **${pDmg}** sát thương và hồi **${drainAmt} HP**!\n`;
+                } else if (pSkill.effect === 'dot') {
+                    // Apply base attack + dot damage
+                    const dotDmg = pSkill.dot_dmg || 0;
+                    mHp -= dotDmg;
+                    log += `🐍 **${pSkill.name}**: ${pSkill.msg} Gây thêm **${dotDmg}** độc!\n`;
+                }
             }
-        }
 
-        if (isCrit) log += `💥 **BẠO KÍCH!** Bạn tung đòn hiểm hóc lên ${mName}.\n`;
-        if (pElemMult > 1) log += `🔥 **Ưu thế hệ!** Đòn đánh cực kỳ hiệu quả.\n`;
-        else if (pElemMult < 1) log += `💧 **Bị khắc hệ!** Sát thương bị giảm sút.\n`;
+            if (isCrit) log += `💥 **BẠO KÍCH!** Bạn tung đòn hiểm hóc lên ${mName}.\n`;
+            if (pElemMult > 1) log += `🔥 **Ưu thế hệ!** Đòn đánh cực kỳ hiệu quả.\n`;
+            else if (pElemMult < 1) log += `💧 **Bị khắc hệ!** Sát thương bị giảm sút.\n`;
 
-        if (pSkill?.effect !== 'heal') {
-            log += `⚔️ Bạn gây **${pDmg}** sát thương.\n`;
-            mHp -= pDmg;
+            if (pSkill?.effect !== 'heal') {
+                log += `⚔️ Bạn gây **${pDmg}** sát thương.\n`;
+                mHp -= pDmg;
+            }
+        } else {
+            // Player uses item
+            const itemToUse = action === 'heal' ? 'healing_potion' : 'mana_potion';
+            const logName = action === 'heal' ? 'Thuốc Hồi Máu' : 'Thuốc Hồi Mana';
+            const inv = await db.queryOne('SELECT amount FROM inventory WHERE user_id = $1 AND item_id = $2', [userId, itemToUse]);
+            
+            if (!inv || inv.amount <= 0) {
+                return interaction.reply({ content: `❌ Bạn không còn ${logName} trong túi đồ! Gõ \`$mua ${itemToUse}\` để sắm thêm.`, flags: MessageFlags.Ephemeral });
+            }
+
+            if (action === 'heal') {
+                if (pHp >= pMaxHp) return interaction.reply({ content: `❌ Máu của bạn đã đầy rồi!`, flags: MessageFlags.Ephemeral });
+                pHp = Math.min(pMaxHp, pHp + 100);
+                log += `💚 Bạn đã sử dụng **Thuốc Hồi Máu**, phục hồi 100 HP!\n`;
+            } else if (action === 'mana') {
+                let pMana = player.mana;
+                let pMaxMana = player.max_mana;
+                if (pMana >= pMaxMana) return interaction.reply({ content: `❌ Mana của bạn đã đầy rồi!`, flags: MessageFlags.Ephemeral });
+                pMana = Math.min(pMaxMana, pMana + 50);
+                await db.execute('UPDATE players SET mana = $1 WHERE user_id = $2', [pMana, userId]);
+                log += `✨ Bạn đã sử dụng **Thuốc Hồi Mana**, phục hồi 50 Mana!\n`;
+            }
+
+            if (inv.amount === 1) {
+                await db.execute('DELETE FROM inventory WHERE user_id = $1 AND item_id = $2', [userId, itemToUse]);
+            } else {
+                await db.execute('UPDATE inventory SET amount = amount - 1 WHERE user_id = $1 AND item_id = $2', [userId, itemToUse]);
+            }
         }
 
         if (mHp <= 0) {
@@ -401,6 +443,16 @@ async function handleButton(interaction) {
                     .setLabel('Tấn Công')
                     .setStyle(ButtonStyle.Danger)
                     .setEmoji('⚔️'),
+                new ButtonBuilder()
+                    .setCustomId(`use_hp_${monster.id}_${mHp}_${isShiny}`)
+                    .setLabel('Bơm Máu')
+                    .setStyle(ButtonStyle.Success)
+                    .setEmoji('🧪'),
+                new ButtonBuilder()
+                    .setCustomId(`use_mana_${monster.id}_${mHp}_${isShiny}`)
+                    .setLabel('Bơm Mana')
+                    .setStyle(ButtonStyle.Primary)
+                    .setEmoji('🎐'),
                 new ButtonBuilder()
                     .setCustomId('escape')
                     .setLabel('Bỏ Chạy')

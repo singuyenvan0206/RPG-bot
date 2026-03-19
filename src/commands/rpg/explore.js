@@ -139,6 +139,16 @@ module.exports = {
                         .setStyle(ButtonStyle.Danger)
                         .setEmoji('⚔️'),
                     new ButtonBuilder()
+                        .setCustomId(`use_hp_${monster.id}_${isShiny ? Math.floor(monster.hp * 1.2) : monster.hp}_${isShiny ? 1 : 0}`)
+                        .setLabel('Bơm Máu')
+                        .setStyle(ButtonStyle.Success)
+                        .setEmoji('🧪'),
+                    new ButtonBuilder()
+                        .setCustomId(`use_mana_${monster.id}_${isShiny ? Math.floor(monster.hp * 1.2) : monster.hp}_${isShiny ? 1 : 0}`)
+                        .setLabel('Bơm Mana')
+                        .setStyle(ButtonStyle.Primary)
+                        .setEmoji('🎐'),
+                    new ButtonBuilder()
                         .setCustomId('escape')
                         .setLabel('Bỏ Chạy')
                         .setStyle(ButtonStyle.Secondary)
