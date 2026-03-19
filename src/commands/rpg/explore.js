@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const db = require('../../database');
+const rpgData = require('../../utils/rpgData');
 const gifData = require('../../utils/gifData');
 const combatLogic = require('../../utils/combatLogic');
 const rpgLogic = require('../../utils/rpgLogic');
