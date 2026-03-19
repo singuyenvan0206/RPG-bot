@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const db = require('../../database');
 const gifData = require('../../utils/gifData');
 const itemsData = require('../../utils/itemsData');
+const materialsData = require('../../utils/materialsData');
 const equipCmd = require('./equip');
 
 const SLOTS = {
@@ -35,7 +36,7 @@ async function forgeSlot(userId, player, equip, slotKey) {
     }
 
     const matInv = await db.queryOne('SELECT amount FROM inventory WHERE user_id = $1 AND item_id = $2', [userId, matNeed]);
-    const matInfo = require('../../utils/materialsData').getMaterial(matNeed);
+    const matInfo = materialsData.getMaterial(matNeed);
     if (!matInv || matInv.amount < matAmount) {
         return { ok: false, msg: `❌ **${slotCfg.label}** (${itemInfo.name}): Thiếu **${matAmount}x ${matInfo.name}**.` };
     }
@@ -116,8 +117,13 @@ module.exports = {
         let slotsToForge = [];
         if (slotInput === 'all') {
             slotsToForge = ['weapon', 'armor', 'accessory'];
-        } else {
+        } else if (SLOTS[slotInput]) {
             slotsToForge = [slotInput];
+        } else {
+            return interaction.reply({ 
+                content: '❌ Lỗi: Slot không hợp lệ. Vui lòng chọn: `weapon`, `armor`, `accessory`, `all` hoặc phím tắt `1`, `2`, `3`.', 
+                flags: MessageFlags.Ephemeral 
+            });
         }
 
         // Forge Animation

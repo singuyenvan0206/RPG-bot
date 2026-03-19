@@ -1,8 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const db = require('../../database');
-const rpgData = require('../../utils/rpgData');
-const path = require('path');
 const gifData = require('../../utils/gifData');
+const combatLogic = require('../../utils/combatLogic');
+const rpgLogic = require('../../utils/rpgLogic');
+const questLogic = require('../../utils/questLogic');
+const path = require('path');
 
 module.exports = {
     category: 'RPG',
@@ -47,7 +49,7 @@ module.exports = {
         }
 
         await db.execute('UPDATE players SET last_explore = $1 WHERE user_id = $2', [now, userId]);
-        require('../../utils/questLogic').addProgress(userId, 'explore', 1);
+        questLogic.addProgress(userId, 'explore', 1);
 
         const regionData = rpgData[player.current_region];
         if (!regionData) return interaction.reply({ content: 'Lỗi Region. Bạn đang ở hư vô.', flags: require('discord.js').MessageFlags.Ephemeral });
@@ -104,7 +106,7 @@ module.exports = {
             if (isShiny) rarityColors[monster.rarity] = '#f1c40f'; // Override to gold for shiny
 
             const rarityIcons = { 'Common': '🧟', 'Rare': '🛡️', 'Elite': '👑' };
-            const elemEmoji = require('../../utils/combatLogic').elements[monster.element]?.emoji || '';
+            const elemEmoji = combatLogic.elements[monster.element]?.emoji || '';
 
             const embed = new EmbedBuilder()
                 .setTitle(`${rarityIcons[monster.rarity]} [Lv.${monster.level}] ${isShiny ? 'SHINY ' : ''}${monster.rarity} MONSTER!`)
@@ -182,7 +184,7 @@ module.exports = {
             } else if (event.exp) {
                 let eventExp = event.exp;
                 if (globalEvent === 'enlightenment') eventExp = Math.floor(eventExp * 1.5);
-                await require('../../utils/rpgLogic').addExp(userId, eventExp);
+                await rpgLogic.addExp(userId, eventExp);
                 embed.addFields({ name: 'Kinh Nghiệm', value: `Nhận được ✨ ${eventExp} Exp.` });
             }
 

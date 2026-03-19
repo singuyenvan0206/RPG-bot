@@ -39,7 +39,7 @@ module.exports = {
                 },
                 getString: (name) => {
                     const baseName = command.data.name;
-                    if (baseName === 'forge' && name === 'slot') {
+                    if (baseName === 'forge' && (name === 'slot' || name === 'slots')) {
                         if (args[0] === '1') return 'weapon';
                         if (args[0] === '2') return 'armor';
                         if (args[0] === '3') return 'accessory';
@@ -52,7 +52,12 @@ module.exports = {
                         // $mua <id>      → args[0]=id directly
                         return args[0] === 'buy' ? args[1] : args[0];
                     }
-                    if (baseName === 'forge' && name === 'slots') return args[0];
+                    if (baseName === 'forge' && name === 'slots') {
+                        if (args[0] === '1') return 'weapon';
+                        if (args[0] === '2') return 'armor';
+                        if (args[0] === '3') return 'accessory';
+                        return args[0];
+                    }
                     if (baseName === 'market' && name === 'item_id') return args[1];
                     if (baseName === 'help' && name === 'command') return args[0];
                     if (baseName === 'guild' && name === 'name') return args.slice(1).join(' ');
