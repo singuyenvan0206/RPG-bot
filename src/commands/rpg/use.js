@@ -25,7 +25,7 @@ module.exports = {
         
         // Lookup numeric id if possible
         if (!isNaN(userInput)) {
-            const shopItem = shopData.general_store?.find(i => i.code == userInput);
+            const shopItem = shopData.consumables?.find(i => i.code == userInput);
             if (shopItem) userInput = shopItem.id;
         }
 

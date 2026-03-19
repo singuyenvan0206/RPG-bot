@@ -30,20 +30,31 @@ module.exports = {
         description: 'Gõ /shop để xem cửa hàng. Dùng /shop buy <ID> [số lượng] để mua.'
     },
     async execute(interaction) {
-        const { MessageFlags } = require('discord.js');
+        const { MessageFlags, ActionRowBuilder, StringSelectMenuBuilder, ComponentType } = require('discord.js');
         const subcommand = interaction.options.getSubcommand(false);
         const userId = interaction.user.id;
         const player = await db.getPlayer(userId);
 
         if (!player) return interaction.reply({ content: '❌ Bạn chưa có nhân vật!', flags: MessageFlags.Ephemeral });
 
-        // Default to showing shop list when no subcommand
-        if (!subcommand || subcommand !== 'buy') {
+        // Default categories configuration
+        const categories = {
+            'weapons': { emoji: '⚔️', label: 'Vũ Khí', data: shopData.weapons },
+            'armors': { emoji: '🛡️', label: 'Giáp Trụ', data: shopData.armors },
+            'accessories': { emoji: '💍', label: 'Trang Sức', data: shopData.accessories },
+            'consumables': { emoji: '🧪', label: 'Tiêu Hao', data: shopData.consumables },
+            'materials': { emoji: '🛠️', label: 'Nguyên Liệu', data: shopData.materials },
+            'black_market': { emoji: '🌑', label: 'Chợ Đen', data: shopData.black_market },
+            'skills': { emoji: '📕', label: 'Kỹ Năng', data: shopData.skill_shops[player.class] || [] }
+        };
+
+        const createShopEmbed = (categoryKey = null) => {
             const embed = new EmbedBuilder()
                 .setTitle('🏪 Cửa Hàng EchoWorld')
-                .setDescription(`Chào **${player.class}** ${interaction.user.username}! Bạn có 🪙 **${player.gold.toLocaleString()} Vàng**.\n\nDùng \`/shop buy <ID>\` để mua đồ.`)
                 .setColor('#f1c40f')
-                .setFooter({ text: 'Dùng /shop buy <ID> để mua | Số ID nằm trong dấu [...]' });
+                .setThumbnail(interaction.client.user.displayAvatarURL())
+                .setDescription(`Chào **${player.class}** ${interaction.user.username}! Bạn có 🪙 **${player.gold.toLocaleString()} Vàng**.\n\nDùng Menu bên dưới để xem đồ, gõ \`/shop buy <ID>\` để mua nhanh.`)
+                .setFooter({ text: 'Dùng menu để chọn Category | /shop buy [mã] để mua' });
 
             const buildList = (itemsArray) => {
                 let list = '';
@@ -59,92 +70,83 @@ module.exports = {
                     } else {
                         name = item.name || item.id;
                     }
-                    list += `\`[${shopCode}]\` **${name}**: 🪙 **${item.price}**\n`;
+                    list += `\`[${shopCode}]\` **${name}**: 🪙 **${item.price.toLocaleString()}**\n`;
                 });
-                return list || 'Trống';
+                return list || '*Trống*';
             };
 
-            const chunkArray = (arr, size) => {
-                const chunks = [];
-                for (let i = 0; i < arr.length; i += size) {
-                    chunks.push(arr.slice(i, i + size));
+            if (!categoryKey) {
+                // Home view: Summary
+                for (const [key, cat] of Object.entries(categories)) {
+                    if (key === 'weapons') {
+                        const filtered = cat.data.filter(i => {
+                            const info = itemsData.getItem(i.id);
+                            return !info || !info.requiredClass || info.requiredClass.includes(player.class);
+                        });
+                        embed.addFields({ name: `${cat.emoji} ${cat.label}`, value: `> Có **${filtered.length}** món phù hợp.`, inline: true });
+                    } else {
+                        embed.addFields({ name: `${cat.emoji} ${cat.label}`, value: `> Có **${cat.data.length}** vật phẩm.`, inline: true });
+                    }
                 }
-                return chunks;
-            };
+            } else {
+                const cat = categories[categoryKey];
+                embed.setTitle(`${cat.emoji} Danh mục: ${cat.label}`);
+                let items = cat.data;
 
-            const addCategoryFields = (title, items) => {
-                const chunks = chunkArray(items, 15);
-                chunks.forEach((chunk, index) => {
-                    const fieldTitle = index === 0 ? title : `↳ ${title} (Tiếp)`;
-                    embed.addFields({ name: fieldTitle, value: buildList(chunk), inline: true });
-                });
-            };
+                if (categoryKey === 'weapons') {
+                    items = items.filter(i => {
+                        const info = itemsData.getItem(i.id);
+                        return !info || !info.requiredClass || info.requiredClass.includes(player.class);
+                    });
+                }
 
-            const classWeapons = shopData.weapons.filter(item => {
-                const info = itemsData.getItem(item.id);
-                if (!info) return true;
-                if (!info.requiredClass || !Array.isArray(info.requiredClass)) return true;
-                return info.requiredClass.includes(player.class);
-            });
-
-            addCategoryFields(`⚔️ Vũ Khí (${player.class})`, classWeapons);
-            addCategoryFields('🛡️ Giáp Trụ', shopData.armors);
-            addCategoryFields('💍 Trang Sức', shopData.accessories);
-            addCategoryFields('🧪 Tiêu Hao', shopData.consumables);
-            addCategoryFields('🛠️ Nguyên Liệu', shopData.materials);
-            embed.addFields({ name: '\u200B', value: '\u200B', inline: true }); // spacing format align
-
-            // Skill Shop (Class Specific)
-            const classSkills = shopData.skill_shops[player.class];
-            if (classSkills) {
-                let skillList = '';
-                classSkills.forEach(book => {
-                    skillList += `\`[${book.code}]\` **${book.name}**: 🪙 **${book.price}**\n*${book.desc}*\n`;
-                });
-                embed.addFields({ name: `📕 Tiệm Sách Kĩ Năng (${player.class})`, value: skillList });
+                // Split into fields if long
+                if (items.length > 15) {
+                    for (let i = 0; i < items.length; i += 15) {
+                        const chunk = items.slice(i, i + 15);
+                        embed.addFields({ 
+                            name: i === 0 ? `${cat.label} hiện có` : `${cat.label} (Tiếp)`, 
+                            value: buildList(chunk), 
+                            inline: true 
+                        });
+                    }
+                } else {
+                    embed.setDescription(`Các vật phẩm thuộc danh mục **${cat.label}**:\n\n${buildList(items)}`);
+                }
             }
+            return embed;
+        };
 
-            // Black Market
-            let blackList = '';
-            shopData.black_market.forEach(item => {
-                const info = materialsData.getMaterial(item.id);
-                if (info) {
-                    blackList += `\`[${item.code}]\` **${info.name}**: 🪙 **${item.price}**\n`;
-                }
-            });
-            if (blackList) embed.addFields({ name: '🌑 Chợ Đen (Vật Liệu Hiếm)', value: blackList });
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('shop_category')
+            .setPlaceholder('Chọn quầy hàng để xem...')
+            .addOptions([
+                { label: 'Trang Chủ', value: 'home', emoji: '🏠', description: 'Xem tổng quan cửa hàng' },
+                ...Object.entries(categories).map(([key, cat]) => ({
+                    label: cat.label,
+                    value: key,
+                    emoji: cat.emoji,
+                    description: `Xem các mặt hàng ${cat.label}`
+                }))
+            ]);
 
-            return interaction.reply({ embeds: [embed] });
-        }
+        const row = new ActionRowBuilder().addComponents(selectMenu);
 
-        // /shop buy
+        // --- SUBCOMMAND: BUY ---
         if (subcommand === 'buy') {
             const itemIdInput = interaction.options.getString('item_id');
             const amount = interaction.options.getInteger('amount') || 1;
 
-            const classSkills = shopData.skill_shops[player.class] || [];
-            const allShopItems = [
-                ...shopData.consumables,
-                ...shopData.weapons,
-                ...shopData.armors,
-                ...shopData.accessories,
-                ...shopData.materials,
-                ...shopData.black_market,
-                ...classSkills
-            ];
+            const allShopItems = Object.values(categories).flatMap(cat => cat.data);
 
-            // Search by id, code, or item code from itemsData/materialsData
             let targetShopItem = allShopItems.find(i =>
-                i.id === itemIdInput ||
-                (i.code && String(i.code) === String(itemIdInput))
+                i.id === itemIdInput || (i.code && String(i.code) === String(itemIdInput))
             );
 
             let itemInfo = null;
             if (!targetShopItem) {
                 itemInfo = itemsData.getItem(itemIdInput) || materialsData.getMaterial(itemIdInput);
-                if (itemInfo) {
-                    targetShopItem = allShopItems.find(i => i.id === itemInfo.id);
-                }
+                if (itemInfo) targetShopItem = allShopItems.find(i => i.id === itemInfo.id);
             } else {
                 if (targetShopItem.skill_id) {
                     itemInfo = { id: targetShopItem.id, name: targetShopItem.name, type: 'skill_book', skill_id: targetShopItem.skill_id };
@@ -153,17 +155,14 @@ module.exports = {
                 }
             }
 
-            if (!targetShopItem || !itemInfo) return interaction.reply({ content: '❌ Vật phẩm không có bán trong shop hoặc ID sai.', flags: MessageFlags.Ephemeral });
+            if (!targetShopItem || !itemInfo) return interaction.reply({ content: '❌ Vật phẩm không có bán hoặc ID sai.', flags: MessageFlags.Ephemeral });
 
             if (itemInfo.type === 'skill_book' && amount > 1) {
                 return interaction.reply({ content: '❌ Bạn chỉ có thể học mỗi kĩ năng 1 lần.', flags: MessageFlags.Ephemeral });
             }
 
             const totalPrice = targetShopItem.price * amount;
-
-            if (player.gold < totalPrice) {
-                return interaction.reply({ content: `❌ Không đủ vàng! Cần 🪙 **${totalPrice.toLocaleString()}** — còn thiếu **${(totalPrice - player.gold).toLocaleString()}**.`, flags: MessageFlags.Ephemeral });
-            }
+            if (player.gold < totalPrice) return interaction.reply({ content: `❌ Thiếu 🪙 **${(totalPrice - player.gold).toLocaleString()}** vàng!`, flags: MessageFlags.Ephemeral });
 
             await db.execute('UPDATE players SET gold = gold - $1 WHERE user_id = $2', [totalPrice, userId]);
 
@@ -182,9 +181,23 @@ module.exports = {
             const buyEmbed = new EmbedBuilder()
                 .setColor('#2ecc71')
                 .setTitle('✅ Mua Hàng Thành Công')
-                .setDescription(`Bạn đã mua **${amount}x ${itemInfo.name}** với giá 🪙 **${totalPrice.toLocaleString()} Vàng**.\n${itemInfo.type === 'skill_book' ? '✨ Kĩ năng đã được học/nâng cấp!' : ''}\n\nSố dư còn lại: 🪙 **${(player.gold - totalPrice).toLocaleString()} Vàng**.`);
+                .setDescription(`Bạn đã mua **${amount}x ${itemInfo.name}** với giá 🪙 **${totalPrice.toLocaleString()} Vàng**.\n\nSố dư còn lại: 🪙 **${(player.gold - totalPrice).toLocaleString()} Vàng**.`);
 
             return interaction.reply({ embeds: [buyEmbed] });
         }
+
+        // --- SHOW SHOP WITH MENU ---
+        const response = await interaction.reply({ embeds: [createShopEmbed()], components: [row] });
+        const collector = response.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 120000 });
+
+        collector.on('collect', async i => {
+            if (i.user.id !== interaction.user.id) return i.reply({ content: 'Lệnh này không dành cho bạn!', flags: MessageFlags.Ephemeral });
+            const selected = i.values[0];
+            await i.update({ embeds: [createShopEmbed(selected === 'home' ? null : selected)] });
+        });
+
+        collector.on('end', () => {
+            interaction.editReply({ components: [] }).catch(() => {});
+        });
     }
 };
