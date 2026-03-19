@@ -161,6 +161,16 @@ async function recalculateStats(userId) {
         });
     }
 
+    // --- REBIRTH BUFFS ---
+    const rebirths = player.rebirths || 0;
+    if (rebirths > 0) {
+        const multiplier = 1 + (rebirths * 0.10); // +10% overall stats per rebirth
+        baseAtk = Math.floor(baseAtk * multiplier);
+        baseDef = Math.floor(baseDef * multiplier);
+        baseAgi = Math.floor(baseAgi * multiplier);
+        baseCrit = Math.min(1.0, baseCrit + (rebirths * 0.01)); // +1% crit rate per rebirth
+    }
+
     // Update in DB
     await db.execute(
         'UPDATE player_stats SET attack = $1, defense = $2, agility = $3, crit_rate = $4 WHERE user_id = $5',

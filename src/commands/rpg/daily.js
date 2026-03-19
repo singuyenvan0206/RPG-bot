@@ -62,11 +62,20 @@ module.exports = {
         // Rewards with streak bonus
         const baseGold = 500;
         const baseExp = 200;
-        const bonusGold = (streak - 1) * 100;
-        const bonusExp = (streak - 1) * 50;
+        const bonusGold = Math.min((streak - 1) * 100, 2000); // Max 2000 bonus
+        const bonusExp = Math.min((streak - 1) * 50, 1000);   // Max 1000 bonus
 
         const totalGold = baseGold + bonusGold;
         const totalExp = baseExp + bonusExp;
+
+        let milestoneReward = null;
+        if (streak > 0 && streak % 7 === 0) {
+            milestoneReward = 'diamond';
+            await db.execute(
+                'INSERT INTO inventory (user_id, item_id, amount) VALUES ($1, $2, 1) ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + 1',
+                [userId, milestoneReward]
+            );
+        }
 
         await db.execute(
             'UPDATE players SET gold = gold + $1, last_daily = $2, daily_streak = $3 WHERE user_id = $4', 
@@ -78,6 +87,10 @@ module.exports = {
         resultMsg += `💰 Bạn nhận được **${totalGold} Vàng** (Thưởng chuỗi: +${bonusGold})\n`;
         resultMsg += `🌟 Bạn nhận được **${totalExp} EXP** (Thưởng chuỗi: +${bonusExp})`;
         
+        if (milestoneReward) {
+            resultMsg += `\n\n🎁 **Quà Kỉ Niệm ${streak} Ngày:** 1x **Diamond** 💎!`;
+        }
+
         if (expResult && expResult.leveledUp) {
             resultMsg += `\n\n🆙 **LÊN CẤP!** Bạn đã đạt đến cấp độ **${expResult.newLevel}**!`;
         }

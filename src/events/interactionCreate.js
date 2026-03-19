@@ -78,10 +78,12 @@ async function handleButton(interaction) {
     if (customId.startsWith('battle_')) {
         let monsterId = '';
         let mHpStr = '';
-        const match = customId.match(/^battle_(.+)_(\d+)$/);
+        let isShiny = 0;
+        const match = customId.match(/^battle_(.+)_(\d+)(?:_(\d+))?$/);
         if (match) {
             monsterId = match[1];
             mHpStr = match[2];
+            if (match[3]) isShiny = parseInt(match[3], 10);
         } else {
             monsterId = customId.replace('battle_', '');
         }
@@ -97,9 +99,34 @@ async function handleButton(interaction) {
         
         if (!monster) return interaction.reply({ content: 'Quái vật đã biến mất!', flags: MessageFlags.Ephemeral });
 
+        let mMaxHp = isShiny ? Math.floor(monster.hp * 1.2) : monster.hp;
+        let mAtk = isShiny ? Math.floor(monster.atk * 1.2) : monster.atk;
+        let mGold = isShiny ? monster.gold * 5 : monster.gold;
+        let mExp = isShiny ? monster.exp * 5 : monster.exp;
+        let mName = isShiny ? `✨ Shiny ${monster.name}` : monster.name;
+
+        // Apply Global Events
+        const globalEventState = await db.queryOne("SELECT value FROM world_states WHERE key = 'global_event'");
+        const globalEvent = globalEventState ? globalEventState.value : 'none';
+
+        if (globalEvent === 'blood_moon') {
+            mMaxHp = Math.floor(mMaxHp * 1.2);
+            mAtk = Math.floor(mAtk * 1.2);
+            mGold = Math.floor(mGold * 1.5);
+            mName = `🔴 [Huyết Nguyệt] ` + mName;
+        } else if (globalEvent === 'gold_rush') {
+            mGold = Math.floor(mGold * 2.0);
+        } else if (globalEvent === 'enlightenment') {
+            mExp = Math.floor(mExp * 1.5);
+        } else if (globalEvent === 'divine_blessing') {
+            mMaxHp = Math.floor(mMaxHp * 0.9);
+            mAtk = Math.floor(mAtk * 0.9);
+            mName = `🕊️ [Kẻ Yếu] ` + mName;
+        }
+
         // Simple turn calculation
         let log = '';
-        let mHp = mHpStr ? parseInt(mHpStr, 10) : monster.hp;
+        let mHp = mHpStr ? parseInt(mHpStr, 10) : mMaxHp;
         let pHp = player.hp;
 
         // Elemental & Skills
@@ -116,9 +143,29 @@ async function handleButton(interaction) {
         // Player Skill (pass player for heal/drain effects)
         const pSkill = combatLogic.triggerCombatSkills(learnedSkills, player.class, player);
         
+        let regionBuff = region.buff || {};
+
+        // Territory Buff check
+        if (player.guild_id && Object.keys(regionBuff).length > 0) {
+            const territoryState = await db.queryOne("SELECT value FROM world_states WHERE key = $1", [`territory_${player.current_region}`]);
+            if (territoryState && territoryState.value === player.guild_id) {
+                // X2 Lợi ích cho bang làm chủ
+                regionBuff = { ...regionBuff }; // Clone
+                for (const k in regionBuff) {
+                    if (typeof regionBuff[k] === 'number') {
+                        regionBuff[k] *= 2;
+                    }
+                }
+            }
+        }
+        
+        let pBaseDmg = regionBuff.atk_bonus ? Math.floor(stats.attack * (1 + regionBuff.atk_bonus)) : stats.attack;
+        let pDef = regionBuff.def_bonus ? Math.floor(stats.defense * (1 + regionBuff.def_bonus)) : stats.defense;
+        let pMaxHp = regionBuff.hp_bonus ? Math.floor(player.max_hp * (1 + regionBuff.hp_bonus)) : player.max_hp;
+        let pCritRate = regionBuff.crit_bonus ? stats.crit_rate + regionBuff.crit_bonus : stats.crit_rate;
+
         // Player attacks first
-        let pBaseDmg = stats.attack;
-        let isCrit = Math.random() < stats.crit_rate;
+        let isCrit = Math.random() < pCritRate;
         let pDmg = isCrit ? Math.floor(pBaseDmg * stats.crit_damage) : pBaseDmg;
         
         // Determine element: if skill was triggered and has element, use skill's element; otherwise use weapon's
@@ -133,13 +180,13 @@ async function handleButton(interaction) {
                 pDmg = Math.floor(pDmg * pSkill.multiplier);
                 log += `✨ **${pSkill.name}**: ${pSkill.msg}\n`;
             } else if (pSkill.effect === 'heal') {
-                const healAmt = Math.floor(player.max_hp * pSkill.heal_pct);
-                pHp = Math.min(player.max_hp, pHp + healAmt);
+                const healAmt = Math.floor(pMaxHp * pSkill.heal_pct);
+                pHp = Math.min(pMaxHp, pHp + healAmt);
                 log += `💚 **${pSkill.name}**: ${pSkill.msg} Hồi **${healAmt} HP**!\n`;
             } else if (pSkill.effect === 'drain') {
                 pDmg = Math.floor(pDmg * (pSkill.multiplier || 1.0));
-                const drainAmt = Math.floor(player.max_hp * pSkill.heal_pct);
-                pHp = Math.min(player.max_hp, pHp + drainAmt);
+                const drainAmt = Math.floor(pMaxHp * pSkill.heal_pct);
+                pHp = Math.min(pMaxHp, pHp + drainAmt);
                 log += `🩸 **${pSkill.name}**: ${pSkill.msg} Gây **${pDmg}** sát thương và hồi **${drainAmt} HP**!\n`;
             } else if (pSkill.effect === 'dot') {
                 // Apply base attack + dot damage
@@ -149,7 +196,7 @@ async function handleButton(interaction) {
             }
         }
 
-        if (isCrit) log += `💥 **BẠO KÍCH!** Bạn tung đòn hiểm hóc lên ${monster.name}.\n`;
+        if (isCrit) log += `💥 **BẠO KÍCH!** Bạn tung đòn hiểm hóc lên ${mName}.\n`;
         if (pElemMult > 1) log += `🔥 **Ưu thế hệ!** Đòn đánh cực kỳ hiệu quả.\n`;
         else if (pElemMult < 1) log += `💧 **Bị khắc hệ!** Sát thương bị giảm sút.\n`;
 
@@ -159,21 +206,34 @@ async function handleButton(interaction) {
         }
 
         if (mHp <= 0) {
-            log += `\n🎉 **Chiến thắng!**\nBạn nhận được 🪙 **${monster.gold} Vàng** và 🌟 **${monster.exp} EXP**.`;
+            if (regionBuff.gold_bonus) mGold = Math.floor(mGold * (1 + regionBuff.gold_bonus));
+            if (regionBuff.exp_bonus) mExp = Math.floor(mExp * (1 + regionBuff.exp_bonus));
+            
+            log += `\n🎉 **Chiến thắng!**\nBạn nhận được 🪙 **${mGold} Vàng** và 🌟 **${mExp} EXP**.`;
             
             // Level up logic
-            await db.execute('UPDATE players SET gold = gold + $1 WHERE user_id = $2', [monster.gold, userId]);
+            await db.execute('UPDATE players SET gold = gold + $1 WHERE user_id = $2', [mGold, userId]);
             require('../utils/questLogic').addProgress(userId, 'kill_monster', 1);
-            require('../utils/questLogic').addProgress(userId, 'earn_gold', monster.gold);
+            require('../utils/questLogic').addProgress(userId, 'earn_gold', mGold);
 
-            const expResult = await require('../utils/rpgLogic').addExp(userId, monster.exp);
+            const expResult = await require('../utils/rpgLogic').addExp(userId, mExp);
             
             if (expResult && expResult.leveledUp) {
-                log += `\n🆙 **Lên Cấp!** Bạn đã đạt cấp độ ${expResult.newLevel}. Sinh lực được hồi phục!`;
+                log += `\n🆙 **LÊN CẤP!** Bạn đã đạt cấp độ ${expResult.newLevel}!`;
+                log += `\n❤️ Máu và Mana đã được hồi phục đầy. Chỉ số cơ bản được tăng cường.`;
             }
 
+            // Guild contribution
+            if (player.guild_id) {
+                const guildExpResult = await require('../utils/rpgLogic').addGuildExp(player.guild_id, 5);
+                if (guildExpResult && guildExpResult.leveledUp) {
+                    log += `\n🏰 **Hỉ Sự!** Bang Hội của bạn đã thăng lên **Cấp ${guildExpResult.newLevel}**!`;
+                }
+            }
             // Item Drop Logic
-            if (Math.random() < 0.25) { // 25% drop rate for gear
+            let dropRateGear = 0.25 + (regionBuff.drop_bonus || 0);
+            if (globalEvent === 'divine_blessing') dropRateGear += 0.15;
+            if (Math.random() < dropRateGear) { // Default 25% drop rate for gear
                 const itemsList = Object.keys(require('../utils/itemsData').getAllItems());
                 const droppedItem = itemsList[Math.floor(Math.random() * itemsList.length)];
                 await db.execute(
@@ -185,7 +245,9 @@ async function handleButton(interaction) {
             }
 
             // Material Drop Logic
-            if (Math.random() < 0.45) { // Increased drop rate slightly
+            let dropRateMat = 0.45 + (regionBuff.drop_bonus || 0);
+            if (globalEvent === 'divine_blessing') dropRateMat += 0.15;
+            if (Math.random() < dropRateMat) { // Increased drop rate slightly
                 const matRoll = Math.random();
                 let rolledMat = 'iron_ore';
                 
@@ -260,8 +322,8 @@ async function handleButton(interaction) {
         }
 
         // Monster hits back
-        let mBaseDmg = monster.atk;
-        let mDmg = Math.max(1, mBaseDmg - Math.floor(stats.defense / 2));
+        let mBaseDmg = regionBuff.monster_atk_bonus ? Math.floor(mAtk * (1 + regionBuff.monster_atk_bonus)) : mAtk;
+        let mDmg = Math.max(1, mBaseDmg - Math.floor(pDef / 2));
         mDmg = Math.floor(mDmg * mElemMult);
 
         // Shield Block passive: 15% chance to block 50% of incoming damage
@@ -273,7 +335,7 @@ async function handleButton(interaction) {
             log += `🛡️ **Shield Block** kích hoạt! Chặn được 50% sát thương!\n`;
         }
 
-        log += `💢 ${monster.name} ${mElemMult > 1 ? '(Ưu thế hệ!) ' : ''}tấn công gây **${mDmg}** sát thương.\n`;
+        log += `💢 ${mName} ${mElemMult > 1 ? '(Ưu thế hệ!) ' : ''}tấn công gây **${mDmg}** sát thương.\n`;
 
         if (pSkill && pSkill.effect === 'reflect') {
             const reflected = Math.floor(mDmg * pSkill.multiplier);
@@ -287,7 +349,7 @@ async function handleButton(interaction) {
             pHp = 0;
             const RESPAWN_MS = 5 * 60 * 1000; // 5 phút
             const deadUntil = Date.now() + RESPAWN_MS;
-            log += `\n💀 **Tử Dận!** Bạn gục ngã trước ${monster.name}. Hồi sinh sau **5 phút**.`;
+            log += `\n💀 **Tử Dận!** Bạn gục ngã trước ${mName}. Hồi sinh sau **5 phút**.`;
             await db.execute('UPDATE players SET hp = 0, dead_until = $1 WHERE user_id = $2', [deadUntil, userId]);
             const loseEmbed = new EmbedBuilder().setColor('#000000').setDescription(log);
             const loseFiles = [];
@@ -313,8 +375,8 @@ async function handleButton(interaction) {
             .setDescription(log)
             .setColor('#E67E22')
             .addFields(
-                { name: `👾 ${monster.name}`, value: createHealthBar(mHp, monster.hp), inline: false },
-                { name: '🛡️ Trạng thái của bạn', value: createHealthBar(pHp, player.max_hp), inline: false }
+                { name: `👾 ${mName}`, value: createHealthBar(mHp, mMaxHp), inline: false },
+                { name: '🛡️ Trạng thái của bạn', value: createHealthBar(pHp, pMaxHp), inline: false }
             );
         
         const files = [];
@@ -335,7 +397,7 @@ async function handleButton(interaction) {
         const row = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`battle_${monster.id}_${mHp}`)
+                    .setCustomId(`battle_${monster.id}_${mHp}_${isShiny}`)
                     .setLabel('Tấn Công')
                     .setStyle(ButtonStyle.Danger)
                     .setEmoji('⚔️'),

@@ -40,21 +40,44 @@ async function forgeSlot(userId, player, equip, slotKey) {
         return { ok: false, msg: `❌ **${slotCfg.label}** (${itemInfo.name}): Thiếu **${matAmount}x ${matInfo.name}**.` };
     }
 
-    // Deduct resources
+    // Deduct resources unconditionally first
     await db.execute('UPDATE players SET gold = gold - $1 WHERE user_id = $2', [goldCost, userId]);
     if (matInv.amount <= matAmount) {
         await db.execute('DELETE FROM inventory WHERE user_id = $1 AND item_id = $2', [userId, matNeed]);
     } else {
         await db.execute('UPDATE inventory SET amount = amount - $1 WHERE user_id = $2 AND item_id = $3', [matAmount, userId, matNeed]);
     }
-
-    const newLevel = currentUpgrade + 1;
-    await db.execute(`UPDATE player_equipment SET ${slotCfg.upLevel} = $1 WHERE user_id = $2`, [newLevel, userId]);
-
-    // Refresh player gold for next iterations
     player.gold -= goldCost;
 
-    return { ok: true, msg: `✅ **${itemInfo.name} [+${newLevel}]** — Cường hoá thành công! (Mất 🪙 ${goldCost} + ${matAmount}x ${matInfo.name})` };
+    // Success Chance Logic
+    let successChance = 1.0;
+    if (currentUpgrade >= 4 && currentUpgrade <= 6) successChance = 0.8;
+    else if (currentUpgrade >= 7 && currentUpgrade <= 9) successChance = 0.6;
+    else if (currentUpgrade >= 10) successChance = 0.4;
+
+    const roll = Math.random();
+    
+    // SUCCESS
+    if (roll < successChance) {
+        const newLevel = currentUpgrade + 1;
+        await db.execute(`UPDATE player_equipment SET ${slotCfg.upLevel} = $1 WHERE user_id = $2`, [newLevel, userId]);
+        return { ok: true, msg: `✅ **${itemInfo.name} [+${newLevel}]** — Thành công! (Mất 🪙 ${goldCost} + ${matAmount}x ${matInfo.name})` };
+    } 
+    
+    // FAIL
+    let failMsg = `❌ **${itemInfo.name} [+${currentUpgrade}]** — Đập xịt! Mất trắng nguyên liệu. (${Math.floor(successChance*100)}% thành công)`;
+    
+    // Downgrade Chance if level >= 7
+    if (currentUpgrade >= 7) {
+        const dropRoll = Math.random();
+        if (dropRoll < 0.5) { // 50% chance to drop 1 level on fail
+            const downLevel = Math.max(0, currentUpgrade - 1);
+            await db.execute(`UPDATE player_equipment SET ${slotCfg.upLevel} = $1 WHERE user_id = $2`, [downLevel, userId]);
+            failMsg = `⚠️ **${itemInfo.name} [+${currentUpgrade} ➡️ +${downLevel}]** — Đập xịt và **RỚT CẤP**! 😭`;
+        }
+    }
+
+    return { ok: false, msg: failMsg };
 }
 
 module.exports = {

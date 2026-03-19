@@ -55,8 +55,9 @@ module.exports = {
             .setImage(gifData.boss);
 
         const msg = await interaction.reply({ embeds: [battleEmbed], fetchReply: true });
+        // Removed artificial 3s sleep to make attacking faster, or keep 1s
         const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-        await sleep(3000); // Boss roar/battle duration
+        await sleep(1000); // Shorter duration to not rate limit too hard
 
         // --- Battle Logic ---
         const stats = await db.queryOne('SELECT * FROM player_stats WHERE user_id = $1', [userId]);
@@ -75,45 +76,78 @@ module.exports = {
         }
         mHp -= pDmg;
 
+        // Track damage in world_states
+        const dmgKey = `${region}_boss_dmg_${userId}`;
+        const currentDmgRecord = await db.queryOne('SELECT value FROM world_states WHERE key = $1', [dmgKey]);
+        let totalDmg = currentDmgRecord ? parseInt(currentDmgRecord.value) : 0;
+        totalDmg += pDmg;
+        await db.execute(
+            'INSERT INTO world_states (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2',
+            [dmgKey, totalDmg.toString()]
+        );
+
         if (mHp <= 0) {
             // Boss Killed
             mHp = 0;
             await db.execute('UPDATE world_states SET value = $1 WHERE key = $2', [0, `${region}_boss_hp`]);
             await db.execute('UPDATE world_states SET value = $1 WHERE key = $2', [0, `${region}_kills`]); // Reset kill counter
 
-            log += `\n🎉 **WORLD BOSS ĐÃ BỊ TIÊU DIỆT!**\nBạn đã vung đòn kết liễu! Nhận thưởng: 🪙 **${bData.gold} Vàng** & 🌟 **${bData.exp} EXP**.`;
+            log += `\n🎉 **WORLD BOSS ĐÃ BỊ TIÊU DIỆT TẠI ${bData.name.toUpperCase()}!**\nNgười kết liễu: <@${userId}>.\n\n🏆 **Bảng Xếp Hạng Sát Thương:**\n`;
 
-            // Give rewards
-            await db.execute('UPDATE players SET gold = gold + $1 WHERE user_id = $2', [bData.gold, userId]);
-            require('../../utils/questLogic').addProgress(userId, 'kill_boss', 1);
-            require('../../utils/questLogic').addProgress(userId, 'earn_gold', bData.gold);
-
-            const expResult = await require('../../utils/rpgLogic').addExp(userId, bData.exp);
+            // Calculate Leaderboard
+            const allDmgRecords = await db.queryAll(`SELECT key, value FROM world_states WHERE key LIKE '${region}_boss_dmg_%'`);
             
-            if (expResult && expResult.leveledUp) {
-                log += `\n🆙 **LÊN CẤP BỨT PHÁ!** Bạn đã trực tiếp phi thăng lên cấp độ ${expResult.newLevel}!`;
+            let participants = allDmgRecords.map(r => {
+                const parts = r.key.split('_');
+                const pId = parts[parts.length - 1];
+                return { userId: pId, dmg: parseInt(r.value) };
+            }).sort((a, b) => b.dmg - a.dmg);
+
+            // Give rewards based on rank
+            for (let i = 0; i < participants.length; i++) {
+                const p = participants[i];
+                let rankMult = 0.2; // Default participation (20%)
+                if (i === 0) rankMult = 1.0; // Top 1: 100%
+                else if (i === 1) rankMult = 0.7; // Top 2: 70%
+                else if (i === 2) rankMult = 0.5; // Top 3: 50%
+
+                const pGold = Math.floor(bData.gold * rankMult);
+                const pExp = Math.floor(bData.exp * rankMult);
+
+                // Need a direct db call since we shouldn't broadcast to offline players right here, just update their DB
+                await db.execute('UPDATE players SET gold = gold + $1, exp = exp + $2 WHERE user_id = $3', [pGold, pExp, p.userId]);
+                require('../../utils/levelLogic').checkLevelUp(p.userId); // Async check level up
+                require('../../utils/questLogic').addProgress(p.userId, 'kill_boss', 1);
+
+                // Top 3 gets items/eggs chance
+                if (i < 3) {
+                    const droppedItem = bData.drops[Math.floor(Math.random() * bData.drops.length)];
+                    await db.execute(
+                        'INSERT INTO inventory (user_id, item_id) VALUES ($1, $2) ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + 1', 
+                        [p.userId, droppedItem]
+                    );
+                    if (Math.random() < 0.5) {
+                        await db.execute(
+                            "INSERT INTO inventory (user_id, item_id) VALUES ($1, 'egg') ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + 1", 
+                            [p.userId]
+                        );
+                    }
+                }
+
+                if (i < 5) {
+                    log += `**Top ${i+1}:** <@${p.userId}> — 💥 ${p.dmg.toLocaleString()} DMG (Nhận ${pGold} Vàng, ${pExp} EXP)\n`;
+                }
             }
 
-            // Give item
-            const droppedItem = bData.drops[Math.floor(Math.random() * bData.drops.length)];
-            await db.execute(
-                'INSERT INTO inventory (user_id, item_id) VALUES ($1, $2) ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + 1', 
-                [userId, droppedItem]
-            );
-            const itemInfo = itemsData.getItem(droppedItem);
-            log += `\n🎁 **Rơi Đồ Đặc Biệt!** Nhặt được 1x **${itemInfo.name}** [${itemInfo.rarity}].`;
-
-            // Egg drop logic
-            if (Math.random() < 0.50) { // 50% to drop an egg
-                await db.execute(
-                    "INSERT INTO inventory (user_id, item_id) VALUES ($1, 'egg') ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + 1", 
-                    [userId]
-                );
-                log += `\n🥚 **Tìm thấy Trứng Thú Rừng!** Con Boss đang bảo vệ một quả trứng bí ẩn.`;
+            if (participants.length > 5) {
+                log += `...và ${participants.length - 5} chiến binh khác cũng nhận được phần thưởng tham gia!\n`;
             }
+
+            // Cleanup dmg records
+            await db.execute(`DELETE FROM world_states WHERE key LIKE '${region}_boss_dmg_%'`);
 
             const winEmbed = new EmbedBuilder().setColor('#FFD700').setDescription(log);
-            return msg.edit({ content: '@everyone', embeds: [winEmbed] }); // Announce kill
+            return msg.edit({ content: '@everyone 📢 **TIN NÓNG MẶT TRẬN!**', embeds: [winEmbed] }); 
         } else {
             // Update Boss HP
             await db.execute('UPDATE world_states SET value = $1 WHERE key = $2', [mHp, `${region}_boss_hp`]);

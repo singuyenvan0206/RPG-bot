@@ -38,6 +38,11 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 
         console.log(`Successfully reloaded ${data.length} application (/) commands globally.`);
     } catch (error) {
-        console.error(error);
+        console.error('❌ Lỗi deploy commands:');
+        if (error.rawError?.errors) {
+            console.error(JSON.stringify(error.rawError.errors, null, 2));
+        } else {
+            console.error(error);
+        }
     }
 })();

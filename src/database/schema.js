@@ -155,6 +155,16 @@ async function initSchema() {
         ALTER TABLE players ADD COLUMN IF NOT EXISTS dead_until BIGINT NOT NULL DEFAULT 0
     `);
 
+    // Migration: add last_fish column if it doesn't exist
+    await pool.query(`
+        ALTER TABLE players ADD COLUMN IF NOT EXISTS last_fish BIGINT DEFAULT 0
+    `);
+
+    // Migration: add rebirths column for Rebirth System
+    await pool.query(`
+        ALTER TABLE players ADD COLUMN IF NOT EXISTS rebirths INTEGER NOT NULL DEFAULT 0
+    `);
+
     // Server Config (prefix per-guild)
     await pool.query(`
         CREATE TABLE IF NOT EXISTS server_config (

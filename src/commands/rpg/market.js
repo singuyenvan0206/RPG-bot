@@ -90,7 +90,7 @@ module.exports = {
             );
 
             const itemInfo = itemsData.getItem(itemId);
-            return interaction.reply(`🛒 Bạn đã đăng bán thành công **${itemInfo ? itemInfo.name : itemId}** với giá 🪙 **${price} Vàng**!`);
+            return interaction.reply(`🛒 Bạn đã đăng bán thành công **${itemInfo ? itemInfo.name : itemId}** với giá 🪙 **${price} Vàng**! (Lưu ý: Mức thuế Giao dịch của Lãnh chúa là 10% khi chốt đơn).`);
         }
 
         if (sub === 'buy') {
@@ -106,10 +106,13 @@ module.exports = {
             }
 
             // Execute transaction
+            const tax = Math.floor(listing.price * 0.10);
+            const sellerRevenue = Math.max(1, listing.price - tax); // Tránh âm tiền
+
             // 1. Deduct gold from buyer
             await db.execute('UPDATE players SET gold = gold - $1 WHERE user_id = $2', [listing.price, userId]);
             // 2. Add gold to seller
-            await db.execute('UPDATE players SET gold = gold + $1 WHERE user_id = $2', [listing.price, listing.seller_id]);
+            await db.execute('UPDATE players SET gold = gold + $1 WHERE user_id = $2', [sellerRevenue, listing.seller_id]);
             // 3. Give item to buyer
             await db.execute(
                 'INSERT INTO inventory (user_id, item_id) VALUES ($1, $2) ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + 1', 

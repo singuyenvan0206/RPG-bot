@@ -42,4 +42,27 @@ async function addExp(userId, expGained) {
     return { leveledUp, newLevel: currentLevel, levelsGained };
 }
 
-module.exports = { addExp };
+async function addGuildExp(guildId, amount) {
+    if (!guildId) return null;
+    const guild = await db.queryOne('SELECT * FROM guilds WHERE guild_id = $1', [guildId]);
+    if (!guild) return null;
+
+    let newExp = Number(guild.exp) + amount;
+    let currentLevel = guild.level;
+    let leveledUp = false;
+
+    // Cần level * 5000 EXP để thăng cấp Bang
+    let expNeed = currentLevel * 5000;
+    while (newExp >= expNeed) {
+        newExp -= expNeed;
+        currentLevel++;
+        expNeed = currentLevel * 5000;
+        leveledUp = true;
+    }
+
+    await db.execute('UPDATE guilds SET exp = $1, level = $2 WHERE guild_id = $3', [newExp, currentLevel, guildId]);
+    
+    return { leveledUp, newLevel: currentLevel };
+}
+
+module.exports = { addExp, addGuildExp };

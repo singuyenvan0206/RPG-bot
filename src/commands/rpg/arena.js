@@ -2,6 +2,14 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const db = require('../../database');
 const gifData = require('../../utils/gifData');
 
+function getRank(elo) {
+    if (elo < 1200) return '🟤 Bronze';
+    if (elo < 1500) return '⚪ Silver';
+    if (elo < 2000) return '🟡 Gold';
+    if (elo < 2500) return '🔵 Platinum';
+    return '💎 Diamond';
+}
+
 module.exports = {
     category: 'RPG',
     aliases: ['a', 'pvp'],
@@ -38,15 +46,16 @@ module.exports = {
             const myStats = await db.queryOne('SELECT * FROM arena_stats WHERE user_id = $1', [userId]);
             const topStats = await db.queryAll('SELECT * FROM arena_stats ORDER BY elo DESC, wins DESC LIMIT 5');
 
+            const myRank = getRank(myStats.elo);
             const embed = new EmbedBuilder()
                 .setTitle('🏆 Đấu Trường Hắc Ám: Bảng Xếp Hạng')
                 .setColor('#e67e22')
-                .setDescription(`Bạn đang có **${myStats.elo} Elo** (Thắng: ${myStats.wins} | Thua: ${myStats.losses})\n\n**TOP 5 SERVER:**`);
+                .setDescription(`Hạng hiện tại: **${myRank}**\nBạn đang có **${myStats.elo} Elo** (Thắng: ${myStats.wins} | Thua: ${myStats.losses})\n\n**TOP 5 SERVER:**`);
 
             topStats.forEach((t, i) => {
                 embed.addFields({
                     name: `Hạng ${i + 1}`,
-                    value: `<@${t.user_id}> - Điểm Elo: **${t.elo}** (Thắng: ${t.wins})`
+                    value: `<@${t.user_id}> - Điểm Elo: **${t.elo}** (${getRank(t.elo)})`
                 });
             });
 
@@ -153,12 +162,14 @@ module.exports = {
             }
 
             let embedColor = '#e74c3c';
+            let resultTitle = '⚔️ Kết Quả Trận Đấu';
             if (winnerId === userId) {
                 // I won
                 const eloWon = 25;
                 const eloLost = 15;
                 log += `\n🎉 **BẠN ĐÃ CHIẾN THẮNG!**\nBạn được cộng **+${eloWon} Elo**. Đối thủ bị trừ **-${eloLost} Elo**.`;
                 embedColor = '#2ecc71';
+                resultTitle = '🏆 🏅 CHIẾN THẮNG!';
                 
                 await db.execute('UPDATE arena_stats SET elo = elo + $1, wins = wins + 1 WHERE user_id = $2', [eloWon, userId]);
                 await db.execute('UPDATE arena_stats SET elo = GREATEST(0, elo - $1), losses = losses + 1 WHERE user_id = $2', [eloLost, enemyId]);
@@ -168,12 +179,18 @@ module.exports = {
                 const eloLost = 20;
                 const eloWon = 20;
                 log += `\n💀 **BẠN ĐÃ BẠI TRẬN!**\nBạn bị trừ **-${eloLost} Elo**. Đối thủ được cộng **+${eloWon} Elo**.`;
+                resultTitle = '💀 💥 BẠI TRẬN!';
                 
                 await db.execute('UPDATE arena_stats SET elo = GREATEST(0, elo - $1), losses = losses + 1 WHERE user_id = $2', [eloLost, userId]);
                 await db.execute('UPDATE arena_stats SET elo = elo + $1, wins = wins + 1 WHERE user_id = $2', [eloWon, enemyId]);
             }
 
-            return msg.edit({ embeds: [embed] });
+            const resultEmbed = new EmbedBuilder()
+                .setTitle(resultTitle)
+                .setDescription(log)
+                .setColor(embedColor);
+
+            return msg.edit({ embeds: [resultEmbed] });
         }
     }
 };

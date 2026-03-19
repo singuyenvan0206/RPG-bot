@@ -1,6 +1,7 @@
 module.exports = {
     whispering_forest: {
         name: '🌳 Khu Rừng Thì Thầm',
+        buff: { exp_bonus: 0.10, desc: '+10% EXP' },
         monsters: [
             { code: 1001, id: 'slime_leaf', name: '🟢 Slime Lá Mục', level: 1, rarity: 'Common', element: 'Wood', hp: 40, atk: 8, gold: 15, exp: 25, image: 'slime_leaf.png' },
             { code: 1002, id: 'goblin_scout', name: '👺 Yêu Tinh Trinh Sát', level: 5, rarity: 'Common', element: 'Earth', hp: 70, atk: 15, gold: 30, exp: 45, image: 'goblin_scout.png' },
@@ -31,6 +32,7 @@ module.exports = {
     },
     burning_desert: {
         name: '🏜️ Sa Mạc Rực Lửa',
+        buff: { gold_bonus: 0.10, desc: '+10% Vàng' },
         monsters: [
             { code: 2001, id: 'fire_imp_d', name: '🔥 Tiểu Quỷ Lửa', level: 20, rarity: 'Common', element: 'Fire', hp: 250, atk: 100, gold: 150, exp: 250, image: 'fire_imp_d.png' },
             { code: 2002, id: 'desert_scorp_d', name: '🦂 Bò Cạp Cát', level: 22, rarity: 'Common', element: 'Earth', hp: 300, atk: 90, gold: 180, exp: 300, image: 'desert_scorp_d.png' },
@@ -61,6 +63,7 @@ module.exports = {
     },
     frozen_mountains: {
         name: '❄️ Dãy Núi Băng Giá',
+        buff: { def_bonus: 0.10, desc: '+10% Phòng thủ (DEF)' },
         monsters: [
             { code: 3001, id: 'ice_slime_f', name: '🧊 Slime Băng', level: 50, rarity: 'Common', element: 'Water', hp: 1200, atk: 350, gold: 500, exp: 1200, image: 'ice_slime_f.png' },
             { code: 3002, id: 'yeti_scout', name: '🦍 Yeti Trinh Sát', level: 60, rarity: 'Common', element: 'Earth', hp: 2000, atk: 500, gold: 800, exp: 2000, image: 'yeti_scout.png' },
@@ -91,6 +94,7 @@ module.exports = {
     },
     abyss_ocean: {
         name: '🌊 Đại Dương Sâu Thẳm',
+        buff: { hp_bonus: 0.10, desc: '+10% Máu (HP)' },
         monsters: [
             { code: 4001, id: 'deep_sea_angler_o', name: '🐟 Cá Lồng Đèn Quỷ', level: 80, rarity: 'Common', element: 'Void', hp: 3500, atk: 1200, gold: 1500, exp: 3000, image: 'deep_sea_angler_o.png' },
             { code: 4002, id: 'kraken_tentacle_o', name: '🦑 Xúc Tu Kraken', level: 90, rarity: 'Rare', element: 'Water', hp: 7000, atk: 2500, gold: 6000, exp: 15000, image: 'kraken_tentacle_o.png' },
@@ -121,6 +125,7 @@ module.exports = {
     },
     ancient_ruins: {
         name: '🏛️ Khu Di Tích Cổ',
+        buff: { drop_bonus: 0.05, desc: '+5% Tỉ lệ rớt đồ' },
         monsters: [
             { code: 5001, id: 'gargoyle_a', name: '👹 Quỷ Đá Gargoyle', level: 150, rarity: 'Common', element: 'Earth', hp: 20000, atk: 5000, gold: 5000, exp: 12000, image: 'gargoyle_a.png' },
             { code: 5002, id: 'cursed_knight_a', name: '⚔️ Kỵ Sĩ Nguyền Rủa', level: 160, rarity: 'Common', element: 'Void', hp: 25000, atk: 6500, gold: 7000, exp: 18000, image: 'cursed_knight_a.png' },
@@ -151,6 +156,7 @@ module.exports = {
     },
     sky_islands: {
         name: '🍃 Phấn Đảo Trên Không',
+        buff: { atk_bonus: 0.10, desc: '+10% Tấn công (ATK)' },
         monsters: [
             { code: 6201, id: 'sky_slime', name: '☁️ Slime Mây Trắng', level: 200, rarity: 'Common', element: 'Wind', hp: 50000, atk: 15000, gold: 20000, exp: 50000, image: 'sky_slime.png' },
             { code: 6202, id: 'harpy_scout', name: '🦅 Harpy Trinh Sát', level: 210, rarity: 'Common', element: 'Wind', hp: 60000, atk: 22000, gold: 35000, exp: 85000, image: 'harpy_scout.png' },
@@ -181,6 +187,7 @@ module.exports = {
     },
     the_void: {
         name: '🌌 Vực Hư Không',
+        buff: { monster_atk_bonus: 0.15, gold_bonus: 0.30, desc: 'Quái mạnh hơn +15% ATK, +30% Vàng' },
         monsters: [
             { code: 7001, id: 'void_eye_v', name: '👁️ Nhãn Thần Hư Không', level: 300, rarity: 'Common', element: 'Void', hp: 150000, atk: 50000, gold: 80000, exp: 200000, image: 'void_eye_v.png' },
             { code: 7002, id: 'shadow_stalker_v', name: '🌑 Bóng Ma Rình Rập', level: 320, rarity: 'Common', element: 'Void', hp: 180000, atk: 65000, gold: 120000, exp: 350000, image: 'shadow_stalker_v.png' },
@@ -211,6 +218,7 @@ module.exports = {
     },
     lava_caverns: {
         name: '🌋 Động Dung Nham',
+        buff: { crit_bonus: 0.05, desc: '+5% Tỉ lệ bạo kích' },
         monsters: [
             { code: 8001, id: 'lava_slime', name: '🔥 Slime Dung Nham', level: 250, rarity: 'Common', element: 'Fire', hp: 150000, atk: 45000, gold: 50000, exp: 120000, image: 'lava_slime.png' },
             { code: 8002, id: 'magma_golem', name: '🧱 Người Đá Nham Thạch', level: 300, rarity: 'Rare', element: 'Fire', hp: 500000, atk: 120000, gold: 200000, exp: 500000, image: 'magma_golem.png' },
@@ -236,6 +244,7 @@ module.exports = {
     },
     crystal_sanctuary: {
         name: '💎 Thánh Địa Tinh Thể',
+        buff: { drop_bonus: 0.10, exp_bonus: 0.10, desc: '+10% Rớt đồ & EXP' },
         monsters: [
             { code: 9001, id: 'crystal_spirit', name: '✨ Linh Hồn Tinh Thể', level: 400, rarity: 'Common', element: 'Light', hp: 400000, atk: 150000, gold: 150000, exp: 500000, image: 'crystal_spirit.png' },
             { code: 9002, id: 'prism_guard', name: '🛡️ Hộ Vệ Lăng Kính', level: 450, rarity: 'Rare', element: 'Light', hp: 1000000, atk: 350000, gold: 500000, exp: 1500000, image: 'prism_guard.png' },
@@ -261,6 +270,7 @@ module.exports = {
     },
     heavenly_gates: {
         name: '👼 Cổng Thiên Giới',
+        buff: { exp_bonus: 0.20, gold_bonus: 0.20, desc: '+20% Vàng & EXP' },
         monsters: [
             { code: 10001, id: 'angel_warrior', name: '⚔️ Thiên Binh', level: 600, rarity: 'Common', element: 'Light', hp: 2000000, atk: 800000, gold: 500000, exp: 2000000, image: 'angel_warrior.png' },
             { code: 10002, id: 'seraphim', name: '👼 Lục Tự Thiên Sứ', level: 800, rarity: 'Rare', element: 'Light', hp: 10000000, atk: 4000000, gold: 2000000, exp: 10000000, image: 'seraphim.png' },

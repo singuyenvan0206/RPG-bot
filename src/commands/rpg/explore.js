@@ -53,9 +53,23 @@ module.exports = {
         if (!regionData) return interaction.reply({ content: 'Lỗi Region. Bạn đang ở hư vô.', flags: require('discord.js').MessageFlags.Ephemeral });
 
         // Exploration Animation
+        let buffText = '';
+        if (regionData.buff) {
+            buffText = `\n🌟 **Vùng Đất Ban Phước:** ${regionData.buff.desc}`;
+        }
+
+        const globalEventState = await db.queryOne("SELECT value FROM world_states WHERE key = 'global_event'");
+        const globalEvent = globalEventState ? globalEventState.value : 'none';
+        
+        let eventText = '';
+        if (globalEvent === 'blood_moon') eventText = `\n🔴 **HUYẾT NGUYỆT:** Quái vật đang rất hung hãn!`;
+        else if (globalEvent === 'gold_rush') eventText = `\n⚜️ **CƠN SỐT VÀNG:** Nhận gấp đôi Vàng toàn cầu!`;
+        else if (globalEvent === 'enlightenment') eventText = `\n🌠 **KHAI SÁNG:** Nhận gấp rưỡi Kinh nghiệm (EXP)!`;
+        else if (globalEvent === 'divine_blessing') eventText = `\n🕊️ **PHƯỚC LÀNH:** Quái yếu đi, tỉ lệ rớt đồ tăng!`;
+
         const explorationEmbed = new EmbedBuilder()
             .setTitle('🗺️ Đang Thám Hiểm...')
-            .setDescription(`Bạn đang cẩn thận rảo bước trong **${regionData.name}**...`)
+            .setDescription(`Bạn đang cẩn thận rảo bước trong **${regionData.name}**...${buffText}${eventText}`)
             .setColor('#3498db')
             .setImage(gifData.explore);
 
@@ -82,16 +96,22 @@ module.exports = {
             
             const monster = possibleMonsters[Math.floor(Math.random() * possibleMonsters.length)];
             
+            // Shiny Roll (1%)
+            const isShiny = Math.random() < 0.01;
+            const monsterName = isShiny ? `✨ Shiny ${monster.name}` : monster.name;
+
             const rarityColors = { 'Common': '#E74C3C', 'Rare': '#9b59b6', 'Elite': '#f1c40f' };
+            if (isShiny) rarityColors[monster.rarity] = '#f1c40f'; // Override to gold for shiny
+
             const rarityIcons = { 'Common': '🧟', 'Rare': '🛡️', 'Elite': '👑' };
             const elemEmoji = require('../../utils/combatLogic').elements[monster.element]?.emoji || '';
 
             const embed = new EmbedBuilder()
-                .setTitle(`${rarityIcons[monster.rarity]} [Lv.${monster.level}] ${monster.rarity} MONSTER!`)
-                .setDescription(`Bạn đang thám hiểm **${regionData.name}** thì chạm mặt **${monster.name}** ${elemEmoji}!`)
-                .setColor(rarityColors[monster.rarity] || '#E74C3C')
+                .setTitle(`${rarityIcons[monster.rarity]} [Lv.${monster.level}] ${isShiny ? 'SHINY ' : ''}${monster.rarity} MONSTER!`)
+                .setDescription(`Bạn đang thám hiểm **${regionData.name}** thì chạm mặt **${monsterName}** ${elemEmoji}!`)
+                .setColor(isShiny ? '#f1c40f' : (rarityColors[monster.rarity] || '#E74C3C'))
                 .addFields(
-                    { name: 'Kẻ thù', value: `❤️ HP: ${monster.hp} | 🗡️ ATK: ${monster.atk}`, inline: true },
+                    { name: 'Kẻ thù', value: `❤️ HP: ${isShiny ? Math.floor(monster.hp * 1.2) : monster.hp} | 🗡️ ATK: ${isShiny ? Math.floor(monster.atk * 1.2) : monster.atk}`, inline: true },
                     { name: 'Của bạn', value: `❤️ HP: ${player.hp}/${player.max_hp}`, inline: true }
                 );
 
@@ -114,7 +134,7 @@ module.exports = {
             const row = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
-                        .setCustomId(`battle_${monster.id}_${monster.hp}`)
+                        .setCustomId(`battle_${monster.id}_${isShiny ? Math.floor(monster.hp * 1.2) : monster.hp}_${isShiny ? 1 : 0}`)
                         .setLabel('Tấn Công')
                         .setStyle(ButtonStyle.Danger)
                         .setEmoji('⚔️'),
@@ -139,18 +159,22 @@ module.exports = {
                 await db.execute('UPDATE players SET hp = $1 WHERE user_id = $2', [newHp, userId]);
                 embed.addFields({ name: 'Chữa lành', value: `Lấy lại ${event.heal} HP. (Hiện tại: ${newHp}/${player.max_hp})` });
             } else if (event.gold) {
-                await db.execute('UPDATE players SET gold = gold + $1 WHERE user_id = $2', [event.gold, userId]);
-                require('../../utils/questLogic').addProgress(userId, 'earn_gold', event.gold);
-                embed.addFields({ name: 'Phần Thưởng', value: `Nhận được 🪙 ${event.gold} Vàng.` });
+                let eventGold = event.gold;
+                if (globalEvent === 'gold_rush') eventGold *= 2;
+                await db.execute('UPDATE players SET gold = gold + $1 WHERE user_id = $2', [eventGold, userId]);
+                require('../../utils/questLogic').addProgress(userId, 'earn_gold', eventGold);
+                embed.addFields({ name: 'Phần Thưởng', value: `Nhận được 🪙 ${eventGold} Vàng.` });
             } else if (event.damage) {
                 const newHp = Math.max(0, player.hp - event.damage);
                 await db.execute('UPDATE players SET hp = $1 WHERE user_id = $2', [newHp, userId]);
                 embed.addFields({ name: 'Thiệt Hại', value: `Bị trừ ${event.damage} HP. (Hiện tại: ${newHp}/${player.max_hp})` });
                 if (newHp === 0) embed.setFooter({ text: '💀 Bạn đã chết tại sự kiện này!' });
             } else if (event.exp) {
-                await db.execute('UPDATE players SET exp = exp + $1 WHERE user_id = $2', [event.exp, userId]);
+                let eventExp = event.exp;
+                if (globalEvent === 'enlightenment') eventExp = Math.floor(eventExp * 1.5);
+                await db.execute('UPDATE players SET exp = exp + $1 WHERE user_id = $2', [eventExp, userId]);
                 require('../../utils/levelLogic').checkLevelUp(userId);
-                embed.addFields({ name: 'Kinh Nghiệm', value: `Nhận được ✨ ${event.exp} Exp.` });
+                embed.addFields({ name: 'Kinh Nghiệm', value: `Nhận được ✨ ${eventExp} Exp.` });
             }
 
             return msg.edit({ embeds: [embed] });

@@ -8,11 +8,6 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('flip')
         .setDescription('Đặt cược vàng vào trò chơi Tung Đồng Xu')
-        .addIntegerOption(opt => 
-            opt.setName('bet')
-               .setDescription('Số vàng muốn đặt cược (Mặc định: 50)')
-               .setRequired(false)
-        )
         .addStringOption(opt =>
             opt.setName('side')
                .setDescription('Chọn mặt đồng xu')
@@ -21,6 +16,11 @@ module.exports = {
                    { name: 'Mặt Ngửa (Heads)', value: 'heads' },
                    { name: 'Mặt Sấp (Tails)', value: 'tails' }
                )
+        )
+        .addIntegerOption(opt => 
+            opt.setName('bet')
+               .setDescription('Số vàng muốn đặt cược (Mặc định: 50)')
+               .setRequired(false)
         ),
     help: {
         usage: '/flip [bet] <side>',

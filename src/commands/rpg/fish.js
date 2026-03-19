@@ -35,7 +35,14 @@ module.exports = {
 
         const now = Math.floor(Date.now() / 1000);
         const cooldown = 20; // 20 seconds
-        const lastExplore = Number(player.last_explore || 0); // Reuse last_explore or add last_fish if needed
+        const lastFish = Number(player.last_fish || 0);
+
+        if (now - lastFish < cooldown) {
+            return interaction.reply({
+                content: `⏳ Nước đang động! Hãy đợi thêm **${cooldown - (now - lastFish)} giây** để câu tiếp.`,
+                flags: require('discord.js').MessageFlags.Ephemeral
+            });
+        }
 
         // Animation
         const embed = new EmbedBuilder()
@@ -71,7 +78,7 @@ module.exports = {
         const fishInfo = materialsData.getMaterial(droppedItem);
 
         // Update DB
-        await db.execute('UPDATE players SET mana = mana - $1 WHERE user_id = $2', [manaCost, userId]);
+        await db.execute('UPDATE players SET mana = mana - $1, last_fish = $2 WHERE user_id = $3', [manaCost, now, userId]);
         await db.execute(
             'INSERT INTO inventory (user_id, item_id, amount) VALUES ($1, $2, $3) ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + $3',
             [userId, droppedItem, amount]
