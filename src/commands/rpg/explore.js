@@ -172,8 +172,7 @@ module.exports = {
             } else if (event.exp) {
                 let eventExp = event.exp;
                 if (globalEvent === 'enlightenment') eventExp = Math.floor(eventExp * 1.5);
-                await db.execute('UPDATE players SET exp = exp + $1 WHERE user_id = $2', [eventExp, userId]);
-                require('../../utils/levelLogic').checkLevelUp(userId);
+                await require('../../utils/rpgLogic').addExp(userId, eventExp);
                 embed.addFields({ name: 'Kinh Nghiệm', value: `Nhận được ✨ ${eventExp} Exp.` });
             }
 
