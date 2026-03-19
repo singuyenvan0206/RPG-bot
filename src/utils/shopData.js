@@ -1,33 +1,102 @@
 const skillsData = require('./skillsData');
 
 const shopItems = {
-    general_store: [
-        // Consumables
-        { code: 901, id: 'medicinal_herb', price: 50, type: 'material' },
+    consumables: [
         { code: 902, id: 'healing_potion', price: 200, type: 'consumable', name: '🧪 Thuốc Hồi Máu', desc: 'Hồi 100 HP ngay lập tức.' },
-        { code: 903, id: 'mana_potion', price: 150, type: 'consumable', name: '🧪 Thuốc Hồi Mana', desc: 'Hồi 50 Mana ngay lập tức.' },
-
-        // Basic Weapons
+        { code: 903, id: 'mana_potion', price: 150, type: 'consumable', name: '🧪 Thuốc Hồi Mana', desc: 'Hồi 50 Mana ngay lập tức.' }
+    ],
+    weapons: [
+        // --- COMMON ---
         { code: 904, id: 'sharp_stick', price: 100, type: 'weapon' },
         { code: 905, id: 'rusted_sword', price: 250, type: 'weapon' },
         { code: 906, id: 'iron_dagger', price: 300, type: 'weapon' },
         { code: 907, id: 'wooden_bow', price: 280, type: 'weapon' },
         { code: 908, id: 'apprentice_wand', price: 320, type: 'weapon' },
+        { code: 918, id: 'stone_hammer', price: 350, type: 'weapon' },
 
-        // Basic Armor
-        { code: 909, id: 'leather_tunic', price: 400, type: 'armor' },
+        // --- RARE ---
+        { code: 919, id: 'warrior_blade', price: 1500, type: 'weapon' },
+        { code: 920, id: 'fire_staff', price: 1800, type: 'weapon' },
+        { code: 921, id: 'hunters_bow', price: 1600, type: 'weapon' },
+        { code: 922, id: 'poison_dagger', price: 1700, type: 'weapon' },
+        { code: 923, id: 'dual_sabers', price: 2000, type: 'weapon' },
+        { code: 935, id: 'steel_axe', price: 1800, type: 'weapon' },
+        { code: 936, id: 'ice_wand', price: 1700, type: 'weapon' },
+        { code: 937, id: 'earth_mace', price: 1900, type: 'weapon' },
+
+        // --- EPIC ---
+        { code: 938, id: 'shadow_blade', price: 7500, type: 'weapon' },
+        { code: 939, id: 'silver_katana', price: 8000, type: 'weapon' },
+        { code: 940, id: 'holy_mace', price: 7200, type: 'weapon' },
+        { code: 941, id: 'wind_shuriken', price: 7800, type: 'weapon' },
+        { code: 942, id: 'inferno_greatsword', price: 8500, type: 'weapon' },
+        { code: 943, id: 'thunder_bolt_bow', price: 8200, type: 'weapon' },
+        { code: 944, id: 'oracle_staff', price: 7900, type: 'weapon' },
+
+        // --- LEGENDARY ---
+        { code: 945, id: 'dragon_slayer', price: 25000, type: 'weapon' },
+        { code: 946, id: 'void_reaper_scythe', price: 28000, type: 'weapon' },
+        { code: 947, id: 'excalibur_fragment', price: 27000, type: 'weapon' },
+        { code: 948, id: 'phoenix_wing_bow', price: 26000, type: 'weapon' },
+        { code: 949, id: 'abyssal_codex', price: 26000, type: 'weapon' },
+
+        // --- MYTHIC ---
+        { code: 961, id: 'god_slayer_blade', price: 100000, type: 'weapon' },
+        { code: 962, id: 'eternity_staff', price: 95000, type: 'weapon' },
+        { code: 963, id: 'starlight_longbow', price: 98000, type: 'weapon' }
+    ],
+    armors: [
+        // --- COMMON ---
         { code: 910, id: 'cloth_armor', price: 150, type: 'armor' },
+        { code: 909, id: 'leather_tunic', price: 400, type: 'armor' },
+        { code: 924, id: 'silk_robe', price: 500, type: 'armor' },
+
+        // --- RARE ---
         { code: 911, id: 'iron_chestplate', price: 1200, type: 'armor' },
+        { code: 925, id: 'elven_cloak', price: 1500, type: 'armor' },
+        { code: 926, id: 'bronze_armor', price: 1400, type: 'armor' },
+        { code: 934, id: 'fire_shield_plate', price: 2500, type: 'armor' },
 
-        // Accessories
-        { code: 912, id: 'wolf_tooth', price: 500, type: 'accessory' },
+        // --- EPIC ---
+        { code: 964, id: 'void_mantle', price: 7000, type: 'armor' },
+        { code: 965, id: 'heavy_plate', price: 7500, type: 'armor' },
+        { code: 966, id: 'crystal_armor', price: 8000, type: 'armor' },
+        { code: 967, id: 'thunder_cloak', price: 7200, type: 'armor' },
+
+        // --- LEGENDARY ---
+        { code: 968, id: 'dragon_scale_armor', price: 28000, type: 'armor' },
+        { code: 969, id: 'valkyrie_mail', price: 25000, type: 'armor' },
+
+        // --- MYTHIC ---
+        { code: 970, id: 'abyssal_juggernaut', price: 100000, type: 'armor' },
+        { code: 971, id: 'celestial_plate', price: 95000, type: 'armor' }
+    ],
+    accessories: [
+        // --- COMMON & RARE ---
         { code: 913, id: 'lucky_charm', price: 300, type: 'accessory' },
+        { code: 912, id: 'wolf_tooth', price: 500, type: 'accessory' },
+        { code: 927, id: 'emerald_earring', price: 2000, type: 'accessory' },
+        { code: 928, id: 'wind_boots', price: 2500, type: 'accessory' },
 
-        // Materials
+        // --- EPIC, LEGENDARY & MYTHIC ---
+        { code: 972, id: 'ruby_ring', price: 8000, type: 'accessory' },
+        { code: 973, id: 'berserker_pendant', price: 7500, type: 'accessory' },
+        { code: 974, id: 'spirit_gem', price: 7800, type: 'accessory' },
+        { code: 975, id: 'ancient_relic', price: 28000, type: 'accessory' },
+        { code: 976, id: 'phoenix_feather', price: 25000, type: 'accessory' },
+        { code: 977, id: 'eye_of_the_void', price: 100000, type: 'accessory' },
+        { code: 978, id: 'crown_of_gods', price: 95000, type: 'accessory' }
+    ],
+    materials: [
+        { code: 901, id: 'medicinal_herb', price: 50, type: 'material' },
         { code: 914, id: 'iron_ore', price: 150, type: 'material' },
         { code: 915, id: 'bronze_scrap', price: 100, type: 'material' },
         { code: 916, id: 'oak_wood', price: 120, type: 'material' },
         { code: 917, id: 'slime_essence', price: 80, type: 'material' },
+        { code: 929, id: 'goblin_tooth', price: 60, type: 'material' },
+        { code: 931, id: 'carp', price: 15, type: 'material' },
+        { code: 932, id: 'salmon', price: 50, type: 'material' },
+        { code: 933, id: 'wolf_pelt', price: 100, type: 'material' }
     ],
 
     black_market: [

@@ -45,23 +45,54 @@ module.exports = {
                 .setColor('#f1c40f')
                 .setFooter({ text: 'Dùng /shop buy <ID> để mua | Số ID nằm trong dấu [...]' });
 
-            // General Store
-            let generalList = '';
-            shopData.general_store.forEach(item => {
-                let name = item.name;
-                const shopCode = item.code || item.id;
-                if (item.type === 'weapon' || item.type === 'armor' || item.type === 'accessory') {
-                    const info = itemsData.getItem(item.id);
-                    name = info ? info.name : item.id;
-                } else if (item.type === 'material') {
-                    const info = materialsData.getMaterial(item.id);
-                    name = info ? info.name : item.id;
-                } else {
-                    name = item.name || item.id;
+            const buildList = (itemsArray) => {
+                let list = '';
+                itemsArray.forEach(item => {
+                    let name = item.name;
+                    const shopCode = item.code || item.id;
+                    if (item.type === 'weapon' || item.type === 'armor' || item.type === 'accessory') {
+                        const info = itemsData.getItem(item.id);
+                        name = info ? info.name : item.id;
+                    } else if (item.type === 'material') {
+                        const info = materialsData.getMaterial(item.id);
+                        name = info ? info.name : item.id;
+                    } else {
+                        name = item.name || item.id;
+                    }
+                    list += `\`[${shopCode}]\` **${name}**: 🪙 **${item.price}**\n`;
+                });
+                return list || 'Trống';
+            };
+
+            const chunkArray = (arr, size) => {
+                const chunks = [];
+                for (let i = 0; i < arr.length; i += size) {
+                    chunks.push(arr.slice(i, i + size));
                 }
-                generalList += `\`[${shopCode}]\` **${name}**: 🪙 **${item.price}**\n`;
+                return chunks;
+            };
+
+            const addCategoryFields = (title, items) => {
+                const chunks = chunkArray(items, 15);
+                chunks.forEach((chunk, index) => {
+                    const fieldTitle = index === 0 ? title : `↳ ${title} (Tiếp)`;
+                    embed.addFields({ name: fieldTitle, value: buildList(chunk), inline: true });
+                });
+            };
+
+            const classWeapons = shopData.weapons.filter(item => {
+                const info = itemsData.getItem(item.id);
+                if (!info) return true;
+                if (!info.requiredClass || !Array.isArray(info.requiredClass)) return true;
+                return info.requiredClass.includes(player.class);
             });
-            embed.addFields({ name: '🛒 Cửa Hàng Phổ Thông', value: generalList || 'Trống' });
+
+            addCategoryFields(`⚔️ Vũ Khí (${player.class})`, classWeapons);
+            addCategoryFields('🛡️ Giáp Trụ', shopData.armors);
+            addCategoryFields('💍 Trang Sức', shopData.accessories);
+            addCategoryFields('🧪 Tiêu Hao', shopData.consumables);
+            addCategoryFields('🛠️ Nguyên Liệu', shopData.materials);
+            embed.addFields({ name: '\u200B', value: '\u200B', inline: true }); // spacing format align
 
             // Skill Shop (Class Specific)
             const classSkills = shopData.skill_shops[player.class];
@@ -92,7 +123,15 @@ module.exports = {
             const amount = interaction.options.getInteger('amount') || 1;
 
             const classSkills = shopData.skill_shops[player.class] || [];
-            const allShopItems = [...shopData.general_store, ...shopData.black_market, ...classSkills];
+            const allShopItems = [
+                ...shopData.consumables,
+                ...shopData.weapons,
+                ...shopData.armors,
+                ...shopData.accessories,
+                ...shopData.materials,
+                ...shopData.black_market,
+                ...classSkills
+            ];
 
             // Search by id, code, or item code from itemsData/materialsData
             let targetShopItem = allShopItems.find(i =>
