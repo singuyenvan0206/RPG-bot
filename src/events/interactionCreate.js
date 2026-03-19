@@ -77,27 +77,35 @@ async function handleButton(interaction) {
 
     if (customId.startsWith('battle_') || customId.startsWith('use_hp_') || customId.startsWith('use_mana_')) {
         let action = 'attack';
+        let prefix = 'battle_';
+        
+        if (customId.startsWith('use_hp_')) {
+            action = 'heal';
+            prefix = 'use_hp_';
+        } else if (customId.startsWith('use_mana_')) {
+            action = 'mana';
+            prefix = 'use_mana_';
+        }
+
         let monsterId = '';
         let mHpStr = '';
         let isShiny = 0;
         
-        let match;
-        if (customId.startsWith('battle_')) {
-            match = customId.match(/^battle_(.+)_(\d+)(?:_(\d+))?$/);
-        } else if (customId.startsWith('use_hp_')) {
-            action = 'heal';
-            match = customId.match(/^use_hp_(.+)_(\d+)(?:_(\d+))?$/);
-        } else if (customId.startsWith('use_mana_')) {
-            action = 'mana';
-            match = customId.match(/^use_mana_(.+)_(\d+)(?:_(\d+))?$/);
-        }
+        let remainder = customId.substring(prefix.length);
+        let match = remainder.match(/^(.+?)_(\d+)(?:_(\d+))?$/);
 
         if (match) {
             monsterId = match[1];
             mHpStr = match[2];
             if (match[3]) isShiny = parseInt(match[3], 10);
         } else {
-            monsterId = customId.split('_').slice(1, -2).join('_'); // rough fallback
+            // Cứu cánh cuối cùng nếu regex vẫn tạch
+            const parts = remainder.split('_');
+            if (parts.length >= 2) {
+                isShiny = parseInt(parts.pop(), 10) || 0;
+                mHpStr = parts.pop();
+                monsterId = parts.join('_');
+            }
         }
         
         const player = await db.getPlayer(userId);
