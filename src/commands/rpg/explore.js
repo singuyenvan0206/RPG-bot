@@ -20,7 +20,7 @@ module.exports = {
         
         const player = await db.getPlayer(userId);
         if (!player) {
-            return interaction.reply({ content: '❌ Bạn chưa chọn Class! Gõ `/start` trước.', flags: require('discord.js').MessageFlags.Ephemeral });
+            return interaction.reply({ content: '❌ Bạn chưa có nhân vật! Gõ `/start` để bắt đầu.', flags: require('discord.js').MessageFlags.Ephemeral });
         }
 
         if (player.hp <= 0 || (player.dead_until && player.dead_until > 0)) {

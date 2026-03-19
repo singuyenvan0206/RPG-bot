@@ -99,16 +99,19 @@ async function recalculateStats(userId) {
     
     // Base stats from level and class
     const level = player.level || 1;
-    let baseAtk = 10 + (level * 2);
-    let baseDef = 10 + (level * 2);
-    let baseAgi = 10 + level;
+    // Starting stats: Novice (5 ATK, 5 DEF), Others (handled by bonuses)
+    let baseAtk = 5 + ((level - 1) * 2);
+    let baseDef = 5 + ((level - 1) * 2);
+    let baseAgi = 5 + (level - 1);
     let baseCrit = 0.05;
 
     // Apply class modifiers
-    if (player.class === 'Warrior') { baseAtk += 5; baseDef += 5; }
-    if (player.class === 'Ranger') { baseAtk += 2; baseAgi += 5; }
-    if (player.class === 'Mage') { baseAtk += 10; baseDef -= 5; }
-    if (player.class === 'Assassin') { baseAtk += 8; baseCrit += 0.05; }
+    // Apply class modifiers (starting at Lv 10)
+    if (player.class === 'Warrior') { baseAtk += 15; baseDef += 15; } // Includes Novice(5) + Bonus(10)
+    if (player.class === 'Ranger') { baseAtk += 12; baseAgi += 8; }
+    if (player.class === 'Mage') { baseAtk += 20; baseDef += 0; }
+    if (player.class === 'Assassin') { baseAtk += 18; baseCrit += 0.05; }
+    if (player.class === 'Novice') { /* Handled by base stats above */ }
 
     // Add equipment bonuses
     if (equip) {

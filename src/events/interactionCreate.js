@@ -283,15 +283,34 @@ async function handleButton(interaction) {
             // Item Drop Logic
             let dropRateGear = 0.25 + (regionBuff.drop_bonus || 0);
             if (globalEvent === 'divine_blessing') dropRateGear += 0.15;
-            if (Math.random() < dropRateGear) { // Default 25% drop rate for gear
-                const itemsList = Object.keys(require('../utils/itemsData').getAllItems());
-                const droppedItem = itemsList[Math.floor(Math.random() * itemsList.length)];
-                await db.execute(
-                    'INSERT INTO inventory (user_id, item_id) VALUES ($1, $2) ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + 1', 
-                    [userId, droppedItem]
-                );
-                const itemInfo = require('../utils/itemsData').getItem(droppedItem);
-                log += `\n🎁 **Rơi Đồ!** Bạn nhặt được 1x **${itemInfo.name}** [${itemInfo.rarity}].`;
+            if (Math.random() < dropRateGear) {
+                const itemsData = require('../utils/itemsData');
+                const allItems = itemsData.getAllItems();
+                
+                // Define Rarity Tier based on Player Level
+                let maxTier = 1; // Common
+                if (player.level >= 100) maxTier = 5; // Mythic
+                else if (player.level >= 60) maxTier = 4; // Legendary
+                else if (player.level >= 30) maxTier = 3; // Epic
+                else if (player.level >= 15) maxTier = 2; // Rare
+
+                const tierMap = { 'Common': 1, 'Rare': 2, 'Epic': 3, 'Legendary': 4, 'Mythic': 5 };
+                
+                // Filter items by rarity tier
+                const possibleDrops = Object.keys(allItems).filter(itemId => {
+                    const item = allItems[itemId];
+                    return tierMap[item.rarity] <= maxTier;
+                });
+
+                if (possibleDrops.length > 0) {
+                    const droppedItem = possibleDrops[Math.floor(Math.random() * possibleDrops.length)];
+                    await db.execute(
+                        'INSERT INTO inventory (user_id, item_id) VALUES ($1, $2) ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + 1', 
+                        [userId, droppedItem]
+                    );
+                    const itemInfo = itemsData.getItem(droppedItem);
+                    log += `\n🎁 **Rơi Đồ!** Bạn nhặt được 1x **${itemInfo.name}** [${itemInfo.rarity}].`;
+                }
             }
 
             // Material Drop Logic

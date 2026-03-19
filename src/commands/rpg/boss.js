@@ -19,7 +19,7 @@ module.exports = {
         const userId = interaction.user.id;
         
         const player = await db.getPlayer(userId);
-        if (!player) return interaction.reply({ content: '❌ Bạn chưa chọn Class! Gõ `/start`.', flags: require('discord.js').MessageFlags.Ephemeral });
+        if (!player) return interaction.reply({ content: '❌ Bạn chưa có nhân vật! Gõ `/start` để bắt đầu.', flags: require('discord.js').MessageFlags.Ephemeral });
 
         // Respawn check
         const nowMs = Date.now();
@@ -115,8 +115,9 @@ module.exports = {
                 const pExp = Math.floor(bData.exp * rankMult);
 
                 // Need a direct db call since we shouldn't broadcast to offline players right here, just update their DB
-                await db.execute('UPDATE players SET gold = gold + $1, exp = exp + $2 WHERE user_id = $3', [pGold, pExp, p.userId]);
-                require('../../utils/levelLogic').checkLevelUp(p.userId); // Async check level up
+                // Use addExp from rpgLogic to handle DB update and leveling
+                await db.execute('UPDATE players SET gold = gold + $1 WHERE user_id = $2', [pGold, p.userId]);
+                await require('../../utils/rpgLogic').addExp(p.userId, pExp);
                 require('../../utils/questLogic').addProgress(p.userId, 'kill_boss', 1);
 
                 // Top 3 gets items/eggs chance

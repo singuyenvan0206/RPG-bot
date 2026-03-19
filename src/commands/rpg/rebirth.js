@@ -35,8 +35,16 @@ module.exports = {
         const newRebirths = currentRebirths + 1;
 
         const multiplier = 1 + (newRebirths * 0.1);
-        const newMaxHp = Math.floor(100 * multiplier);
-        const newMaxMana = Math.floor(50 * multiplier);
+        
+        // Base stats by class
+        let classBaseHp = 80, classBaseMana = 30;
+        if (player.class === 'Warrior') { classBaseHp = 150; classBaseMana = 30; }
+        else if (player.class === 'Ranger') { classBaseHp = 100; classBaseMana = 40; }
+        else if (player.class === 'Mage') { classBaseHp = 80; classBaseMana = 100; }
+        else if (player.class === 'Assassin') { classBaseHp = 90; classBaseMana = 40; }
+
+        const newMaxHp = Math.floor(classBaseHp * multiplier);
+        const newMaxMana = Math.floor(classBaseMana * multiplier);
 
         // Reset level, exp, increase rebirths, and properly reset/scale HP & Mana
         await db.execute(

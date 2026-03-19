@@ -60,7 +60,8 @@ module.exports = {
         let skillsText = '';
         if (learnedSkills && learnedSkills.length > 0) {
             learnedSkills.forEach(ls => {
-                const data = skillsData[player.class]?.find(s => s.id === ls.skill_id);
+                const classSkills = skillsData[player.class];
+                const data = classSkills ? classSkills.find(s => s.id === ls.skill_id) : null;
                 if (data) skillsText += `• **${data.name}** [Lv.${ls.level}]\n`;
             });
         } else {
@@ -68,7 +69,7 @@ module.exports = {
         }
 
         const regionName = require('../../utils/rpgData')[player.current_region]?.name || player.current_region;
-        const expNeeded = player.level * 100;
+        const expNeeded = 150 + (player.level * 100);
 
         const embed = new EmbedBuilder()
             .setTitle(`👤 Hồ Sơ: ${targetUser.username}`)

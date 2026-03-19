@@ -10,12 +10,12 @@ async function addExp(userId, expGained) {
     let levelsGained = 0;
 
     // Level up loop
-    let expNeed = currentLevel * 100;
+    let expNeed = 150 + (currentLevel * 100);
     while (newExp >= expNeed) {
         newExp -= expNeed;
         currentLevel++;
         levelsGained++;
-        expNeed = currentLevel * 100;
+        expNeed = 150 + (currentLevel * 100);
         leveledUp = true;
     }
 
