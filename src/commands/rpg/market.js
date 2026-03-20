@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const db = require('../../database');
+const { parseAmount } = require('../../utils/numberHelper');
 const itemsData = require('../../utils/itemsData');
 
 module.exports = {
@@ -16,7 +17,7 @@ module.exports = {
             sub.setName('sell')
                .setDescription('Đăng bán 1 vật phẩm')
                .addStringOption(opt => opt.setName('item_id').setDescription('Mã vật phẩm').setRequired(true))
-               .addIntegerOption(opt => opt.setName('price').setDescription('Giá bán (Vàng)').setRequired(true).setMinValue(1))
+               .addStringOption(opt => opt.setName('price').setDescription('Giá bán (Vàng, hỗ trợ k/m/b)').setRequired(true))
         )
         .addSubcommand(sub => 
             sub.setName('buy')
@@ -62,7 +63,12 @@ module.exports = {
 
         if (sub === 'sell') {
             const itemId = interaction.options.getString('item_id');
-            const price = interaction.options.getInteger('price');
+            const priceStr = interaction.options.getString('price');
+            const price = parseAmount(priceStr);
+
+            if (isNaN(price) || price <= 0) {
+                return interaction.reply({ content: '❌ Giá bán không hợp lệ!', flags: require('discord.js').MessageFlags.Ephemeral });
+            }
 
             // Verify ownership
             const inventoryRow = await db.queryOne('SELECT * FROM inventory WHERE user_id = $1 AND item_id = $2 AND amount > 0', [userId, itemId]);

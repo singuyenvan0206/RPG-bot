@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const db = require('../../database');
+const { parseAmount } = require('../../utils/numberHelper');
 const gifData = require('../../utils/gifData');
 
 module.exports = {
@@ -17,9 +18,9 @@ module.exports = {
                    { name: 'Mặt Sấp (Tails)', value: 'tails' }
                )
         )
-        .addIntegerOption(opt => 
+        .addStringOption(opt => 
             opt.setName('bet')
-               .setDescription('Số vàng muốn đặt cược (Mặc định: 50)')
+               .setDescription('Số vàng muốn đặt cược (Ví dụ: 100, 10k, 1m). Mặc định: 50')
                .setRequired(false)
         ),
     help: {
@@ -30,7 +31,8 @@ module.exports = {
     async execute(interaction) {
         const userId = interaction.user.id;
         const MIN_BET = 50;
-        let bet = interaction.options.getInteger('bet');
+        const betStr = interaction.options.getString('bet');
+        let bet = betStr ? parseAmount(betStr) : null;
         const side = interaction.options.getString('side');
 
         // Auto-default to minbet if not provided

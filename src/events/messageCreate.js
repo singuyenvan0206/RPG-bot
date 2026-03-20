@@ -1,5 +1,6 @@
 const { Events } = require('discord.js');
 const { getPrefix } = require('../utils/serverConfig');
+const { parseAmount } = require('../utils/numberHelper');
 
 module.exports = {
     name: Events.MessageCreate,
@@ -69,7 +70,7 @@ module.exports = {
                 getInteger: (name) => {
                     const baseName = command.data.name;
                     const parseArgs = (index) => {
-                        const val = parseInt(args[index]);
+                        const val = parseAmount(args[index]);
                         return isNaN(val) ? null : val;
                     };
                     if (baseName === 'pet' && name === 'pet_id') return parseArgs(1);

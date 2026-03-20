@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const db = require('../../database');
+const { parseAmount } = require('../../utils/numberHelper');
 
 module.exports = {
     category: 'Owner',
@@ -7,7 +8,7 @@ module.exports = {
         .setName('givegold')
         .setDescription('[Owner Only] Cộng hoặc trừ vàng của người chơi')
         .addUserOption(opt => opt.setName('user').setDescription('Người chơi').setRequired(true))
-        .addIntegerOption(opt => opt.setName('amount').setDescription('Số vàng (có thể âm để trừ)').setRequired(true)),
+        .addStringOption(opt => opt.setName('amount').setDescription('Số vàng (có thể thêm k/m/b, ví dụ: 10k)').setRequired(true)),
 
     async execute(interaction) {
         if (interaction.user.id !== process.env.OWNER_ID) {
@@ -15,7 +16,8 @@ module.exports = {
         }
 
         const targetUser = interaction.options.getUser('user');
-        const amount = interaction.options.getInteger('amount');
+        const amountStr = interaction.options.getString('amount');
+        const amount = parseAmount(amountStr);
         const userId = targetUser.id;
 
         const player = await db.getPlayer(userId);
