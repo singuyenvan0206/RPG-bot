@@ -1,12 +1,12 @@
 const db = require('../database');
 
-async function addExp(userId, expGained) {
-    return await db.withTransaction(async (client) => {
-        const player = await client.query('SELECT * FROM players WHERE user_id = $1', [userId]).then(r => r.rows[0]);
+async function addExp(userId, expGained, client = null) {
+    const logic = async (txClient) => {
+        const player = await txClient.query('SELECT * FROM players WHERE user_id = $1', [userId]).then(r => r.rows[0]);
         if (!player) return null;
 
         let expToMultiply = expGained;
-        const globalExpState = await client.query('SELECT value FROM world_states WHERE key = \'global_exp_mult\'').then(r => r.rows[0]);
+        const globalExpState = await txClient.query('SELECT value FROM world_states WHERE key = \'global_exp_mult\'').then(r => r.rows[0]);
         const mult = globalExpState ? parseFloat(globalExpState.value) : 1.0;
         expToMultiply = Math.floor(expToMultiply * mult);
 
@@ -29,34 +29,38 @@ async function addExp(userId, expGained) {
             const manaGain = levelsGained * 10;
             const statGain = levelsGained * 2;
             
-            // Update core stats and fully refill HP/Mana on level up
-            await client.query(
+            await txClient.query(
                 'UPDATE players SET level = $1, exp = $2, max_hp = max_hp + $3, hp = max_hp + $3, max_mana = max_mana + $4, mana = max_mana + $4 WHERE user_id = $5', 
                 [currentLevel, newExp, hpGain, manaGain, userId]
             );
             
-            await client.query(
+            await txClient.query(
                 'UPDATE player_stats SET attack = attack + $1, defense = defense + $1 WHERE user_id = $2', 
                 [statGain, userId]
             );
         } else {
-            await client.query('UPDATE players SET exp = $1 WHERE user_id = $2', [newExp, userId]);
+            await txClient.query('UPDATE players SET exp = $1 WHERE user_id = $2', [newExp, userId]);
         }
 
         return { leveledUp, newLevel: currentLevel, levelsGained };
-    });
+    };
+
+    if (client) return await logic(client);
+    return await db.withTransaction(logic);
 }
 
-async function addGuildExp(guildId, amount) {
+async function addGuildExp(guildId, amount, client = null) {
     if (!guildId) return null;
-    const guild = await db.queryOne('SELECT * FROM guilds WHERE guild_id = $1', [guildId]);
+    const dbObj = client || db;
+    
+    // Support both client.query and db.queryOne
+    const guild = await (client ? client.query('SELECT * FROM rpg_guilds WHERE guild_id = $1', [guildId]).then(r => r.rows[0]) : db.queryOne('SELECT * FROM rpg_guilds WHERE guild_id = $1', [guildId]));
     if (!guild) return null;
 
     let newExp = Number(guild.exp) + amount;
     let currentLevel = guild.level;
     let leveledUp = false;
 
-    // Cần level * 5000 EXP để thăng cấp Bang
     let expNeed = currentLevel * 5000;
     while (newExp >= expNeed) {
         newExp -= expNeed;
@@ -65,7 +69,11 @@ async function addGuildExp(guildId, amount) {
         leveledUp = true;
     }
 
-    await db.execute('UPDATE guilds SET exp = $1, level = $2 WHERE guild_id = $3', [newExp, currentLevel, guildId]);
+    const query = 'UPDATE rpg_guilds SET exp = $1, level = $2 WHERE guild_id = $3';
+    const params = [newExp, currentLevel, guildId];
+    
+    if (client) await client.query(query, params);
+    else await db.execute(query, params);
     
     return { leveledUp, newLevel: currentLevel };
 }

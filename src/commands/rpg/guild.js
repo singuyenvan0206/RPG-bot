@@ -23,7 +23,7 @@ module.exports = {
 
             try {
                 const guildId = `g_${Date.now()}`;
-                await db.execute('INSERT INTO guilds (guild_id, name, owner_id) VALUES ($1, $2, $3)', [guildId, name, userId]);
+                await db.execute('INSERT INTO rpg_guilds (guild_id, name, owner_id) VALUES ($1, $2, $3)', [guildId, name, userId]);
                 await db.execute('UPDATE players SET gold = gold - 10000, guild_id = $1 WHERE user_id = $2', [guildId, userId]);
                 return interaction.reply({ content: `✅ Chúc mừng! Bạn đã thành lập Bang Hội **${name}**!` });
             } catch (e) {
@@ -33,7 +33,7 @@ module.exports = {
 
         if (sub === 'join') {
             const name = interaction.options.getString('name');
-            const guild = await db.queryOne('SELECT * FROM guilds WHERE name = $1', [name]);
+            const guild = await db.queryOne('SELECT * FROM rpg_guilds WHERE name = $1', [name]);
             if (!guild) return interaction.reply({ content: '❌ Không tìm thấy bang hội này.', flags: 64 });
 
             const player = await db.getPlayer(userId);
@@ -47,11 +47,11 @@ module.exports = {
             const name = interaction.options.getString('name');
             let guild;
             if (name) {
-                guild = await db.queryOne('SELECT * FROM guilds WHERE name = $1', [name]);
+                guild = await db.queryOne('SELECT * FROM rpg_guilds WHERE name = $1', [name]);
             } else {
                 const player = await db.getPlayer(userId);
                 if (!player.guild_id) return interaction.reply({ content: 'Bạn chưa tham gia bang hội nào. Hãy dùng `/guild join` hoặc `/guild create`.', flags: 64 });
-                guild = await db.queryOne('SELECT * FROM guilds WHERE guild_id = $1', [player.guild_id]);
+                guild = await db.queryOne('SELECT * FROM rpg_guilds WHERE guild_id = $1', [player.guild_id]);
             }
 
             if (!guild) return interaction.reply({ content: '❌ Không tìm thấy bang hội.', flags: 64 });
@@ -74,7 +74,7 @@ module.exports = {
         }
 
         if (sub === 'territory') {
-            const territories = await db.query('SELECT t.region_id, g.name as guild_name FROM guild_territories t LEFT JOIN guilds g ON t.guild_id = g.guild_id');
+            const territories = await db.query('SELECT t.region_id, g.name as guild_name FROM guild_territories t LEFT JOIN rpg_guilds g ON t.guild_id = g.guild_id');
             const rpgData = require('../../utils/rpgData');
             
             let list = '';

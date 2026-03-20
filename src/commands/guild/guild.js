@@ -34,7 +34,7 @@ module.exports = {
         if (sub === 'info') {
             if (!player.guild_id) return interaction.reply({ content: '❌ Bạn hiện không thuộc bang hội nào.', flags: require('discord.js').MessageFlags.Ephemeral });
 
-            const guild = await db.queryOne('SELECT * FROM guilds WHERE guild_id = $1', [player.guild_id]);
+            const guild = await db.queryOne('SELECT * FROM rpg_guilds WHERE guild_id = $1', [player.guild_id]);
             const members = await db.queryAll('SELECT user_id, level FROM players WHERE guild_id = $1', [player.guild_id]);
 
             const embed = new EmbedBuilder()
@@ -60,7 +60,7 @@ module.exports = {
 
             const name = interaction.options.getString('name');
             // Check name taken
-            const check = await db.queryOne('SELECT * FROM guilds WHERE name = $1', [name]);
+            const check = await db.queryOne('SELECT * FROM rpg_guilds WHERE name = $1', [name]);
             if (check) return interaction.reply({ content: '❌ Tên bang hội này đã tồn tại!', flags: require('discord.js').MessageFlags.Ephemeral });
 
             // Generate UUID
@@ -69,7 +69,7 @@ module.exports = {
 
             await db.execute('UPDATE players SET gold = gold - $1 WHERE user_id = $2', [cost, userId]);
             await db.execute(
-                'INSERT INTO guilds (guild_id, name, owner_id) VALUES ($1, $2, $3)',
+                'INSERT INTO rpg_guilds (guild_id, name, owner_id) VALUES ($1, $2, $3)',
                 [gId, name, userId]
             );
             await db.execute('UPDATE players SET guild_id = $1 WHERE user_id = $2', [gId, userId]);
@@ -81,7 +81,7 @@ module.exports = {
             if (player.guild_id) return interaction.reply({ content: '❌ Bạn đã ở trong một bang hội! Hãy rời đi trước.', flags: require('discord.js').MessageFlags.Ephemeral });
             
             const gId = interaction.options.getString('guild_id');
-            const guild = await db.queryOne('SELECT * FROM guilds WHERE guild_id = $1', [gId]);
+            const guild = await db.queryOne('SELECT * FROM rpg_guilds WHERE guild_id = $1', [gId]);
             
             if (!guild) return interaction.reply({ content: '❌ ID Bang hội không hợp lệ!', flags: require('discord.js').MessageFlags.Ephemeral });
 
@@ -92,7 +92,7 @@ module.exports = {
         if (sub === 'leave') {
             if (!player.guild_id) return interaction.reply({ content: '❌ Bạn không ở trong bang nào.', flags: require('discord.js').MessageFlags.Ephemeral });
             
-            const guild = await db.queryOne('SELECT * FROM guilds WHERE guild_id = $1', [player.guild_id]);
+            const guild = await db.queryOne('SELECT * FROM rpg_guilds WHERE guild_id = $1', [player.guild_id]);
             
             if (guild.owner_id === userId) {
                 return interaction.reply({ content: '⚠️ Bạn là Bang Chủ! Bạn không thể rời bang. Hãy nhường chức hoặc giải tán bang (Tính năng đang phát triển).', flags: require('discord.js').MessageFlags.Ephemeral });

@@ -60,7 +60,7 @@ async function start() {
         await db.initSchema();
         client.login(process.env.DISCORD_TOKEN);
         
-        client.once('ready', () => {
+        client.once('clientReady', () => {
             console.log(`[Bot] Logged in as ${client.user.tag}`);
             const { startScheduler } = require('./utils/scheduler');
             startScheduler(client);

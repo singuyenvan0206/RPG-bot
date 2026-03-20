@@ -63,9 +63,9 @@ async function initSchema() {
         )
     `);
 
-    // Guilds
+    // RPG Guilds
     await pool.query(`
-        CREATE TABLE IF NOT EXISTS guilds (
+        CREATE TABLE IF NOT EXISTS rpg_guilds (
             guild_id TEXT PRIMARY KEY,
             name TEXT NOT NULL UNIQUE,
             owner_id TEXT NOT NULL REFERENCES players(user_id),
@@ -76,9 +76,9 @@ async function initSchema() {
         )
     `);
 
-    // Market / Auction House
+    // RPG Market / Auction House
     await pool.query(`
-        CREATE TABLE IF NOT EXISTS market (
+        CREATE TABLE IF NOT EXISTS rpg_market (
             listing_id SERIAL PRIMARY KEY,
             seller_id TEXT NOT NULL REFERENCES players(user_id) ON DELETE CASCADE,
             item_id TEXT NOT NULL,
@@ -92,10 +92,10 @@ async function initSchema() {
         )
     `);
 
-    // Market Bids tracking
+    // RPG Market Bids tracking
     await pool.query(`
-        CREATE TABLE IF NOT EXISTS market_bids (
-            listing_id INTEGER NOT NULL REFERENCES market(listing_id) ON DELETE CASCADE,
+        CREATE TABLE IF NOT EXISTS rpg_market_bids (
+            listing_id INTEGER NOT NULL REFERENCES rpg_market(listing_id) ON DELETE CASCADE,
             bidder_id TEXT NOT NULL REFERENCES players(user_id) ON DELETE CASCADE,
             bid_amount BIGINT NOT NULL,
             created_at BIGINT NOT NULL DEFAULT (extract(epoch from now())),
@@ -215,7 +215,7 @@ async function initSchema() {
     await pool.query(`
         CREATE TABLE IF NOT EXISTS guild_territories (
             region_id TEXT PRIMARY KEY,
-            guild_id TEXT REFERENCES guilds(guild_id) ON DELETE SET NULL,
+            guild_id TEXT REFERENCES rpg_guilds(guild_id) ON DELETE SET NULL,
             captured_at BIGINT NOT NULL DEFAULT (extract(epoch from now()))
         );
     `);

@@ -8,7 +8,8 @@ module.exports = {
         drops: ['warrior_blade', 'heavy_plate', 'wooden_bow'],
         gold: 2000,
         exp: 4000,
-        spawn_req: 25
+        spawn_req: 25,
+        image: 'forest_treant.png'
     },
     burning_desert: {
         code: 2002,
@@ -19,7 +20,8 @@ module.exports = {
         drops: ['fire_staff', 'ruby_ring', 'steel_axe'],
         gold: 3500,
         exp: 6000,
-        spawn_req: 25
+        spawn_req: 25,
+        image: 'desert_scorp_d.png'
     },
     frozen_mountains: {
         code: 2003,
@@ -30,7 +32,8 @@ module.exports = {
         drops: ['iron_chestplate', 'wolf_tooth', 'silver_katana'],
         gold: 6000,
         exp: 10000,
-        spawn_req: 30
+        spawn_req: 30,
+        image: 'ice_dragon_f.png'
     },
     abyss_ocean: {
         code: 2004,
@@ -41,7 +44,8 @@ module.exports = {
         drops: ['shadow_blade', 'void_mantle', 'wind_shuriken'],
         gold: 10000,
         exp: 18000,
-        spawn_req: 35
+        spawn_req: 35,
+        image: 'kraken_tentacle_o.png'
     },
     ancient_ruins: {
         code: 2005,
@@ -52,7 +56,8 @@ module.exports = {
         drops: ['holy_mace', 'ancient_relic'],
         gold: 20000,
         exp: 30000,
-        spawn_req: 40
+        spawn_req: 40,
+        image: 'ruin_guardian_a.png'
     },
     the_void: {
         code: 2006,
@@ -63,7 +68,8 @@ module.exports = {
         drops: ['dragon_slayer', 'dragon_scale_armor', 'ancient_relic'],
         gold: 80000,
         exp: 150000,
-        spawn_req: 50
+        spawn_req: 50,
+        image: 'antigravity_core_v.png'
     }
 };
 

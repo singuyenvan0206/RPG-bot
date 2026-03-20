@@ -109,23 +109,61 @@ function calculateCrit(baseAtk, def, critRate, critDamage) {
     return { damage, isCrit };
 }
 
-/**
- * Processes status effects on an actor (player or monster).
- * @param {object} actor { hp, max_hp, statusEffects: [{type, duration}] }
- * @returns {object} { damageTaken, log, skipTurn }
- */
-function processStatusEffects(actor) {
+function processStatusEffects(arg1, arg2, arg3, arg4) {
+    // Style 1: CombatService.js (pHp, mHp, pEffects, mEffects)
+    if (typeof arg1 === 'number' && typeof arg2 === 'number') {
+        let pHp = arg1;
+        let mHp = arg2;
+        let pEffects = arg3 || [];
+        let mEffects = arg4 || [];
+        let log = '';
+
+        pEffects = pEffects.filter(eff => {
+            if (eff.duration <= 0) return false;
+            if (eff.type === 'BURN') {
+                const dmg = Math.floor(pHp * 0.05) || 5;
+                pHp = Math.max(0, pHp - dmg);
+                log += `🔥 Bạn bị thiêu đốt gây **${dmg}** sát thương.\n`;
+            } else if (eff.type === 'POISON') {
+                const dmg = eff.damage || 20;
+                pHp = Math.max(0, pHp - dmg);
+                log += `🐍 Bạn bị trúng độc gây **${dmg}** sát thương.\n`;
+            }
+            eff.duration--;
+            return eff.duration > 0;
+        });
+
+        mEffects = mEffects.filter(eff => {
+            if (eff.duration <= 0) return false;
+            if (eff.type === 'BURN') {
+                const dmg = Math.floor(mHp * 0.05) || 5;
+                mHp = Math.max(0, mHp - dmg);
+                log += `🔥 Quái vật bị thiêu đốt gây **${dmg}** sát thương.\n`;
+            } else if (eff.type === 'POISON') {
+                const dmg = eff.damage || 20;
+                mHp = Math.max(0, mHp - dmg);
+                log += `🐍 Quái vật bị trúng độc gây **${dmg}** sát thương.\n`;
+            }
+            eff.duration--;
+            return eff.duration > 0;
+        });
+
+        return { playerHP: pHp, monsterHP: mHp, log, effects: mEffects, pEffects };
+    }
+
+    // Style 2: PvpService.js / Single Actor ({ hp, max_hp, statusEffects })
+    const actor = arg1;
     let damageTaken = 0;
     let log = '';
     let skipTurn = false;
 
-    if (!actor.statusEffects) return { damageTaken, log, skipTurn };
+    if (!actor || !actor.statusEffects) return { damageTaken, log, skipTurn };
 
     actor.statusEffects = actor.statusEffects.filter(effect => {
         if (effect.duration <= 0) return false;
 
         if (effect.type === 'BURN') {
-            const burnDmg = Math.floor(actor.max_hp * 0.05); // 5% max HP
+            const burnDmg = Math.floor(actor.hp * 0.05) || 5;
             damageTaken += burnDmg;
             log += `🔥 **${statusEffects.BURN.name}**: Gây **${burnDmg}** sát thương.\n`;
         } else if (effect.type === 'POISON') {
@@ -134,7 +172,7 @@ function processStatusEffects(actor) {
             log += `🐍 **${statusEffects.POISON.name}**: Gây **${poisonDmg}** sát thương.\n`;
         } else if (effect.type === 'STUN') {
             skipTurn = true;
-            log += `😵 **${statusEffects.STUN.name}**: Bạn bị choáng và mất lượt!\n`;
+            log += `😵 **${statusEffects.STUN.name}**: Bị choáng và mất lượt!\n`;
         }
 
         effect.duration--;

@@ -5,7 +5,7 @@ const sessionManager = require('./sessionManager');
 
 async function processExpiredAuctions(client) {
     const now = Math.floor(Date.now() / 1000);
-    const expired = await db.queryAll('SELECT * FROM market WHERE is_auction = true AND expire_at < $1', [now]);
+    const expired = await db.queryAll('SELECT * FROM rpg_market WHERE is_auction = true AND expire_at < $1', [now]);
 
     for (const l of expired) {
         try {
@@ -26,7 +26,7 @@ async function processExpiredAuctions(client) {
                 await db.execute('INSERT INTO inventory (user_id, item_id, amount) VALUES ($1, $2, 1) ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + 1', [l.seller_id, l.item_id]);
             }
             
-            await db.execute('DELETE FROM market WHERE listing_id = $1', [l.listing_id]);
+            await db.execute('DELETE FROM rpg_market WHERE listing_id = $1', [l.listing_id]);
         } catch (err) {
             console.error(`[Scheduler] Auction error:`, err);
         }

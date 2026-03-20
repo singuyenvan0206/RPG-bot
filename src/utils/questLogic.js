@@ -1,13 +1,12 @@
 const db = require('../database');
 
-async function addProgress(userId, actionType, amount = 1) {
+async function addProgress(userId, actionType, amount = 1, client = null) {
+    const dbObj = client || db;
     // Check if the user has any active quests of this type
-    const activeQuests = await db.queryAll(
-        'SELECT * FROM quests WHERE user_id = $1 AND action_type = $2 AND completed = FALSE',
-        [userId, actionType]
-    );
+    const query = 'SELECT * FROM quests WHERE user_id = $1 AND action_type = $2 AND completed = FALSE';
+    const activeQuests = await (client ? client.query(query, [userId, actionType]).then(r => r.rows) : db.queryAll(query, [userId, actionType]));
 
-    if (activeQuests.length === 0) return;
+    if (!activeQuests || activeQuests.length === 0) return;
 
     for (const q of activeQuests) {
         let newProgress = q.progress + amount;
@@ -16,7 +15,10 @@ async function addProgress(userId, actionType, amount = 1) {
             newProgress = q.target;
             completed = true;
         }
-        await db.execute('UPDATE quests SET progress = $1, completed = $2 WHERE id = $3', [newProgress, completed, q.id]);
+        const updateQuery = 'UPDATE quests SET progress = $1, completed = $2 WHERE id = $3';
+        const params = [newProgress, completed, q.id];
+        if (client) await client.query(updateQuery, params);
+        else await db.execute(updateQuery, params);
     }
 }
 

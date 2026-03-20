@@ -136,6 +136,14 @@ async function handleButton(interaction) {
                     { name: 'Của bạn', value: `❤️ HP: ${session.hp}/${session.maxHp}`, inline: true }
                 );
 
+            const imgPath = path.join(process.cwd(), 'src', 'assets', 'monsters', session.region, monster.image || 'placeholder.png');
+            let files = [];
+            const fs = require('fs');
+            if (fs.existsSync(imgPath)) {
+                files.push(new AttachmentBuilder(imgPath, { name: 'monster.png' }));
+                embed.setImage('attachment://monster.png');
+            }
+
             const row = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder().setCustomId(`battle_${monster.id}_${mHp}_${isShiny ? 1 : 0}`).setLabel('Tấn Công').setStyle(ButtonStyle.Danger).setEmoji('⚔️'),
@@ -143,7 +151,7 @@ async function handleButton(interaction) {
                     new ButtonBuilder().setCustomId('session_finish').setLabel('Bỏ Chạy').setStyle(ButtonStyle.Secondary).setEmoji('🏃')
                 );
 
-            return interaction.update({ embeds: [embed], components: [row] });
+            return interaction.update({ embeds: [embed], components: [row], files: files });
         } else {
             // EVENT
             const event = regionData.events[Math.floor(Math.random() * regionData.events.length)];
@@ -158,7 +166,7 @@ async function handleButton(interaction) {
                 embed.addFields({ name: 'Kinh Nghiệm', value: `+ ✨ ${event.exp} Exp` });
             }
             if (event.damage) {
-                session.hp = Math.max(0, session.hp - event.damage);
+                session.hp = Math.max(0, Math.floor(session.hp - event.damage));
                 embed.addFields({ name: 'Thiệt Hại', value: `- ${event.damage} HP` });
                 await db.execute('UPDATE players SET hp = $1 WHERE user_id = $2', [session.hp, userId]);
             }
