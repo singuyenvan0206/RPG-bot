@@ -63,6 +63,7 @@ module.exports = {
                     if (baseName === 'guild' && name === 'name') return args.slice(1).join(' ');
                     if (baseName === 'guild' && name === 'guild_id') return args[1];
                     if (baseName === 'flip' && name === 'side') return args[1];
+                    if (baseName === 'giveitem' && name === 'item_id') return args[1];
                     return null;
                 },
                 getInteger: (name) => {
@@ -81,6 +82,9 @@ module.exports = {
                         // $mua <id> [amount]      → amount at args[1]
                         return args[0] === 'buy' ? parseArgs(2) : parseArgs(1);
                     }
+                    if (baseName === 'setlevel' && name === 'level') return parseArgs(1);
+                    if (baseName === 'givegold' && name === 'amount') return parseArgs(1);
+                    if (baseName === 'giveitem' && name === 'amount') return parseArgs(2);
                     return null;
                 },
                 getUser: (name) => {
