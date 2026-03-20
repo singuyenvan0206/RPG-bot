@@ -65,6 +65,12 @@ module.exports = {
                     if (baseName === 'guild' && name === 'guild_id') return args[1];
                     if (baseName === 'flip' && name === 'side') return args[1];
                     if (baseName === 'giveitem' && name === 'item_id') return args[1];
+                    if (name === 'amount' || name === 'bet' || name === 'price') {
+                        // Return raw string for commands that now use getString + parseAmount
+                        if (baseName === 'givegold' || baseName === 'slots' || baseName === 'flip') return args[1] || args[0];
+                        if (baseName === 'market' && name === 'price') return args[1];
+                        if (baseName === 'giveitem' && name === 'amount') return args[2];
+                    }
                     return null;
                 },
                 getInteger: (name) => {
