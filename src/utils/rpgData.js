@@ -16,7 +16,7 @@ module.exports = {
             { code: 1011, id: 'wild_boar_r', name: '🐗 Heo Rừng Hung Tợn', level: 9, rarity: 'Rare', element: 'Earth', hp: 400, atk: 65, gold: 80, exp: 110, image: 'wild_boar_r.png' },
             { code: 1012, id: 'enchanted_owl_r', name: '🦉 Cú Phép Thuật', level: 11, rarity: 'Rare', element: 'Wind', hp: 280, atk: 80, gold: 100, exp: 150, image: 'enchanted_owl_r.png' },
             { code: 1013, id: 'black_widow_r', name: '🕷️ Nhện Góa Phụ Đen', level: 13, rarity: 'Elite', element: 'Void', hp: 750, atk: 130, gold: 350, exp: 600, image: 'black_widow_r.png' },
-            { code: 1014, id: 'dragonling_r', name: '🐲 Long Nhi Lục Bảo', level: 15, rarity: 'Elite', element: 'Wood', hp: 1200, atk: 180, gold: 500, exp: 800, image: 'dragonling_r.png' },
+            { code: 1014, id: 'dragonling_r', name: '🐲 Long Nhi Lục Bảo', level: 15, rarity: 'Elite', element: 'Wood', type: 'Dragon', hp: 1200, atk: 180, gold: 500, exp: 800, image: 'dragonling_r.png' },
             { code: 1015, id: 'forest_cat', name: '🐈 Mèo Rừng Lang Thang', level: 2, rarity: 'Common', element: 'Wind', hp: 80, atk: 22, gold: 15, exp: 25, image: 'forest_cat.png' }
         ],
         events: [
@@ -43,7 +43,7 @@ module.exports = {
             { code: 2007, id: 'cacti_bruiser', name: '🌵 Xương Rồng Đô Vật', level: 23, rarity: 'Common', element: 'Wood', hp: 350, atk: 95, gold: 120, exp: 200, image: 'cacti_bruiser.png' },
             { code: 2008, id: 'fire_elemental_d', name: '🔥 Hỏa Nguyên Tố', level: 32, rarity: 'Rare', element: 'Fire', hp: 700, atk: 450, gold: 1200, exp: 3500, image: 'fire_elemental_d.png' },
             { code: 2009, id: 'sand_spirit', name: '✨ Linh Hồn Sa Mạc', level: 38, rarity: 'Rare', element: 'Light', hp: 1500, atk: 700, gold: 3000, exp: 8000, image: 'sand_spirit.png' },
-            { code: 2010, id: 'desert_dragon', name: '🐲 Rồng Sa Mạc', level: 60, rarity: 'Elite', element: 'Fire', hp: 15000, atk: 3500, gold: 30000, exp: 80000, image: 'desert_dragon.png' },
+            { code: 2010, id: 'desert_dragon', name: '🐲 Rồng Sa Mạc', level: 60, rarity: 'Elite', element: 'Fire', type: 'Dragon', hp: 15000, atk: 3500, gold: 30000, exp: 80000, image: 'desert_dragon.png' },
             { code: 2011, id: 'anubis_seeker', name: '⚖️ Kẻ Tầm Đạo Anubis', level: 50, rarity: 'Elite', element: 'Void', hp: 8000, atk: 2500, gold: 15000, exp: 45000, image: 'anubis_seeker.png' },
             { code: 2012, id: 'dust_devil_d', name: '🌪️ Quỷ Cát Bụi', level: 21, rarity: 'Common', element: 'Wind', hp: 220, atk: 110, gold: 100, exp: 180, image: 'dust_devil_d.png' },
             { code: 2013, id: 'mirage_mage', name: '🔮 Pháp Sư Ảo Ảnh', level: 36, rarity: 'Rare', element: 'Void', hp: 900, atk: 900, gold: 2000, exp: 6000, image: 'mirage_mage.png' },
@@ -70,7 +70,7 @@ module.exports = {
             { code: 3003, id: 'frost_wolf_f', name: '🐺 Sói Tuyết Ngàn Năm', level: 55, rarity: 'Common', element: 'Water', hp: 1500, atk: 450, gold: 650, exp: 1800, image: 'frost_wolf_f.png' },
             { code: 3004, id: 'ice_wraith_f', name: '👻 Linh Hồn Băng Giá', level: 65, rarity: 'Rare', element: 'Void', hp: 2500, atk: 900, gold: 2000, exp: 5000, image: 'ice_wraith_f.png' },
             { code: 3005, id: 'king_yeti_f', name: '🦍 Vua Tuyết Yeti', level: 85, rarity: 'Elite', element: 'Earth', hp: 10000, atk: 2500, gold: 15000, exp: 45000, image: 'king_yeti_f.png' },
-            { code: 3006, id: 'ice_dragon_f', name: '🐲 Rồng Băng Gầm Thét', level: 120, rarity: 'Elite', element: 'Water', hp: 40000, atk: 8000, gold: 80000, exp: 250000, image: 'ice_dragon_f.png' },
+            { code: 3006, id: 'ice_dragon_f', name: '🐲 Rồng Băng Gầm Thét', level: 120, rarity: 'Elite', element: 'Water', type: 'Dragon', hp: 40000, atk: 8000, gold: 80000, exp: 250000, image: 'ice_dragon_f.png' },
             { code: 3007, id: 'snow_leopard_f', name: '🐆 Báo Tuyết Vĩnh Cửu', level: 58, rarity: 'Rare', element: 'Wind', hp: 1800, atk: 1200, gold: 1200, exp: 3500, image: 'snow_leopard_f.png' },
             { code: 3008, id: 'frozen_knight_f', name: '⚔️ Kỵ Sĩ Băng', level: 75, rarity: 'Rare', element: 'Void', hp: 5000, atk: 1800, gold: 5000, exp: 12000, image: 'frozen_knight_f.png' },
             { code: 3009, id: 'lich_shade_f', name: '💀 Bóng Ma Vua Lich', level: 140, rarity: 'Elite', element: 'Void', hp: 80000, atk: 12000, gold: 200000, exp: 700000, image: 'lich_shade_f.png' },
@@ -131,7 +131,7 @@ module.exports = {
             { code: 5002, id: 'cursed_knight_a', name: '⚔️ Kỵ Sĩ Nguyền Rủa', level: 160, rarity: 'Common', element: 'Void', hp: 25000, atk: 6500, gold: 7000, exp: 18000, image: 'cursed_knight_a.png' },
             { code: 5003, id: 'ruin_guardian_a', name: '🤖 Hộ Vệ Di Tích', level: 170, rarity: 'Rare', element: 'Earth', hp: 40000, atk: 12000, gold: 15000, exp: 45000, image: 'ruin_guardian_a.png' },
             { code: 5004, id: 'skeleton_king_a', name: '💀 Vua Xương Vương', level: 190, rarity: 'Elite', element: 'Void', hp: 120000, atk: 35000, gold: 100000, exp: 350000, image: 'skeleton_king_a.png' },
-            { code: 5005, id: 'ancient_dragon_a', name: '🐲 Hồn Rồng Cổ Đại', level: 220, rarity: 'Elite', element: 'Light', hp: 300000, atk: 85000, gold: 300000, exp: 1200000, image: 'ancient_dragon_a.png' },
+            { code: 5005, id: 'ancient_dragon_a', name: '🐲 Hồn Rồng Cổ Đại', level: 220, rarity: 'Elite', element: 'Light', type: 'Dragon', hp: 300000, atk: 85000, gold: 300000, exp: 1200000, image: 'ancient_dragon_a.png' },
             { code: 5006, id: 'ruin_stalker_a', name: '👣 Kẻ Rình Rập Di Tích', level: 155, rarity: 'Common', element: 'Wind', hp: 18000, atk: 7500, gold: 6000, exp: 15000, image: 'ruin_stalker_a.png' },
             { code: 5007, id: 'stone_construct_a', name: '🗿 Thực Thể Đá Cổ', level: 165, rarity: 'Common', element: 'Earth', hp: 35000, atk: 5500, gold: 8500, exp: 20000, image: 'stone_construct_a.png' },
             { code: 5008, id: 'shadow_priest_a', name: '🔮 Linh Mục Bóng Tối', level: 175, rarity: 'Rare', element: 'Void', hp: 28000, atk: 22000, gold: 25000, exp: 60000, image: 'shadow_priest_a.png' },
@@ -193,7 +193,7 @@ module.exports = {
             { code: 7002, id: 'shadow_stalker_v', name: '🌑 Bóng Ma Rình Rập', level: 320, rarity: 'Common', element: 'Void', hp: 180000, atk: 65000, gold: 120000, exp: 350000, image: 'shadow_stalker_v.png' },
             { code: 7003, id: 'void_beast_v', name: '🧿 Quái Thú Hư Không', level: 350, rarity: 'Rare', element: 'Void', hp: 400000, atk: 120000, gold: 300000, exp: 1000000, image: 'void_beast_v.png' },
             { code: 7004, id: 'antigravity_core_v', name: '🌀 Antigravity Core', level: 500, rarity: 'Elite', element: 'Light', hp: 5000000, atk: 1000000, gold: 10000000, exp: 50000000, image: 'antigravity_core_v.png' },
-            { code: 7005, id: 'void_dragon_v', name: '🐉 Void Dragon God', level: 450, rarity: 'Elite', element: 'Void', hp: 2000000, atk: 500000, gold: 5000000, exp: 20000000, image: 'void_dragon_v.png' },
+            { code: 7005, id: 'void_dragon_v', name: '🐉 Void Dragon God', level: 450, rarity: 'Elite', element: 'Void', type: 'Dragon', hp: 2000000, atk: 500000, gold: 5000000, exp: 20000000, image: 'void_dragon_v.png' },
             { code: 7006, id: 'dark_matter_v', name: '🌌 Vật Chất Tối', level: 310, rarity: 'Common', element: 'Void', hp: 160000, atk: 55000, gold: 90000, exp: 250000, image: 'dark_matter_v.png' },
             { code: 7007, id: 'entropy_glitch_v', name: '🌀 Lỗi Thực Tại', level: 330, rarity: 'Common', element: 'Void', hp: 220000, atk: 75000, gold: 150000, exp: 400000, image: 'entropy_glitch_v.png' },
             { code: 7008, id: 'void_reaver_v', name: '☄️ Kẻ Gặt Hư Không', level: 380, rarity: 'Rare', element: 'Void', hp: 600000, atk: 180000, gold: 600000, exp: 2500000, image: 'void_reaver_v.png' },
@@ -229,7 +229,7 @@ module.exports = {
             { code: 8007, id: 'fire_breather', name: '🔥 Kẻ Phun Lửa', level: 265, rarity: 'Common', element: 'Fire', hp: 200000, atk: 85000, gold: 75000, exp: 170000, image: 'fire_breather.png' },
             { code: 8008, id: 'obsidian_golem', name: '🧱 Golem Đá Vỏ Chai', level: 320, rarity: 'Rare', element: 'Earth', hp: 800000, atk: 150000, gold: 300000, exp: 800000, image: 'obsidian_golem.png' },
             { code: 8009, id: 'hell_fire_spirit', name: '✨ Tinh Linh Lửa Ngục', level: 290, rarity: 'Rare', element: 'Fire', hp: 400000, atk: 200000, gold: 250000, exp: 600000, image: 'hell_fire_spirit.png' },
-            { code: 8010, id: 'ancient_lava_dragon', name: '🐲 Cổ Long Dung Nham', level: 400, rarity: 'Elite', element: 'Fire', hp: 5000000, atk: 1200000, gold: 2000000, exp: 8000000, image: 'ancient_lava_dragon.png' }
+            { code: 8010, id: 'ancient_lava_dragon', name: '🐲 Cổ Long Dung Nham', level: 400, rarity: 'Elite', element: 'Fire', type: 'Dragon', hp: 5000000, atk: 1200000, gold: 2000000, exp: 8000000, image: 'ancient_lava_dragon.png' }
         ],
         events: [
             { code: 1171, id: 'magma_burn', text: 'Bạn lỡ chân dẫm vào dòng dung nham nóng hổi.', damage: 1500 },
@@ -248,7 +248,7 @@ module.exports = {
         monsters: [
             { code: 9001, id: 'crystal_spirit', name: '✨ Linh Hồn Tinh Thể', level: 400, rarity: 'Common', element: 'Light', hp: 400000, atk: 150000, gold: 150000, exp: 500000, image: 'crystal_spirit.png' },
             { code: 9002, id: 'prism_guard', name: '🛡️ Hộ Vệ Lăng Kính', level: 450, rarity: 'Rare', element: 'Light', hp: 1000000, atk: 350000, gold: 500000, exp: 1500000, image: 'prism_guard.png' },
-            { code: 9003, id: 'diamond_dragon', name: '🐲 Rồng Kim Cương', level: 500, rarity: 'Elite', element: 'Light', hp: 10000000, atk: 2500000, gold: 5000000, exp: 10000000, image: 'diamond_dragon.png' },
+            { code: 9003, id: 'diamond_dragon', name: '🐲 Rồng Kim Cương', level: 500, rarity: 'Elite', element: 'Light', type: 'Dragon', hp: 10000000, atk: 2500000, gold: 5000000, exp: 10000000, image: 'diamond_dragon.png' },
             { code: 9004, id: 'mirror_specter', name: '👻 Bóng Ma Gương', level: 410, rarity: 'Common', element: 'Void', hp: 450000, atk: 180000, gold: 180000, exp: 600000, image: 'mirror_specter.png' },
             { code: 9005, id: 'crystal_leopard', name: '🐆 Báo Gấm Pha Lê', level: 420, rarity: 'Common', element: 'Light', hp: 500000, atk: 220000, gold: 200000, exp: 700000, image: 'crystal_leopard.png' },
             { code: 9006, id: 'shard_golem', name: '🧱 Golem Mảnh Vụn', level: 430, rarity: 'Common', element: 'Earth', hp: 700000, atk: 120000, gold: 220000, exp: 800000, image: 'shard_golem.png' },

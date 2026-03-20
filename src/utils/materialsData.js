@@ -17,6 +17,7 @@ module.exports = {
         diamond: { code: 3007, id: 'diamond', name: '💍 Kim Cương', rarity: 'Epic', desc: 'Vật chất cứng nhất thế giới, cực kỳ quý hiếm.' },
         amethyst: { code: 3011, id: 'amethyst', name: '🟣 Thạch Anh Tím', rarity: 'Rare', desc: 'Đá quý mang năng lượng huyền bí.' },
         topaz: { code: 3012, id: 'topaz', name: '🟡 Hoàng Ngọc', rarity: 'Rare', desc: 'Tỏa ra sự ấm áp của đất mẹ.' },
+        shiny_essence: { code: 3013, id: 'shiny_essence', name: '✨ Tinh Hoa Lấp Lánh', rarity: 'Epic', desc: 'Mảnh vỡ hào quang từ quái vật Shiny.' },
 
         // Nature & Wood
         oak_wood: { code: 3101, id: 'oak_wood', name: '🪵 Gỗ Sồi', rarity: 'Common', desc: 'Loại gỗ bền chắc cho các công cụ cơ bản.' },

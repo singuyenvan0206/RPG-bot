@@ -40,8 +40,9 @@ module.exports = {
         {
             id: 'earth_smash', code: 104,
             name: '⛰️ Earth Smash', element: 'Earth',
-            desc: 'Dùng sức mạnh đất đai đập kẻ địch xuống đất, gây 180% ATK. Có thể làm choáng.',
+            desc: 'Dùng sức mạnh đất đai đập kẻ địch xuống đất, gây 180% ATK. Có 25% cơ hội gây choáng.',
             type: 'active', multiplier: 1.8, chance: 0.18, element: 'Earth', effect: 'attack',
+            status: 'STUN',
             msg: 'gọi sức mạnh của **Earth Smash**!'
         },
         // Tier 3 - Epic
@@ -73,8 +74,9 @@ module.exports = {
         {
             id: 'fireball', code: 201,
             name: '🔥 Fireball', element: 'Fire',
-            desc: 'Phóng cầu lửa gây 130% ATK hỏa hệ, 25% cơ hội kích hoạt.',
+            desc: 'Phóng cầu lửa gây 130% ATK hỏa hệ, 25% cơ hội kích hoạt. Có 20% cơ hội gây thiêu đốt.',
             type: 'active', multiplier: 1.3, chance: 0.25, element: 'Fire', effect: 'attack',
+            status: 'BURN',
             msg: 'phóng **Fireball** bùng cháy!'
         },
         {
@@ -147,8 +149,9 @@ module.exports = {
         {
             id: 'poison_arrow', code: 304,
             name: '🐍 Poison Arrow', element: 'Wood',
-            desc: 'Bắn mũi tên tẩm độc, gây 80% ATK + 200 độc hệ theo thời gian.',
+            desc: 'Bắn mũi tên tẩm độc, gây 80% ATK + gây độc theo thời gian.',
             type: 'active', multiplier: 0.8, dot_dmg: 200, chance: 0.25, element: 'Wood', effect: 'dot',
+            status: 'POISON',
             msg: 'bắn **Poison Arrow** tẩm đầy nọc độc!'
         },
         // Tier 3 - Epic

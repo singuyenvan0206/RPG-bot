@@ -84,8 +84,23 @@ async function initSchema() {
             item_id TEXT NOT NULL,
             amount INTEGER NOT NULL DEFAULT 1,
             price BIGINT NOT NULL,
+            is_auction BOOLEAN DEFAULT FALSE,
+            expire_at BIGINT DEFAULT 0,
+            current_bid BIGINT DEFAULT 0,
+            highest_bidder_id TEXT REFERENCES players(user_id),
             created_at BIGINT NOT NULL DEFAULT (extract(epoch from now()))
         )
+    `);
+
+    // Market Bids tracking
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS market_bids (
+            listing_id INTEGER NOT NULL REFERENCES market(listing_id) ON DELETE CASCADE,
+            bidder_id TEXT NOT NULL REFERENCES players(user_id) ON DELETE CASCADE,
+            bid_amount BIGINT NOT NULL,
+            created_at BIGINT NOT NULL DEFAULT (extract(epoch from now())),
+            PRIMARY KEY (listing_id, bidder_id)
+        );
     `);
 
     // World States (Global server variables)
@@ -119,7 +134,10 @@ async function initSchema() {
             progress INTEGER NOT NULL DEFAULT 0,
             reward_gold BIGINT NOT NULL,
             reward_exp BIGINT NOT NULL,
+            quest_type TEXT NOT NULL DEFAULT 'daily',
+            unlocked_by_id INTEGER DEFAULT NULL,
             completed BOOLEAN NOT NULL DEFAULT FALSE,
+            is_claimed BOOLEAN NOT NULL DEFAULT FALSE,
             created_at BIGINT NOT NULL DEFAULT (extract(epoch from now()))
         )
     `);
@@ -165,12 +183,55 @@ async function initSchema() {
         ALTER TABLE players ADD COLUMN IF NOT EXISTS rebirths INTEGER NOT NULL DEFAULT 0
     `);
 
-    // Server Config (prefix per-guild)
+    // Migration: add status_effects column
     await pool.query(`
-        CREATE TABLE IF NOT EXISTS server_config (
-            guild_id TEXT PRIMARY KEY,
-            prefix TEXT NOT NULL DEFAULT '$'
+        ALTER TABLE players ADD COLUMN IF NOT EXISTS status_effects JSONB DEFAULT '[]'::jsonb
+    `);
+
+    // Unique Items (for items with rolled stats/passives)
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS player_unique_items (
+            id SERIAL PRIMARY KEY,
+            user_id TEXT NOT NULL REFERENCES players(user_id) ON DELETE CASCADE,
+            item_id TEXT NOT NULL,
+            stats JSONB DEFAULT '{}'::jsonb,
+            passives TEXT[] DEFAULT '{}',
+            created_at BIGINT NOT NULL DEFAULT (extract(epoch from now()))
         )
+    `);
+
+    // World Boss Damage tracking
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS world_boss_damage (
+            region_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            damage BIGINT DEFAULT 0,
+            last_hit TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (region_id, user_id)
+        );
+    `);
+
+    // Guild Territory Control
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS guild_territories (
+            region_id TEXT PRIMARY KEY,
+            guild_id TEXT REFERENCES guilds(guild_id) ON DELETE SET NULL,
+            captured_at BIGINT NOT NULL DEFAULT (extract(epoch from now()))
+        );
+    `);
+
+    // Trades tracking
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS trades (
+            trade_id TEXT PRIMARY KEY,
+            sender_id TEXT NOT NULL,
+            receiver_id TEXT NOT NULL,
+            item_id TEXT,
+            amount INTEGER DEFAULT 0,
+            gold BIGINT DEFAULT 0,
+            status TEXT DEFAULT 'pending',
+            created_at BIGINT NOT NULL DEFAULT (extract(epoch from now()))
+        );
     `);
 
     console.log('[Database] EchoWorld RPG Schema initialized successfully.');

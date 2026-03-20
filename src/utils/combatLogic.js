@@ -7,6 +7,12 @@ const elements = {
     Light: { beats: 'Void', emoji: '✨' }
 };
 
+const statusEffects = {
+    BURN: { name: 'Thiêu Đốt', emoji: '🔥', duration: 3 },
+    POISON: { name: 'Trúng Độc', emoji: '🐍', duration: 3 },
+    STUN: { name: 'Choáng', emoji: '😵', duration: 1 }
+};
+
 /**
  * Calculates the damage multiplier based on elemental advantage.
  * @param {string} attackerElement 
@@ -36,7 +42,7 @@ const skillsData = require('./skillsData');
  * @param {Array} learnedSkills List of {skill_id, level, equipped_slot} from DB
  * @param {string} className 
  * @param {object} player Player object (for heal calculations)
- * @returns {object|null} result { name, effect, multiplier, msg, type, heal_pct, dot_dmg, element }
+ * @returns {object|null} result { name, effect, multiplier, msg, type, heal_pct, dot_dmg, element, status }
  */
 function triggerCombatSkills(learnedSkills, className, player) {
     if (!learnedSkills) return null;
@@ -69,11 +75,13 @@ function triggerCombatSkills(learnedSkills, className, player) {
 
             return {
                 name: skill.name,
+                id: skill.id,
                 effect: skill.effect || 'attack',
                 multiplier: finalMultiplier,
                 element: skill.element || null,
                 heal_pct: skill.heal_pct || 0,
                 dot_dmg: skill.dot_dmg || 0,
+                status: skill.status || null,
                 msg: msg,
                 type: skill.type
             };
@@ -82,8 +90,65 @@ function triggerCombatSkills(learnedSkills, className, player) {
     return null;
 }
 
+/**
+ * Calculates critical hit damage.
+ * @param {number} baseAtk 
+ * @param {number} def 
+ * @param {number} critRate 
+ * @param {number} critDamage 
+ * @returns {object} { damage, isCrit }
+ */
+function calculateCrit(baseAtk, def, critRate, critDamage) {
+    const isCrit = Math.random() < critRate;
+    const rawDamage = isCrit ? Math.floor(baseAtk * critDamage) : baseAtk;
+    
+    // Mitigation formula: dmg = raw * (100 / (100 + def))
+    const mitFactor = 100 / (100 + (def || 0));
+    const damage = Math.max(1, Math.floor(rawDamage * mitFactor));
+    
+    return { damage, isCrit };
+}
+
+/**
+ * Processes status effects on an actor (player or monster).
+ * @param {object} actor { hp, max_hp, statusEffects: [{type, duration}] }
+ * @returns {object} { damageTaken, log, skipTurn }
+ */
+function processStatusEffects(actor) {
+    let damageTaken = 0;
+    let log = '';
+    let skipTurn = false;
+
+    if (!actor.statusEffects) return { damageTaken, log, skipTurn };
+
+    actor.statusEffects = actor.statusEffects.filter(effect => {
+        if (effect.duration <= 0) return false;
+
+        if (effect.type === 'BURN') {
+            const burnDmg = Math.floor(actor.max_hp * 0.05); // 5% max HP
+            damageTaken += burnDmg;
+            log += `🔥 **${statusEffects.BURN.name}**: Gây **${burnDmg}** sát thương.\n`;
+        } else if (effect.type === 'POISON') {
+            const poisonDmg = effect.damage || 20;
+            damageTaken += poisonDmg;
+            log += `🐍 **${statusEffects.POISON.name}**: Gây **${poisonDmg}** sát thương.\n`;
+        } else if (effect.type === 'STUN') {
+            skipTurn = true;
+            log += `😵 **${statusEffects.STUN.name}**: Bạn bị choáng và mất lượt!\n`;
+        }
+
+        effect.duration--;
+        return effect.duration > 0;
+    });
+
+    return { damageTaken, log, skipTurn };
+}
+
 module.exports = {
     elements,
+    statusEffects,
     getElementalMultiplier,
-    triggerCombatSkills
+    triggerCombatSkills,
+    calculateCrit,
+    processStatusEffects
 };

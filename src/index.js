@@ -59,6 +59,12 @@ async function start() {
     try {
         await db.initSchema();
         client.login(process.env.DISCORD_TOKEN);
+        
+        client.once('ready', () => {
+            console.log(`[Bot] Logged in as ${client.user.tag}`);
+            const { startScheduler } = require('./utils/scheduler');
+            startScheduler(client);
+        });
     } catch (err) {
         console.error('Failed to start bot:', err);
     }

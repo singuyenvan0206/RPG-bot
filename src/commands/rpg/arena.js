@@ -1,14 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const db = require('../../database');
 const gifData = require('../../utils/gifData');
-
-function getRank(elo) {
-    if (elo < 1200) return '🟤 Bronze';
-    if (elo < 1500) return '⚪ Silver';
-    if (elo < 2000) return '🟡 Gold';
-    if (elo < 2500) return '🔵 Platinum';
-    return '💎 Diamond';
-}
+const PvpService = require('../../services/PvpService');
 
 module.exports = {
     category: 'RPG',
@@ -34,11 +27,11 @@ module.exports = {
         const userId = interaction.user.id;
 
         const player = await db.getPlayer(userId);
-        if (!player) return interaction.reply({ content: '❌ Bạn chưa tham gia thế giới này!', flags: require('discord.js').MessageFlags.Ephemeral });
+        if (!player) return interaction.reply({ content: '❌ Bạn chưa tham gia thế giới này!', flags: MessageFlags.Ephemeral });
 
         // Ensure arena stats exist
         await db.execute(
-            'INSERT INTO arena_stats (user_id) VALUES ($1) ON CONFLICT DO NOTHING',
+            'INSERT INTO arena_stats (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING',
             [userId]
         );
 
@@ -46,16 +39,17 @@ module.exports = {
             const myStats = await db.queryOne('SELECT * FROM arena_stats WHERE user_id = $1', [userId]);
             const topStats = await db.queryAll('SELECT * FROM arena_stats ORDER BY elo DESC, wins DESC LIMIT 5');
 
-            const myRank = getRank(myStats.elo);
+            const rankInfo = PvpService.getRankInfo(myStats.elo);
             const embed = new EmbedBuilder()
                 .setTitle('🏆 Đấu Trường Hắc Ám: Bảng Xếp Hạng')
-                .setColor('#e67e22')
-                .setDescription(`Hạng hiện tại: **${myRank}**\nBạn đang có **${myStats.elo} Elo** (Thắng: ${myStats.wins} | Thua: ${myStats.losses})\n\n**TOP 5 SERVER:**`);
+                .setColor(rankInfo.color)
+                .setDescription(`Hạng hiện tại: **${rankInfo.name}**\nBạn đang có **${myStats.elo} Elo** (Thắng: ${myStats.wins} | Thua: ${myStats.losses})\n\n**TOP 5 SERVER:**`);
 
             topStats.forEach((t, i) => {
+                const tr = PvpService.getRankInfo(t.elo);
                 embed.addFields({
                     name: `Hạng ${i + 1}`,
-                    value: `<@${t.user_id}> - Điểm Elo: **${t.elo}** (${getRank(t.elo)})`
+                    value: `<@${t.user_id}> - Elo: **${t.elo}** (${tr.name})`
                 });
             });
 
@@ -63,135 +57,71 @@ module.exports = {
         }
 
         if (sub === 'match') {
-            // Block if player is dead/respawning
             const nowMs = Date.now();
             if (player.dead_until && player.dead_until > nowMs) {
                 const secsLeft = Math.ceil((player.dead_until - nowMs) / 1000);
-                const mins = Math.floor(secsLeft / 60);
-                const secs = secsLeft % 60;
-                return interaction.reply({ content: `💀 Bạn đang hồi sinh... Còn **${mins} phút ${secs} giây** nữa.`, flags: require('discord.js').MessageFlags.Ephemeral });
+                return interaction.reply({ content: `💀 Bạn đang hồi sinh... Còn **${secsLeft} giây**.`, flags: MessageFlags.Ephemeral });
             }
 
             const myStats = await db.queryOne('SELECT * FROM arena_stats WHERE user_id = $1', [userId]);
             const myElo = parseInt(myStats.elo);
 
-            // Find opponents within +/- 300 Elo, excluding self
+            // Matchmaking
             let opponents = await db.queryAll(
                 'SELECT * FROM arena_stats WHERE user_id != $1 AND elo >= $2 AND elo <= $3 ORDER BY elo DESC',
-                [userId, myElo - 300, myElo + 300]
+                [userId, myElo - 400, myElo + 400]
             );
 
-            // If no match found in bracket, just pick anyone
             if (opponents.length === 0) {
                 opponents = await db.queryAll('SELECT * FROM arena_stats WHERE user_id != $1 ORDER BY elo DESC LIMIT 20', [userId]);
             }
 
             if (opponents.length === 0) {
-                return interaction.reply({ content: '🏜️ Đấu trường trống vắng. Không tìm thấy đối thủ nào!', flags: require('discord.js').MessageFlags.Ephemeral });
+                return interaction.reply({ content: '🏜️ Đấu trường vắng vẻ...', flags: MessageFlags.Ephemeral });
             }
 
-            const enemy = opponents[Math.floor(Math.random() * opponents.length)];
-            const enemyId = enemy.user_id;
+            const enemyStat = opponents[Math.floor(Math.random() * opponents.length)];
+            const enemyPlayer = await db.getPlayer(enemyStat.user_id);
 
-            // Load combat stats
-            const myCombat = await db.queryOne('SELECT * FROM player_stats WHERE user_id = $1', [userId]);
-            const enemyCombat = await db.queryOne('SELECT * FROM player_stats WHERE user_id = $1', [enemyId]);
-            const enemyPlayer = await db.getPlayer(enemyId); // Need Max HP for arena
+            if (!enemyPlayer) return interaction.reply({ content: '❌ Lỗi đối thủ.', flags: MessageFlags.Ephemeral });
 
-            if (!myCombat || !enemyCombat || !enemyPlayer) {
-                return interaction.reply({ content: '❌ Đối thủ bị lỗi dữ liệu chiến đấu. Thử lại sau.', flags: require('discord.js').MessageFlags.Ephemeral });
-            }
-
-            // Battle Animation
+            // Animation
             const battleEmbed = new EmbedBuilder()
                 .setTitle('⚔️ Đấu Trường Quyết Chiến')
-                .setDescription(`Bạn và <@${enemyId}> đang lao vào nhau...`)
+                .setDescription(`Bạn đang so tài với <@${enemyStat.user_id}> (${PvpService.getRankInfo(enemyStat.elo).name})...`)
                 .setColor('#e74c3c')
-                .setImage(gifData.arena);
+                .setImage(gifData.arena || null);
 
             const msg = await interaction.reply({ embeds: [battleEmbed], fetchReply: true });
-            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-            await sleep(3500); // GIF duration
+            
+            // Artificial delay for tension
+            await new Promise(r => setTimeout(r, 3000));
 
-            // AUTO BATTLE LOGIC
-            let myHp = player.max_hp;
-            let enHp = enemyPlayer.max_hp;
-            let log = `Bạn đã thách đấu <@${enemyId}> (Elo: ${enemy.elo})\n\n`;
-
-            let turn = 1;
-            let winnerId = null;
-
-            while (myHp > 0 && enHp > 0 && turn <= 10) {
-                // My Turn
-                let myDmg = myCombat.attack;
-                if (Math.random() < myCombat.crit_rate) {
-                    myDmg = Math.floor(myDmg * myCombat.crit_damage);
-                }
-                let realDmgToEn = Math.max(1, myDmg - Math.floor(enemyCombat.defense / 2));
-                enHp -= realDmgToEn;
-
-                if (enHp <= 0) {
-                    log += `Đòn kết liễu! Bạn đâm trúng tim đối thủ với **${realDmgToEn}** sát thương.\n`;
-                    winnerId = userId;
-                    break;
-                }
-
-                // Enemy Turn
-                let enDmg = enemyCombat.attack;
-                if (Math.random() < enemyCombat.crit_rate) {
-                    enDmg = Math.floor(enDmg * enemyCombat.crit_damage);
-                }
-                let realDmgToMe = Math.max(1, enDmg - Math.floor(myCombat.defense / 2));
-                myHp -= realDmgToMe;
-
-                if (myHp <= 0) {
-                    log += `Chí mạng! Đối thủ phản công bằng đòn **${realDmgToMe}** sát thương hạ gục bạn.\n`;
-                    winnerId = enemyId;
-                    break;
-                }
-                turn++;
-            }
-
-            // If 10 turns pass and nobody dies, highest HP % wins
-            if (!winnerId) {
-                const myHpPct = myHp / player.max_hp;
-                const enHpPct = enHp / enemyPlayer.max_hp;
-                if (myHpPct >= enHpPct) winnerId = userId;
-                else winnerId = enemyId;
-                log += `Trận chiến kéo dài quá lâu! Trọng tài xử thắng dựa theo lượng máu còn lại.\n`;
-            }
-
-            let embedColor = '#e74c3c';
-            let resultTitle = '⚔️ Kết Quả Trận Đấu';
-            if (winnerId === userId) {
-                // I won
-                const eloWon = 25;
-                const eloLost = 15;
-                log += `\n🎉 **BẠN ĐÃ CHIẾN THẮNG!**\nBạn được cộng **+${eloWon} Elo**. Đối thủ bị trừ **-${eloLost} Elo**.`;
-                embedColor = '#2ecc71';
-                resultTitle = '🏆 🏅 CHIẾN THẮNG!';
+            // Run Battle
+            const result = await PvpService.runBattle(interaction, player, enemyPlayer);
+            
+            let eloChange = 20;
+            if (result.winnerId === userId) {
+                await db.execute('UPDATE arena_stats SET elo = elo + $1, wins = wins + 1 WHERE user_id = $2', [eloChange, userId]);
+                await db.execute('UPDATE arena_stats SET elo = GREATEST(0, elo - $1), losses = losses + 1 WHERE user_id = $2', [15, enemyStat.user_id]);
                 
-                await db.execute('UPDATE arena_stats SET elo = elo + $1, wins = wins + 1 WHERE user_id = $2', [eloWon, userId]);
-                await db.execute('UPDATE arena_stats SET elo = GREATEST(0, elo - $1), losses = losses + 1 WHERE user_id = $2', [eloLost, enemyId]);
-
+                const winEmbed = new EmbedBuilder()
+                    .setTitle('🏆 CHIẾN THẮNG!')
+                    .setColor('#2ecc71')
+                    .setDescription(result.log + `\n\n🎉 **KẾT QUẢ:**\nBạn nhận được **+${eloChange} Elo**.`);
+                
+                return msg.edit({ embeds: [winEmbed] });
             } else {
-                // I lost
-                const eloLost = 20;
-                const eloWon = 20;
-                log += `\n💀 **BẠN ĐÃ BẠI TRẬN!**\nBạn bị trừ **-${eloLost} Elo**. Đối thủ được cộng **+${eloWon} Elo**.`;
-                resultTitle = '💀 💥 BẠI TRẬN!';
+                await db.execute('UPDATE arena_stats SET elo = GREATEST(0, elo - $1), losses = losses + 1 WHERE user_id = $2', [eloChange, userId]);
+                await db.execute('UPDATE arena_stats SET elo = elo + $1, wins = wins + 1 WHERE user_id = $2', [15, enemyStat.user_id]);
+
+                const lossEmbed = new EmbedBuilder()
+                    .setTitle('💀 THẤT BẠI!')
+                    .setColor('#e74c3c')
+                    .setDescription(result.log + `\n\n💀 **KẾT QUẢ:**\nBạn bị trừ **-${eloChange} Elo**.`);
                 
-                await db.execute('UPDATE arena_stats SET elo = GREATEST(0, elo - $1), losses = losses + 1 WHERE user_id = $2', [eloLost, userId]);
-                await db.execute('UPDATE arena_stats SET elo = elo + $1, wins = wins + 1 WHERE user_id = $2', [eloWon, enemyId]);
+                return msg.edit({ embeds: [lossEmbed] });
             }
-
-            const resultEmbed = new EmbedBuilder()
-                .setTitle(resultTitle)
-                .setDescription(log)
-                .setColor(embedColor);
-
-            return msg.edit({ embeds: [resultEmbed] });
         }
     }
 };
-

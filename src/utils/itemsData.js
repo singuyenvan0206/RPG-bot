@@ -28,14 +28,14 @@ module.exports = {
         oracle_staff: { code: 114, id: 'oracle_staff', name: '🔮 Trượng Tiên Tri', type: 'weapon', rarity: 'Epic', atk: 70, mana: 100, element: 'Light', requiredClass: ['Mage'], desc: 'Nhìn thấu tương lai để điều khiển ma pháp.' },
 
         // --- LEGENDARY (Level 61-100) ---
-        dragon_slayer: { code: 16, id: 'dragon_slayer', name: '🐉 Long Đao', type: 'weapon', rarity: 'Legendary', atk: 150, crit: 0.22, requiredClass: ['Warrior'], desc: 'Thanh đao truyền thuyết dùng để hạ gục rồng.' },
+        dragon_slayer: { code: 16, id: 'dragon_slayer', name: '🐉 Long Đao', type: 'weapon', rarity: 'Legendary', atk: 150, crit: 0.22, passives: ['dragon_hunter'], desc: 'Thanh đao truyền thuyết dùng để hạ gục rồng.' },
         void_reaper_scythe: { code: 108, id: 'void_reaper_scythe', name: '☄️ Lưỡi Hái Tử Thần', type: 'weapon', rarity: 'Legendary', atk: 180, crit: 0.28, element: 'Void', requiredClass: ['Assassin', 'Mage'], desc: 'Gặt hái linh hồn từ vực thẳm.' },
         excalibur_fragment: { code: 109, id: 'excalibur_fragment', name: '🗡️ Mảnh Vỡ Excalibur', type: 'weapon', rarity: 'Legendary', atk: 160, crit: 0.18, element: 'Light', requiredClass: ['Warrior'], desc: 'Dù chỉ là một mảnh, nó vẫn mang hào quang chính trực.' },
         phoenix_wing_bow: { code: 115, id: 'phoenix_wing_bow', name: '🦅 Cung Cánh Phượng', type: 'weapon', rarity: 'Legendary', atk: 140, agi: 50, element: 'Fire', requiredClass: ['Ranger'], desc: 'Tốc độ như cánh chim phượng hoàng.' },
         abyssal_codex: { code: 116, id: 'abyssal_codex', name: '📖 Cổ Thư Vực Thẳm', type: 'weapon', rarity: 'Legendary', atk: 130, mana: 300, element: 'Void', requiredClass: ['Mage'], desc: 'Ghi chép những cấm thuật đáng sợ.' },
 
         // --- MYTHIC (Endgame) ---
-        god_slayer_blade: { code: 110, id: 'god_slayer_blade', name: '🌌 Thanh Gươm Diệt Thần', type: 'weapon', rarity: 'Mythic', atk: 450, crit: 0.40, element: 'Void', requiredClass: ['Warrior', 'Assassin'], desc: 'Đã từng nhuốm máu của các vị thần.' },
+        god_slayer_blade: { code: 110, id: 'god_slayer_blade', name: '🌌 Thanh Gươm Diệt Thần', type: 'weapon', rarity: 'Mythic', atk: 450, crit: 0.40, element: 'Void', passives: ['god_slayer', 'lifesteal'], requiredClass: ['Warrior', 'Assassin'], desc: 'Đã từng nhuốm máu của các vị thần.' },
         eternity_staff: { code: 111, id: 'eternity_staff', name: '✨ Trượng Vĩnh Hằng', type: 'weapon', rarity: 'Mythic', atk: 350, crit: 0.25, element: 'Light', requiredClass: ['Mage'], desc: 'Nguồn năng lượng vô tận của vũ trụ.' },
         starlight_longbow: { code: 117, id: 'starlight_longbow', name: '🏹 Trường Cung Tinh Tú', type: 'weapon', rarity: 'Mythic', atk: 400, crit: 0.35, element: 'Light', requiredClass: ['Ranger'], desc: 'Bắn ra những tia sáng tinh tú xuyên mọi vật cản.' }
     },
@@ -53,7 +53,7 @@ module.exports = {
 
         // Epic
         void_mantle: { code: 8, id: 'void_mantle', name: '🌌 Áo Choàng Hư Không', type: 'armor', rarity: 'Epic', def: 45, hp: 150, element: 'Void', desc: 'Hấp thụ một phần sát thương vào cõi hư vô.' },
-        heavy_plate: { code: 19, id: 'heavy_plate', name: '🏢 Đại Giáp Thép', type: 'armor', rarity: 'Epic', def: 60, hp: 250, desc: 'Bộ giáp nặng nề biến bạn thành pháo đài di động.' },
+        heavy_plate: { code: 19, id: 'heavy_plate', name: '🏢 Đại Giáp Thép', type: 'armor', rarity: 'Epic', def: 60, hp: 250, passives: ['reflect'], desc: 'Bộ giáp nặng nề biến bạn thành pháo đài di động, phản lại một phần sát thương.' },
         crystal_armor: { code: 204, id: 'crystal_armor', name: '💎 Giáp Tinh Thể', type: 'armor', rarity: 'Epic', def: 50, hp: 300, desc: 'Lấp lánh và cực kỳ cứng cáp.' },
         thunder_cloak: { code: 205, id: 'thunder_cloak', name: '⚡ Choàng Sấm Sét', type: 'armor', rarity: 'Epic', def: 35, hp: 200, agi: 30, element: 'Wind', desc: 'Cảm giác như gió luôn thổi sau lưng.' },
 
@@ -76,12 +76,12 @@ module.exports = {
 
         // Epic
         ruby_ring: { code: 10, id: 'ruby_ring', name: '💍 Nhẫn Hồng Ngọc', type: 'accessory', rarity: 'Epic', hp: 80, crit: 0.05, element: 'Fire', desc: 'Khảm viên ngọc quý rực sáng huy hoàng.' },
-        berserker_pendant: { code: 23, id: 'berserker_pendant', name: '🩸 Mặt Dây Cuồng Chiến', type: 'accessory', rarity: 'Epic', atk: 25, crit: 0.08, desc: 'Kích thích bản năng chiến đấu mãnh liệt.' },
+        berserker_pendant: { code: 23, id: 'berserker_pendant', name: '🩸 Mặt Dây Cuồng Chiến', type: 'accessory', rarity: 'Epic', atk: 25, crit: 0.08, passives: ['lifesteal'], desc: 'Kích thích bản năng chiến đấu mãnh liệt, hút máu từ kẻ địch.' },
         spirit_gem: { code: 303, id: 'spirit_gem', name: '💎 Ngọc Linh Hồn', type: 'accessory', rarity: 'Epic', mana: 200, atk: 15, desc: 'Tăng cường ma lực bản thân.' },
 
         // Legendary
         ancient_relic: { code: 24, id: 'ancient_relic', name: '🏺 Cổ Vật Bí Ẩn', type: 'accessory', rarity: 'Legendary', atk: 50, def: 50, hp: 200, desc: 'Chứa đựng sức mạnh của các vị thần cổ đại.' },
-        phoenix_feather: { code: 304, id: 'phoenix_feather', name: '🪶 Lông Vũ Phượng Hoàng', type: 'accessory', rarity: 'Legendary', hp: 500, element: 'Fire', desc: 'Tái sinh từ đống tro tàn.' },
+        phoenix_feather: { code: 304, id: 'phoenix_feather', name: '🪶 Lông Vũ Phượng Hoàng', type: 'accessory', rarity: 'Legendary', hp: 500, element: 'Fire', passives: ['rebirth'], desc: 'Tái sinh từ đống tro tàn.' },
 
         // Mythic
         eye_of_the_void: { code: 305, id: 'eye_of_the_void', name: '👁️ Nhãn Thần Hư Không', type: 'accessory', rarity: 'Mythic', atk: 100, crit: 0.15, element: 'Void', desc: 'Nhìn thấu mọi kẽ hở của thế giới.' },
@@ -95,15 +95,21 @@ module.exports.getAllItems = function() {
 
 module.exports.getItem = function(itemId) {
     if (!itemId) return null;
-    const all = this.getAllItems();
-    if (all[itemId]) return all[itemId];
+    const weapons = this.weapons;
+    const armors = this.armors;
+    const accessories = this.accessories;
     
-    // Fallback to numeric code search
-    for (const key in all) {
-        if (all[key].code == itemId) {
-            return all[key];
+    let item = weapons[itemId] || armors[itemId] || accessories[itemId];
+    
+    if (!item) {
+        const all = { ...weapons, ...armors, ...accessories };
+        for (const key in all) {
+            if (all[key].code == itemId) {
+                item = all[key];
+                break;
+            }
         }
     }
     
-    return null;
+    return item ? JSON.parse(JSON.stringify(item)) : null;
 };

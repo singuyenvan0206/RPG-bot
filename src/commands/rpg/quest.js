@@ -1,94 +1,62 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const db = require('../../database');
 const questLogic = require('../../utils/questLogic');
-const rpgLogic = require('../../utils/rpgLogic');
-
-const ACTION_NAMES = {
-    'kill_monster': 'Tiêu diệt Quái vật bằng /explore',
-    'kill_boss': 'Tiêu diệt World Boss',
-    'earn_gold': 'Thu thập Vàng',
-    'explore': 'Sử dụng lệnh /explore'
-};
 
 module.exports = {
     category: 'RPG',
-    aliases: ['q', 'task'],
     data: new SlashCommandBuilder()
         .setName('quest')
-        .setDescription('Xem danh sách Nhiệm Vụ Hằng Ngày (Daily Bounties)')
-        .addSubcommand(sub =>
-            sub.setName('claim')
-               .setDescription('Nhận thưởng các nhiệm vụ đã hoàn thành')
-        ),
-    help: {
-        usage: '/quest | /quest claim',
-        examples: ['/quest', '/quest claim', '$q'],
-        description: 'Xem danh sách nhiệm vụ hằng ngày từ Hiệp Hội. Dùng /quest claim để nhận thưởng sau khi hoàn thành mục tiêu.'
-    },
+        .setDescription('Xem và nhận thưởng nhiệm vụ')
+        .addSubcommand(sub => sub.setName('list').setDescription('Danh sách nhiệm vụ đang thực hiện'))
+        .addSubcommand(sub => sub.setName('claim').setDescription('Nhận thưởng nhiệm vụ đã hoàn thành').addIntegerOption(opt => opt.setName('id').setDescription('Mã nhiệm vụ (ID)').setRequired(true))),
     async execute(interaction) {
         const userId = interaction.user.id;
-        const { MessageFlags } = require('discord.js');
+        const sub = interaction.options.getSubcommand();
 
-        const player = await db.getPlayer(userId);
-        if (!player) return interaction.reply({ content: '❌ Bạn chưa tham gia thế giới này!', flags: MessageFlags.Ephemeral });
-
-        let activeQuests = await db.queryAll('SELECT * FROM quests WHERE user_id = $1 AND completed = FALSE', [userId]);
-
-        // Check if using subcommand or not
-        const sub = interaction.options.getSubcommand(false);
-
-        // If no subcommand (or 'list'), show quest list
-        if (!sub || sub !== 'claim') {
-            if (activeQuests.length === 0) {
-                await questLogic.generateDailyQuests(userId);
-                activeQuests = await db.queryAll('SELECT * FROM quests WHERE user_id = $1 AND completed = FALSE', [userId]);
-                interaction.channel.send(`<@${userId}> Kẻ lang thang, Hiệp Hội Thợ Săn đã gửi cho bạn 3 nhiệm vụ mới!`);
+        if (sub === 'list') {
+            const quests = await db.queryAll('SELECT * FROM quests WHERE user_id = $1 AND is_claimed = FALSE ORDER BY quest_type DESC, created_at DESC', [userId]);
+            
+            if (quests.length === 0) {
+                return interaction.reply({ content: '📜 Bạn không có nhiệm vụ nào đang thực hiện. Hãy dùng `/daily` để nhận nhiệm vụ mới!', flags: 64 });
             }
 
             const embed = new EmbedBuilder()
-                .setTitle('📜 Bảng Chỉ Thị Nhiệm Vụ')
-                .setColor('#3498db')
-                .setDescription('Hoàn thành các mục tiêu dưới đây để nhận thưởng khủng. Nếu thanh tiến độ đầy, hãy dùng lệnh `/quest claim`.');
+                .setTitle('📜 Sổ Tay Nhiệm Vụ')
+                .setColor('#f1c40f')
+                .setDescription('Hoàn thành các mục tiêu bên dưới để nhận thưởng hậu hĩnh.');
 
-            activeQuests.forEach(q => {
-                const actName = ACTION_NAMES[q.action_type] || q.action_type;
-                const status = q.progress >= q.target ? '✅ Hoàn Thành' : '⏳ Đang tiến hành';
+            quests.forEach(q => {
+                const typeLabel = q.quest_type === 'weekly' ? '🗓️ [HÀNG TUẦN]' : '☀️ [HÀNG NGÀY]';
+                let status = `Tiến độ: **${q.progress}/${q.target}**`;
+                if (q.completed) status = '✅ **ĐÃ HOÀN THÀNH** (Dùng `/quest claim id:${q.id}` để nhận thưởng)';
+                
                 embed.addFields({
-                    name: `Mã lệnh #${q.id}: ${actName}`,
-                    value: `Tiến độ: **${q.progress}/${q.target}**\nThưởng: 🪙 ${q.reward_gold} Vàng | 🌟 ${q.reward_exp} EXP\nTrạng thái: ${status}`
+                    name: `${typeLabel} Quest ID: #${q.id}`,
+                    value: `Mục tiêu: ${this.getActionLabel(q.action_type, q.target)}\n${status}\nThưởng: 💰 ${q.reward_gold} | 🌟 ${q.reward_exp}`,
+                    inline: false
                 });
             });
 
             return interaction.reply({ embeds: [embed] });
         }
 
-        // /quest claim
         if (sub === 'claim') {
-            const completedQuests = activeQuests.filter(q => q.progress >= q.target);
-            if (completedQuests.length === 0) {
-                return interaction.reply({ content: '❌ Bạn chưa hoàn thành nhiệm vụ nào để nhận thưởng!', flags: MessageFlags.Ephemeral });
-            }
+            const questId = interaction.options.getInteger('id');
+            const res = await questLogic.claimQuest(userId, questId);
 
-            let totalGold = 0;
-            let totalExp = 0;
+            if (!res.success) return interaction.reply({ content: `❌ ${res.message}`, flags: 64 });
 
-            for (const q of completedQuests) {
-                totalGold += Number(q.reward_gold);
-                totalExp += Number(q.reward_exp);
-                await db.execute('UPDATE quests SET completed = TRUE WHERE id = $1', [q.id]);
-            }
+            return interaction.reply(`🎊 Chúc mừng! Bạn đã nhận **${res.gold} Gold** và **${res.exp} EXP** từ nhiệm vụ #${questId}!`);
+        }
+    },
 
-            await db.execute('UPDATE players SET gold = gold + $1 WHERE user_id = $2', [totalGold, userId]);
-            const expResult = await rpgLogic.addExp(userId, totalExp);
-
-            let msg = `🎉 **HOÀN THÀNH NHIỆM VỤ!**\nBạn đã báo cáo ${completedQuests.length} nhiệm vụ và nhận được:\n🪙 **${totalGold} Vàng**\n🌟 **${totalExp} EXP**`;
-            
-            if (expResult && expResult.leveledUp) {
-                msg += `\n\n🆙 **LÊN CẤP!** Bạn đã đạt cấp độ ${expResult.newLevel}!`;
-            }
-
-            const embed = new EmbedBuilder().setColor('#f1c40f').setDescription(msg);
-            return interaction.reply({ embeds: [embed] });
+    getActionLabel(type, target) {
+        switch (type) {
+            case 'kill_monster': return `Tiêu diệt ${target} quái vật`;
+            case 'kill_boss': return `Tham gia hạ gục ${target} Boss`;
+            case 'earn_gold': return `Kiếm được ${target} Gold`;
+            case 'explore': return `Thám hiểm ${target} lần`;
+            default: return `Thực hiện ${type} x${target}`;
         }
     }
 };
