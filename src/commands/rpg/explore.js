@@ -104,9 +104,10 @@ module.exports = {
 
             await db.execute('UPDATE players SET last_explore = $1, mana = mana - 5 WHERE user_id = $2', [Date.now(), userId]);
 
+            const regionName = rpgData[session.region]?.name || session.region;
             const embed = new EmbedBuilder()
                 .setTitle('🚀 Bắt Đầu Hành Trình')
-                .setDescription(`Bạn đã chuẩn bị hành trang và tiến vào **${rpgData[session.region].name}**!${maxCleared > 0 ? `\n\nBạn đã từng thám hiểm đến **Tầng ${maxCleared}** ở đây.` : ''}`)
+                .setDescription(`Bạn đã chuẩn bị hành trang và tiến vào **${regionName}**!${maxCleared > 0 ? `\n\nBạn đã từng thám hiểm đến **Tầng ${maxCleared}** ở đây.` : ''}`)
                 .setColor('#3498db')
                 .setImage(gifData.explore);
 
