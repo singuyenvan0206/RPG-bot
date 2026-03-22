@@ -144,7 +144,7 @@ async function handleButton(interaction) {
             return interaction.update({ embeds: [embed], components: [row] });
         }
 
-        const regionData = rpgData[session.region];
+        const regionData = rpgData[session.region] || { name: session.region, monsters: [], events: [] };
         session.progress++;
 
         // --- PET EXPLORE BUFFS ---

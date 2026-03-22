@@ -45,8 +45,9 @@ module.exports = {
                 return interaction.reply({ content: '⚔️ Bạn đang trong trận chiến! Hãy kết thúc nó trước.', flags: require('discord.js').MessageFlags.Ephemeral });
             }
 
+            const regionInfo = rpgData[session.region] || { name: session.region };
             const embed = new EmbedBuilder()
-                .setTitle(`🗺️ Hành Trình Tại ${rpgData[session.region].name}`)
+                .setTitle(`🗺️ Hành Trình Tại ${regionInfo.name}`)
                 .setDescription(`Bạn đang ở **Tầng ${session.progress + 1}**.\n\n` +
                     `❤️ **HP:** ${player.hp}/${player.max_hp}\n` +
                     `💰 **Vàng tích lũy:** ${session.accumulatedRewards.gold}\n` +
