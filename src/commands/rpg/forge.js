@@ -90,9 +90,26 @@ async function forgeSlot(userId, player, equip, slotKey, client) {
     const itemInfo = itemsData.getItem(itemId);
     const goldCost = 500 * (currentUpgrade + 1);
     
-    let matNeed = 'iron_ore', matAmount = currentUpgrade + 2;
-    if (currentUpgrade >= 3 && currentUpgrade <= 6) { matNeed = 'magic_core'; matAmount = currentUpgrade - 1 || 1; }
-    else if (currentUpgrade >= 7) { matNeed = 'void_shard'; matAmount = 1; }
+    // --- CLASS-SPECIFIC MATERIALS ---
+    const classMaterials = {
+        'Warrior': { low: 'iron_ore', mid: 'steel_ingot', high: 'demon_horn' },
+        'Ranger': { low: 'oak_wood', mid: 'elven_wood', high: 'spirit_bark' },
+        'Mage': { low: 'magic_core', mid: 'mana_blossom', high: 'light_essence' },
+        'Assassin': { low: 'bronze_scrap', mid: 'emerald', high: 'void_shard' },
+        'Novice': { low: 'iron_ore', mid: 'iron_ore', high: 'iron_ore' }
+    };
+
+    const mats = classMaterials[player.class] || classMaterials['Novice'];
+    let matNeed = mats.low;
+    let matAmount = currentUpgrade + 2;
+
+    if (currentUpgrade >= 5 && currentUpgrade < 10) {
+        matNeed = mats.mid;
+        matAmount = Math.max(1, Math.floor(currentUpgrade / 2));
+    } else if (currentUpgrade >= 10) {
+        matNeed = mats.high;
+        matAmount = 1;
+    }
 
     const matInv = await client.query('SELECT amount FROM inventory WHERE user_id = $1 AND item_id = $2', [userId, matNeed]).then(r => r.rows[0]);
     if (!matInv || matInv.amount < matAmount || player.gold < goldCost) {

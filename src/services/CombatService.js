@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 
 class CombatService {
-    static async handleBattle(interaction, userId, monsterId, mHp, isShiny, action = 'attack') {
+    static async handleBattle(interaction, userId, monsterId, mHp, isShiny, action = 'attack', difficulty = 0) {
         const session = sessionManager.getSession(userId);
         const player = await db.getPlayer(userId);
         if (!player || (player.hp <= 0 && (!session || session.hp <= 0))) {
@@ -38,8 +38,31 @@ class CombatService {
 
         let mMaxHp = isShiny ? Math.floor(monster.hp * 1.5) : monster.hp;
         let mAtk = isShiny ? Math.floor(monster.atk * 1.5) : monster.atk;
-        let mName = isShiny ? `✨ Shiny ${monster.name}` : monster.name;
+        
+        // --- DIFFICULTY SCALING ---
+        const diffStatsMult = [1.0, 1.5, 2.5][difficulty] || 1.0;
+        const diffRewardsMult = [1.0, 1.2, 1.5][difficulty] || 1.0;
+        const difficultyNames = ['Thường', 'Khó', 'Ác Mộng'];
+        
+        mMaxHp = Math.floor(mMaxHp * diffStatsMult);
+        mAtk = Math.floor(mAtk * diffStatsMult);
+        
+        let mName = (isShiny ? `✨ Shiny ${monster.name}` : monster.name);
+        mName = `[${difficultyNames[difficulty]}] ${mName}`;
+        
         let mStatusEffects = (session && session.monster) ? session.monster.statusEffects : [];
+
+        // --- MONSTER SCALING ---
+        const floor = session ? session.progress : 1;
+        const scalingMod = 1 + (floor * 0.03); // 3% increase per floor
+        mMaxHp = Math.floor(mMaxHp * scalingMod);
+        mAtk = Math.floor(mAtk * scalingMod);
+
+        // --- FETCH MAX FLOOR (for first-time rewards) ---
+        const exploreData = await db.queryOne('SELECT max_floor FROM player_exploration WHERE user_id = $1 AND region_id = $2', [userId, player.current_region]);
+        const maxCleared = exploreData ? exploreData.max_floor : 0;
+        const isFirstClear = session && session.progress > maxCleared;
+        const rewardMult = isFirstClear ? 1.0 : 0.5; // 50% for repeat clears (as per user request "những lần sau sẽ nhận được ít hơn")
 
         // Stats with Buffs
         const territory = await db.queryOne('SELECT guild_id FROM guild_territories WHERE region_id = $1', [player.current_region]);
@@ -51,6 +74,15 @@ class CombatService {
         let pDef = regionBuff.defense_bonus ? Math.floor(stats.defense * (1 + regionBuff.defense_bonus * buffMult)) : stats.defense;
         let pMaxHp = regionBuff.hp_bonus ? Math.floor(player.max_hp * (1 + regionBuff.hp_bonus * buffMult)) : player.max_hp;
         let pHp = session ? session.hp : player.hp;
+
+        // --- APPLY EXPLORE MODIFIERS ---
+        let expMultTotal = 1.0;
+        if (session && session.modifier) {
+            const mod = rpgData.EXPLORE_MODIFIERS[session.modifier];
+            if (mod.atk_mult) pBaseDmg = Math.floor(pBaseDmg * mod.atk_mult);
+            if (mod.def_mult) pDef = Math.floor(pDef * mod.def_mult);
+            if (mod.exp_mult) expMultTotal *= mod.exp_mult;
+        }
 
         let log = isGuildTerritory ? `Castle **Lãnh Địa Bang Hội**: Buff vùng đất x2!\n` : '';
 
@@ -68,15 +100,44 @@ class CombatService {
         mStatusEffects = nextEffects;
         let pStatusEffects = nextPEffects;
 
+        // --- SKILL TRIGGERING ---
+        const learnedSkills = await db.getPlayerSkills(userId);
+        const skillTrigger = mHp > 0 && pHp > 0 ? combatLogic.triggerCombatSkills(learnedSkills, player.class, player) : null;
+
         if (mHp > 0 && pHp > 0 && action === 'attack') {
-            const { damage, isCrit } = combatLogic.calculateCrit(pBaseDmg, 0, stats.crit_rate, stats.crit_damage);
-            let finalDmg = damage;
-            if (playerPassives.includes('dragon_hunter') && monster.type === 'Dragon') {
-                finalDmg = Math.floor(finalDmg * 1.5);
-                log += `🐉 **Diệt Rồng**: Sát thương x1.5!\n`;
+            if (skillTrigger && player.mana >= (skillTrigger.mana_cost || 0)) {
+                // Skills consume mana
+                const manaCost = skillTrigger.mana_cost || 0;
+                player.mana -= manaCost;
+
+                let skillDmg = Math.floor(pBaseDmg * skillTrigger.multiplier);
+                const elemMult = combatLogic.getElementalMultiplier(skillTrigger.element, monster.element);
+                skillDmg = Math.floor(skillDmg * elemMult);
+
+                mHp = Math.max(0, mHp - skillDmg);
+                log += `🪄 Bạn ${skillTrigger.msg} (**-${manaCost} Mana**)\n`;
+                log += `💥 Gây **${skillDmg}** sát thương${elemMult > 1 ? ' (Ưu thế hệ!)' : ''}.\n`;
+
+                if (skillTrigger.effect === 'heal' || skillTrigger.effect === 'drain') {
+                    const heal = Math.floor(pMaxHp * (skillTrigger.heal_pct || 0.1));
+                    pHp = Math.min(pMaxHp, pHp + heal);
+                    log += `💚 Bạn được hồi phục **+${heal} HP**.\n`;
+                }
+                
+                if (skillTrigger.status && Math.random() < 0.3) {
+                    mStatusEffects.push({ type: skillTrigger.status, duration: 3 });
+                    log += `✨ Quái vật bị dính trạng thái **${skillTrigger.status}**!\n`;
+                }
+            } else {
+                const { damage, isCrit } = combatLogic.calculateCrit(pBaseDmg, 0, stats.crit_rate, stats.crit_damage);
+                let finalDmg = damage;
+                if (playerPassives.includes('dragon_hunter') && monster.type === 'Dragon') {
+                    finalDmg = Math.floor(finalDmg * 1.5);
+                    log += `🐉 **Diệt Rồng**: Sát thương x1.5!\n`;
+                }
+                mHp = Math.max(0, mHp - finalDmg);
+                log += `⚔️ Bạn gây **${finalDmg}** sát thương${isCrit ? ' (BẠO KÍCH)' : ''}.\n`;
             }
-            mHp = Math.max(0, mHp - finalDmg);
-            log += `⚔️ Bạn gây **${finalDmg}** sát thương${isCrit ? ' (BẠO KÍCH)' : ''}.\n`;
         }
 
         if (mHp > 0 && pHp > 0) {
@@ -87,10 +148,29 @@ class CombatService {
 
         // --- WIN/LOSS/CONTINUE ---
         if (mHp <= 0) {
-            const gold = isShiny ? monster.gold * 5 : monster.gold;
-            const exp = isShiny ? monster.exp * 5 : monster.exp;
+            let goldMult = 1.0;
+            let expMult = 1.0;
+            let itemBonus = 0;
+            if (session && session.petId) {
+                const pet = require('../utils/petsData').getPet(session.petId);
+                if (pet && pet.explore_buffs) {
+                    const eb = pet.explore_buffs;
+                    if (eb.gold_mult) goldMult += (eb.gold_mult - 1);
+                    if (eb.exp_mult) expMult += (eb.exp_mult - 1);
+                    if (eb.reward_mult) {
+                        goldMult += (eb.reward_mult - 1);
+                        expMult += (eb.reward_mult - 1);
+                    }
+                    if (eb.item_roll_bonus) itemBonus = eb.item_roll_bonus;
+                }
+            }
+
+            const gold = Math.floor((isShiny ? monster.gold * 5 : monster.gold) * rewardMult * diffRewardsMult * goldMult);
+            const exp = Math.floor((isShiny ? monster.exp * 5 : monster.exp) * expMultTotal * rewardMult * diffRewardsMult * expMult);
             
-            let rewardMsg = `💰 +${gold} Gold | 🌟 +${exp} EXP`;
+            let rewardMsg = isFirstClear ? `🏆 **THƯỞNG LẦN ĐẦU VƯỢT TẦNG!**\n` : `🔄 **VƯỢT TẦNG LẠI (50% Thưởng)**\n`;
+            rewardMsg += `✨ Độ khó **${difficultyNames[difficulty]}**: x${diffRewardsMult} Thưởng\n`;
+            rewardMsg += `💰 +${gold} Gold | 🌟 +${exp} EXP`;
             let itemsToClaim = [];
 
             if (isShiny) {
@@ -98,7 +178,7 @@ class CombatService {
                 itemsToClaim.push('shiny_essence');
             }
 
-            const dropRoll = Math.random();
+            const dropRoll = Math.random() - itemBonus;
             if (dropRoll < 0.2) {
                 const possibleDrops = ['iron_ore', 'bronze_scrap', 'medicinal_herb'];
                 itemsToClaim.push(possibleDrops[Math.floor(Math.random() * possibleDrops.length)]);
@@ -134,8 +214,13 @@ class CombatService {
                     session.statusEffects = pStatusEffects;
                     sessionManager.updateSession(userId, session);
                     await client.query('UPDATE players SET hp = $1, status_effects = $2 WHERE user_id = $3', [session.hp, JSON.stringify(pStatusEffects), userId]);
+                    
+                    // Update exploration progress
+                    if (isFirstClear) {
+                        await client.query('INSERT INTO player_exploration (user_id, region_id, max_floor) VALUES ($1, $2, $3) ON CONFLICT (user_id, region_id) DO UPDATE SET max_floor = GREATEST(player_exploration.max_floor, $3)', [userId, player.current_region, session.progress]);
+                    }
                 } else {
-                    await client.query('UPDATE players SET gold = gold + $1, hp = $2, status_effects = $3 WHERE user_id = $4', [gold, Math.floor(pHp) || 0, JSON.stringify(pStatusEffects), userId]);
+                    await client.query('UPDATE players SET gold = gold + $1, hp = $2, mana = $3, status_effects = $4 WHERE user_id = $5', [gold, Math.floor(pHp) || 0, player.mana, JSON.stringify(pStatusEffects), userId]);
                     await rpgLogic.addExp(userId, exp, client);
                 }
             });
@@ -172,7 +257,7 @@ class CombatService {
             session.statusEffects = pStatusEffects;
             sessionManager.updateSession(userId, session);
         }
-        await db.execute('UPDATE players SET hp = $1, status_effects = $2 WHERE user_id = $3', [Math.floor(pHp) || 0, JSON.stringify(pStatusEffects), userId]);
+        await db.execute('UPDATE players SET hp = $1, mana = $2, status_effects = $3 WHERE user_id = $4', [Math.floor(pHp) || 0, player.mana, JSON.stringify(pStatusEffects), userId]);
 
         const embed = new EmbedBuilder()
             .setTitle(`⚔️ Chiến Đấu - Tầng ${session ? session.progress : '?'}`)
@@ -197,8 +282,8 @@ class CombatService {
         }
 
         const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId(`battle_${monsterId}_${mHp}_${isShiny ? 1 : 0}`).setLabel('Tấn Công').setStyle(ButtonStyle.Danger).setEmoji('⚔️'),
-            new ButtonBuilder().setCustomId(`use_hp_${monsterId}_${mHp}_${isShiny ? 1 : 0}`).setLabel('Bơm Máu').setStyle(ButtonStyle.Success).setEmoji('🧪'),
+            new ButtonBuilder().setCustomId(`battle_${monsterId}_${mHp}_${isShiny ? 1 : 0}_${difficulty}`).setLabel('Tấn Công').setStyle(ButtonStyle.Danger).setEmoji('⚔️'),
+            new ButtonBuilder().setCustomId(`use_hp_${monsterId}_${mHp}_${isShiny ? 1 : 0}_${difficulty}`).setLabel('Bơm Máu').setStyle(ButtonStyle.Success).setEmoji('🧪'),
             new ButtonBuilder().setCustomId('session_finish').setLabel('Bỏ Chạy').setStyle(ButtonStyle.Secondary).setEmoji('🏃')
         );
 

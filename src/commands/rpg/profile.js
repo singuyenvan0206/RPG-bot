@@ -3,6 +3,10 @@ const db = require('../../database');
 const itemsData = require('../../utils/itemsData');
 const petsData = require('../../utils/petsData');
 const { createHealthBar } = require('../../utils/uiHelper');
+const { refreshMana } = require('../../utils/rpgLogic');
+const { MessageFlags, AttachmentBuilder } = require('discord.js');
+const path = require('path');
+const fs = require('fs');
 
 module.exports = {
     category: 'RPG',
@@ -21,12 +25,11 @@ module.exports = {
         description: 'Hiển thị hồ sơ nhân vật. Có thể xem hồ sơ của người khác bằng cách tag họ.'
     },
     async execute(interaction) {
-        const { MessageFlags } = require('discord.js');
         const targetUser = interaction.options.getUser('user') || interaction.user;
         const userId = targetUser.id;
         const isSelf = targetUser.id === interaction.user.id;
 
-        const player = await db.getPlayer(userId);
+        const player = await refreshMana(userId) || await db.getPlayer(userId);
         if (!player) {
             return interaction.reply({
                 content: isSelf
@@ -88,6 +91,19 @@ module.exports = {
             )
             .setFooter({ text: '💡 /inventory — Xem túi đồ | /equip — Thay trang bị | /shop — Mua sắm' });
 
-        await interaction.reply({ embeds: [embed] });
+        const activePetId = equip?.pet_id;
+        let files = [];
+        if (activePetId) {
+            const pet = petsData.getPet(activePetId);
+            if (pet && pet.image) {
+                const imgPath = path.join(process.cwd(), 'src', 'assets', 'pets', pet.image);
+                if (fs.existsSync(imgPath)) {
+                    files.push(new AttachmentBuilder(imgPath, { name: 'pet.png' }));
+                    embed.setImage('attachment://pet.png');
+                }
+            }
+        }
+
+        await interaction.reply({ embeds: [embed], files: files });
     },
 };

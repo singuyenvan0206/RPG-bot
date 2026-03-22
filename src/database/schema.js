@@ -188,6 +188,11 @@ async function initSchema() {
         ALTER TABLE players ADD COLUMN IF NOT EXISTS status_effects JSONB DEFAULT '[]'::jsonb
     `);
 
+    // Migration: add last_mana_regen column
+    await pool.query(`
+        ALTER TABLE players ADD COLUMN IF NOT EXISTS last_mana_regen BIGINT NOT NULL DEFAULT (extract(epoch from now()) * 1000)
+    `);
+
     // Unique Items (for items with rolled stats/passives)
     await pool.query(`
         CREATE TABLE IF NOT EXISTS player_unique_items (
@@ -232,6 +237,16 @@ async function initSchema() {
             status TEXT DEFAULT 'pending',
             created_at BIGINT NOT NULL DEFAULT (extract(epoch from now()))
         );
+    `);
+    
+    // Player Exploration Progress
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS player_exploration (
+            user_id TEXT NOT NULL REFERENCES players(user_id) ON DELETE CASCADE,
+            region_id TEXT NOT NULL,
+            max_floor INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (user_id, region_id)
+        )
     `);
 
     console.log('[Database] EchoWorld RPG Schema initialized successfully.');

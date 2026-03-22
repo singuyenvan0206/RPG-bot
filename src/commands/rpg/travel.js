@@ -11,11 +11,25 @@ const REGION_MIN_LEVELS = {
     abyss_ocean: 80,
     ancient_ruins: 150,
     sky_islands: 200,
-    the_void: 300,
     lava_caverns: 250,
+    the_void: 300,
     crystal_sanctuary: 400,
     heavenly_gates: 600
 };
+
+// Order of regions for progression
+const REGION_ORDER = [
+    'whispering_forest',
+    'burning_desert',
+    'frozen_mountains',
+    'abyss_ocean',
+    'ancient_ruins',
+    'sky_islands',
+    'lava_caverns',
+    'the_void',
+    'crystal_sanctuary',
+    'heavenly_gates'
+];
 
 module.exports = {
     category: 'RPG',
@@ -38,27 +52,50 @@ module.exports = {
         }
 
         const validRegions = Object.keys(rpgData).filter(key => typeof rpgData[key] === 'object' && rpgData[key].monsters);
+        
+        // Fetch progress for all regions
+        const explorationProgress = await db.queryAll('SELECT region_id, max_floor FROM player_exploration WHERE user_id = $1', [userId]);
+        const progressMap = explorationProgress.reduce((acc, curr) => {
+            acc[curr.region_id] = curr.max_floor;
+            return acc;
+        }, {});
+
         const options = validRegions.map(key => {
             const regionInfo = rpgData[key];
             const minLevel = REGION_MIN_LEVELS[key] || 1;
             const isCurrent = key === player.current_region;
-            const canEnter = player.level >= minLevel;
+            
+            // Check if UNLOCKED
+            let isUnlocked = true;
+            let lockReason = '';
+            
+            const regionIndex = REGION_ORDER.indexOf(key);
+            if (regionIndex > 0) {
+                const prevRegionKey = REGION_ORDER[regionIndex - 1];
+                const prevRegionInfo = rpgData[prevRegionKey];
+                const prevMaxFloor = progressMap[prevRegionKey] || 0;
+                
+                if (prevMaxFloor < prevRegionInfo.monsters.length * 3) {
+                    isUnlocked = false;
+                    lockReason = `Cần mốc thám hiểm ${prevRegionInfo.name} Tầng ${prevRegionInfo.monsters.length * 3}`;
+                }
+            }
+            
+            const levelEnough = player.level >= minLevel;
+            if (!levelEnough) {
+                isUnlocked = false;
+                lockReason = lockReason ? `${lockReason} & Cấp ${minLevel}` : `Cần đạt Cấp ${minLevel}`;
+            }
+
             const label = `${regionInfo.name}${isCurrent ? ' ← Hiện tại' : ''}`;
-            const desc = `Yêu cầu Lv.${minLevel}${canEnter ? '' : ' ⛔ Cấp chưa đủ'}`;
-            return { label, description: desc, value: key };
+            const desc = isUnlocked ? `Cấp ${minLevel}+ | Sẵn sàng` : `⛔ ${lockReason}`;
+            return { label, description: desc.substring(0, 100), value: key, emoji: isUnlocked ? '✅' : '🔒' };
         });
 
         const embed = new EmbedBuilder()
             .setTitle('🗺️ Bản Đồ Thế Giới EchoWorld')
-            .setDescription(`📍 Vị trí hiện tại: **${rpgData[player.current_region]?.name || player.current_region}**\n⚔️ Cấp độ của bạn: **Lv.${player.level}**\n\nChọn vùng đất muốn di chuyển. Vùng yêu cầu cấp cao hơn của bạn sẽ được đánh dấu ⛔.`)
-            .setColor('#f1c40f')
-            .addFields(
-                validRegions.map(key => ({
-                    name: rpgData[key].name,
-                    value: `Lv.${REGION_MIN_LEVELS[key] || 1}+ | ${rpgData[key].monsters.length} quái vật`,
-                    inline: true
-                }))
-            );
+            .setDescription(`📍 Vị trí hiện tại: **${rpgData[player.current_region]?.name || player.current_region}**\n⚔️ Cấp độ của bạn: **Lv.${player.level}**\n\n**Điều kiện mở vùng đất:**\n1️⃣ Đạt cấp độ tối thiểu.\n2️⃣ Đã thám hiểm đủ sâu ở vùng đất trước đó (Số tầng = Số loại quái vật).`)
+            .setColor('#f1c40f');
 
         const row = new ActionRowBuilder()
             .addComponents(
@@ -74,11 +111,25 @@ module.exports = {
 
         collector.on('collect', async i => {
             const selectedRegion = i.values[0];
-            const regionName = rpgData[selectedRegion].name;
+            const regionInfo = rpgData[selectedRegion];
+            const regionName = regionInfo.name;
             const minLevel = REGION_MIN_LEVELS[selectedRegion] || 1;
 
+            // Re-check logic for security
             if (player.level < minLevel) {
                 return i.reply({ content: `⛔ Bạn cần đạt **Lv.${minLevel}** mới có thể vào **${regionName}**!`, flags: MessageFlags.Ephemeral });
+            }
+
+            const regionIndex = REGION_ORDER.indexOf(selectedRegion);
+            if (regionIndex > 0) {
+                const prevRegionKey = REGION_ORDER[regionIndex - 1];
+                const prevRegionInfo = rpgData[prevRegionKey];
+                const progress = await db.queryOne('SELECT max_floor FROM player_exploration WHERE user_id = $1 AND region_id = $2', [userId, prevRegionKey]);
+                const maxFloor = progress ? progress.max_floor : 0;
+
+                if (maxFloor < prevRegionInfo.monsters.length * 3) {
+                    return i.reply({ content: `🔒 Bạn cần thám hiểm sâu hơn ở **${prevRegionInfo.name}** mới có thể mở khóa vùng đất này! (Cần hoàn thành tất cả mức độ khó - Tầng ${prevRegionInfo.monsters.length * 3})`, flags: MessageFlags.Ephemeral });
+                }
             }
 
             if (selectedRegion === player.current_region) {

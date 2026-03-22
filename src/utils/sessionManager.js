@@ -20,6 +20,7 @@ module.exports = {
                 progress: 0,
                 accumulatedRewards: { gold: 0, exp: 0, items: [] },
                 monster: null, // { id, hp, maxHp, statusEffects, isShiny }
+                petId: initialData.petId || null,
                 lastAction: Date.now()
             });
         }

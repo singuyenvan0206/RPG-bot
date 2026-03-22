@@ -30,7 +30,7 @@ async function addExp(userId, expGained, client = null) {
             const statGain = levelsGained * 2;
             
             await txClient.query(
-                'UPDATE players SET level = $1, exp = $2, max_hp = max_hp + $3, hp = max_hp + $3, max_mana = max_mana + $4, mana = max_mana + $4 WHERE user_id = $5', 
+                'UPDATE players SET level = $1, exp = $2, max_hp = max_hp + $3, hp = hp + $3, max_mana = max_mana + $4, mana = mana + $4 WHERE user_id = $5', 
                 [currentLevel, newExp, hpGain, manaGain, userId]
             );
             
@@ -78,4 +78,31 @@ async function addGuildExp(guildId, amount, client = null) {
     return { leveledUp, newLevel: currentLevel };
 }
 
-module.exports = { addExp, addGuildExp };
+async function refreshMana(userId, client = null) {
+    const query = 'SELECT mana, max_mana, last_mana_regen FROM players WHERE user_id = $1';
+    const player = await (client ? client.query(query, [userId]).then(r => r.rows[0]) : db.queryOne(query, [userId]));
+    if (!player) return null;
+
+    const now = Date.now();
+    const timePassed = now - Number(player.last_mana_regen);
+    const regenInterval = 5 * 60 * 1000; // 5 minutes per 1 mana
+    
+    if (timePassed < regenInterval) return player;
+
+    const regenAmount = Math.floor(timePassed / regenInterval);
+    const newMana = Math.min(player.max_mana, player.mana + regenAmount);
+    
+    // If mana is already full, just update the timestamp to now to prevent huge pileup check
+    // Actually, better to only update timestamp for used regenAmount
+    const newLastRegen = player.mana >= player.max_mana ? now : Number(player.last_mana_regen) + (regenAmount * regenInterval);
+
+    const updateQuery = 'UPDATE players SET mana = $1, last_mana_regen = $2 WHERE user_id = $3';
+    const params = [newMana, newLastRegen, userId];
+    
+    if (client) await client.query(updateQuery, params);
+    else await db.execute(updateQuery, params);
+    
+    return { ...player, mana: newMana, last_mana_regen: newLastRegen };
+}
+
+module.exports = { addExp, addGuildExp, refreshMana };

@@ -82,6 +82,7 @@ function triggerCombatSkills(learnedSkills, className, player) {
                 heal_pct: skill.heal_pct || 0,
                 dot_dmg: skill.dot_dmg || 0,
                 status: skill.status || null,
+                mana_cost: skill.mana_cost || 0,
                 msg: msg,
                 type: skill.type
             };

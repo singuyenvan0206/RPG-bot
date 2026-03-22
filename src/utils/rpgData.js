@@ -27,7 +27,16 @@ module.exports = {
             { code: 1105, id: 'lucky_clover', text: 'Bạn tìm thấy một cỏ 4 lá may mắn trên thảm cỏ.', gold: 50 },
             { code: 1106, id: 'poison_ivy', text: 'Bạn vô tình chạm vào lá độc, da dẻ ngứa ngáy khó chịu.', damage: 15 },
             { code: 1107, id: 'hermit_hut', text: 'Vị ẩn sĩ trong rừng mời bạn một chén trà thảo mộc.', heal: 100 },
-            { code: 1108, id: 'buried_acorn', text: 'Bạn đào được một quả sồi thần kỳ chôn dưới gốc cây.', exp: 30 }
+            { code: 1108, id: 'buried_acorn', text: 'Bạn đào được một quả sồi thần kỳ chôn dưới gốc cây.', exp: 30 },
+            { 
+                code: 1109, id: 'choice_traveler', type: 'choice_event',
+                text: 'Bạn gặp một thám hiểm khách bị thương đang cầu cứu.',
+                choices: [
+                    { id: 'help', label: '🤝 Giúp đỡ (-20 HP)', effect: { hp: -20, gold: 150, exp: 100, msg: 'Bạn dùng thuốc cứu người và được họ tặng vàng trả ơn!' } },
+                    { id: 'ignore', label: '🚶 Bỏ qua', effect: { msg: 'Bạn lạnh lùng bước đi, để lại người khách sau lưng.' } },
+                    { id: 'rob', label: '💰 Cướp bóc', effect: { gold: 300, hp: -10, status: 'POISON', msg: 'Bạn cướp túi tiền nhưng bị người đó đâm lén bằng dao độc!' } }
+                ]
+            }
         ]
     },
     burning_desert: {
@@ -58,7 +67,16 @@ module.exports = {
             { code: 1115, id: 'dust_chest', text: 'Một chiếc rương cũ phủ đầy cát bụi chứa đầy vàng.', gold: 300 },
             { code: 1116, id: 'sphinx_riddle', text: 'Bạn giải được câu đố của một linh hồn nhân sư.', exp: 200 },
             { code: 1117, id: 'sun_blessing', text: 'Ánh nắng rực rỡ tiếp thêm sức mạnh cho bạn.', heal: 150 },
-            { code: 1118, id: 'ancient_map', text: 'Bạn tìm thấy một mảnh bản đồ cũ chỉ đường.', exp: 150 }
+            { code: 1118, id: 'ancient_map', text: 'Bạn tìm thấy một mảnh bản đồ cũ chỉ đường.', exp: 150 },
+            {
+                code: 1119, id: 'choice_oasis_guardian', type: 'choice_event',
+                text: 'Một linh hồn hộ vệ Ốc đảo ngăn cản bạn: "Chỉ kẻ có tâm hồn thuần khiết mới được uống nước."',
+                choices: [
+                    { id: 'pray', label: '🙏 Cầu nguyện', effect: { heal: 500, exp: 100, msg: 'Linh hồn hài lòng và ban phước cho bạn dòng nước mát lạnh.' } },
+                    { id: 'pay', label: '🪙 Mua chuộc (500 Vàng)', effect: { gold: -500, heal: 300, msg: 'Linh hồn nhận vàng và biến mất, để lại hồ nước nhỏ.' } },
+                    { id: 'fight', label: '⚔️ Khiêu khích', effect: { hp: -100, msg: 'Linh hồn nổi giận và tung một luồng cát nóng vào mặt bạn!' } }
+                ]
+            }
         ]
     },
     frozen_mountains: {
@@ -294,6 +312,13 @@ module.exports = {
             { code: 1198, id: 'divine_knowledge', text: 'Tiếp nhận kho tàng kiến thức của thiên giới.', exp: 5000000 }
         ]
     }
+};
+
+module.exports.EXPLORE_MODIFIERS = {
+    fog: { name: '😶‍🌫️ Sương Mù', desc: 'Giảm 10% chính xác của bạn.', atk_mult: 0.9 },
+    mana_rich: { name: '✨ Linh Khí', desc: 'Tăng 20% EXP nhận được.', exp_mult: 1.2 },
+    cursed: { name: '🌑 Ám Khí', desc: 'Giảm 10% phòng thủ của bạn.', def_mult: 0.9 },
+    blessed: { name: '🌟 Chúc Phúc', desc: 'Tăng 10% tấn công của bạn.', atk_mult: 1.1 }
 };
 
 module.exports.getRegion = function(regionId) {

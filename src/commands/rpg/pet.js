@@ -1,4 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discord.js');
+const path = require('path');
+const fs = require('fs');
 const db = require('../../database');
 const petsData = require('../../utils/petsData');
 const equipCmd = require('./equip');
@@ -93,7 +95,16 @@ module.exports = {
                 .setColor('#f1c40f')
                 .setDescription(`Chúc mừng! Bạn đã ấp thành công nở ra **${info.name}** [${info.rarity}].\n\nHãy dùng lệnh \`/pet equip\` để mang nó theo cùng phiêu lưu.`);
 
-            return interaction.reply({ embeds: [embed] });
+            let files = [];
+            if (info.image) {
+                const imgPath = path.join(process.cwd(), 'src', 'assets', 'pets', info.image);
+                if (fs.existsSync(imgPath)) {
+                    files.push(new AttachmentBuilder(imgPath, { name: 'pet.png' }));
+                    embed.setImage('attachment://pet.png');
+                }
+            }
+
+            return interaction.reply({ embeds: [embed], files: files });
         }
 
         if (sub === 'equip') {

@@ -2,8 +2,9 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 const db = require('../../database');
 const rpgData = require('../../utils/rpgData');
 const gifData = require('../../utils/gifData');
-const sessionManager = require('../../utils/sessionManager');
+const { refreshMana } = require('../../utils/rpgLogic');
 const path = require('path');
+const { MessageFlags } = require('discord.js');
 
 module.exports = {
     category: 'RPG',
@@ -19,9 +20,9 @@ module.exports = {
     async execute(interaction) {
         const userId = interaction.user.id;
         
-        const player = await db.getPlayer(userId);
+        const player = await refreshMana(userId) || await db.getPlayer(userId);
         if (!player) {
-            return interaction.reply({ content: '❌ Bạn chưa có nhân vật! Gõ `/start` để bắt đầu.', flags: require('discord.js').MessageFlags.Ephemeral });
+            return interaction.reply({ content: '❌ Bạn chưa có nhân vật! Gõ `/start` để bắt đầu.', flags: MessageFlags.Ephemeral });
         }
 
         // Basic HP/Death check
@@ -52,6 +53,11 @@ module.exports = {
                 .setColor('#f1c40f')
                 .setThumbnail(gifData.explore);
 
+            if (session.modifier) {
+                const mod = rpgData.EXPLORE_MODIFIERS[session.modifier];
+                embed.addFields({ name: '🌐 Môi trường', value: `**${mod.name}**: ${mod.desc}`, inline: false });
+            }
+
             const row = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder().setCustomId('session_continue').setLabel('Tiến Tới').setStyle(ButtonStyle.Primary).setEmoji('👣'),
@@ -68,25 +74,47 @@ module.exports = {
                 return interaction.reply({ content: `⏳ Bạn cần nghỉ ngơi **${secs} giây** trước khi bắt đầu hành trình mới.`, flags: require('discord.js').MessageFlags.Ephemeral });
             }
 
+            if (player.mana < 5) {
+                return interaction.reply({ 
+                    content: `🔮 Bạn không đủ Mana để bắt đầu hành trình! (Cần **5 Mana**, hiện có **${player.mana}**)\n*Mana hồi lại 1 điểm mỗi 5 phút.*`, 
+                    flags: MessageFlags.Ephemeral 
+                });
+            }
+
+            // Fetch max floor
+            const exploreData = await db.queryOne('SELECT max_floor FROM player_exploration WHERE user_id = $1 AND region_id = $2', [userId, player.current_region]);
+            const maxCleared = exploreData ? exploreData.max_floor : 0;
+
+            // Fetch current pet from DB to put in session
+            const activePet = await db.queryOne('SELECT pet_id FROM player_pets WHERE user_id = $1 AND is_active = true', [userId]);
+
             session = sessionManager.getOrCreateSession(userId, {
                 region: player.current_region,
                 hp: player.hp,
                 maxHp: player.max_hp,
-                statusEffects: player.status_effects
+                statusEffects: player.status_effects,
+                petId: activePet ? activePet.pet_id : null
             });
 
-            await db.execute('UPDATE players SET last_explore = $1 WHERE user_id = $2', [Date.now(), userId]);
+            await db.execute('UPDATE players SET last_explore = $1, mana = mana - 5 WHERE user_id = $2', [Date.now(), userId]);
 
             const embed = new EmbedBuilder()
                 .setTitle('🚀 Bắt Đầu Hành Trình')
-                .setDescription(`Bạn đã chuẩn bị hành trang và tiến vào **${rpgData[session.region].name}**!`)
+                .setDescription(`Bạn đã chuẩn bị hành trang và tiến vào **${rpgData[session.region].name}**!${maxCleared > 0 ? `\n\nBạn đã từng thám hiểm đến **Tầng ${maxCleared}** ở đây.` : ''}`)
                 .setColor('#3498db')
                 .setImage(gifData.explore);
 
-            const row = new ActionRowBuilder()
-                .addComponents(
+            const row = new ActionRowBuilder();
+            if (maxCleared > 0) {
+                row.addComponents(
+                    new ButtonBuilder().setCustomId(`session_start_resume_${maxCleared}`).setLabel(`Khám Phá Tiếp (Tầng ${maxCleared + 1})`).setStyle(ButtonStyle.Primary).setEmoji('🚀'),
+                    new ButtonBuilder().setCustomId('session_continue').setLabel('Làm Lại Từ Tầng 1').setStyle(ButtonStyle.Secondary).setEmoji('🔄')
+                );
+            } else {
+                row.addComponents(
                     new ButtonBuilder().setCustomId('session_continue').setLabel('Bắt Đầu Tầng 1').setStyle(ButtonStyle.Primary).setEmoji('⚔️')
                 );
+            }
 
             return interaction.reply({ embeds: [embed], components: [row] });
         }
