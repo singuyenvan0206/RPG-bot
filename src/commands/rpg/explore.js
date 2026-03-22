@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 const db = require('../../database');
 const rpgData = require('../../utils/rpgData');
 const gifData = require('../../utils/gifData');
+const sessionManager = require('../../utils/sessionManager');
 const { refreshMana } = require('../../utils/rpgLogic');
 const path = require('path');
 const { MessageFlags } = require('discord.js');
