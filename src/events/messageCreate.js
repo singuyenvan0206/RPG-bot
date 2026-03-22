@@ -143,8 +143,20 @@ module.exports = {
         try {
             await command.execute(mockInteraction);
         } catch (error) {
-            console.error(error);
-            message.reply('Có lỗi xảy ra khi thực hiện lệnh này!');
+            console.error('[Command Error]:', error);
+            if (error.code === 'MODULE_NOT_FOUND' && error.requireStack) {
+                console.error('[Require Stack]:', error.requireStack);
+            }
+            
+            if (typeof message.reply === 'function') {
+                try {
+                    await message.reply('Có lỗi xảy ra khi thực hiện lệnh này!');
+                } catch (replyError) {
+                    console.error('[Reply Error]:', replyError);
+                }
+            } else {
+                console.error('[Error]: message.reply is not a function');
+            }
         }
     },
 };
