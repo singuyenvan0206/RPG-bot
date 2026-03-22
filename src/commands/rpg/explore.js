@@ -86,15 +86,20 @@ module.exports = {
             const exploreData = await db.queryOne('SELECT max_floor FROM player_exploration WHERE user_id = $1 AND region_id = $2', [userId, player.current_region]);
             const maxCleared = exploreData ? exploreData.max_floor : 0;
 
-            // Fetch current pet from DB to put in session
-            const activePet = await db.queryOne('SELECT pet_id FROM player_pets WHERE user_id = $1 AND is_active = true', [userId]);
+            // Fetch current pet from DB to put in session (type string like 'slime')
+            const equip = await db.queryOne('SELECT pet_id FROM player_equipment WHERE user_id = $1', [userId]);
+            let activePetType = null;
+            if (equip && equip.pet_id) {
+                const pet = await db.queryOne('SELECT pet_type FROM player_pets WHERE id = $1', [equip.pet_id]);
+                activePetType = pet ? pet.pet_type : null;
+            }
 
             session = sessionManager.getOrCreateSession(userId, {
                 region: player.current_region,
                 hp: player.hp,
                 maxHp: player.max_hp,
                 statusEffects: player.status_effects,
-                petId: activePet ? activePet.pet_id : null
+                petId: activePetType
             });
 
             await db.execute('UPDATE players SET last_explore = $1, mana = mana - 5 WHERE user_id = $2', [Date.now(), userId]);
