@@ -30,9 +30,10 @@ class CombatService {
             ...(accessory?.passives || [])
         ];
 
-        // Find monster
         const rpgData = require('../utils/rpgData');
         const region = rpgData[player.current_region];
+        if (!region) return interaction.reply({ content: '❌ Vùng đất không hợp lệ!', flags: 64 });
+        
         const monster = region.monsters.find(m => m.id === monsterId);
         if (!monster) return interaction.reply({ content: 'Quái vật đã hết hạn!', flags: 64 });
 

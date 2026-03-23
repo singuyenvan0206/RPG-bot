@@ -91,6 +91,83 @@ async function handleButton(interaction) {
         });
     }
 
+    if (customId === 'session_heal') {
+        const session = sessionManager.getSession(userId);
+        if (!session) return interaction.reply({ content: 'Không có hành trình nào đang diễn ra.', flags: MessageFlags.Ephemeral });
+
+        const player = await rpgLogic.refreshMana(userId);
+        if (player.mana < 2) {
+            return interaction.reply({ content: '🔮 Bạn không đủ Mana để nghỉ ngơi! (Cần **2 Mana**)', flags: MessageFlags.Ephemeral });
+        }
+
+        if (session.hp >= session.maxHp) {
+            return interaction.reply({ content: '❤️ Máu của bạn đã đầy!', flags: MessageFlags.Ephemeral });
+        }
+
+        const healAmount = Math.floor(session.maxHp * 0.25);
+        session.hp = Math.min(session.maxHp, session.hp + healAmount);
+        await db.execute('UPDATE players SET mana = mana - 2, hp = $1 WHERE user_id = $2', [session.hp, userId]);
+        
+        const regionInfo = rpgData[session.region] || { name: session.region };
+        const embed = new EmbedBuilder()
+            .setTitle(`⛺ Nghỉ Ngơi Tại ${regionInfo.name}`)
+            .setDescription(`Bạn đã hồi phục **+${healAmount} HP** (Tiêu tốn 2 Mana).\n\n` +
+                `❤️ **HP Hiện Tại:** ${session.hp}/${session.maxHp}\n` +
+                `🔮 **Mana Còn Lại:** ${player.mana - 2}`)
+            .setColor('#2ecc71');
+
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder().setCustomId('session_continue').setLabel('Tiếp Tục').setStyle(ButtonStyle.Primary).setEmoji('👣'),
+                new ButtonBuilder().setCustomId('session_finish').setLabel('Rút Lui').setStyle(ButtonStyle.Secondary).setEmoji('🏃')
+            );
+
+        return interaction.update({ embeds: [embed], components: [row] });
+    }
+
+    if (customId.startsWith('evtch_')) {
+        const [, eventCodeStr, choiceId] = customId.split('_');
+        const session = sessionManager.getSession(userId);
+        if (!session) return interaction.reply({ content: 'Không có hành trình nào đang diễn ra.', flags: MessageFlags.Ephemeral });
+
+        const regionKey = session.region;
+        const regionData = rpgData[regionKey];
+        const event = regionData.events.find(e => e.code === parseInt(eventCodeStr, 10));
+        const choice = event?.choices?.find(c => c.id === choiceId);
+
+        if (!choice) return interaction.reply({ content: 'Lựa chọn không hợp lệ.', flags: MessageFlags.Ephemeral });
+
+        const effect = choice.effect;
+        let log = effect.msg || '';
+        let pStatusEffects = session.statusEffects || [];
+
+        if (effect.hp) session.hp = Math.max(0, Math.min(session.maxHp, session.hp + effect.hp));
+        if (effect.heal) session.hp = Math.min(session.maxHp, session.hp + effect.heal);
+        if (effect.gold) session.accumulatedRewards.gold += effect.gold;
+        if (effect.exp) session.accumulatedRewards.exp += effect.exp;
+        if (effect.status) pStatusEffects.push({ type: effect.status, duration: 3 });
+
+        session.statusEffects = pStatusEffects;
+        sessionManager.updateSession(userId, session);
+
+        const embed = new EmbedBuilder()
+            .setTitle(`📜 Kết Quả: ${choice.label}`)
+            .setDescription(log)
+            .setColor(session.hp <= 0 ? '#000000' : '#2ecc71');
+
+        if (session.hp <= 0) {
+            sessionManager.endSession(userId);
+            await db.execute('UPDATE players SET hp = 0, dead_until = $1, status_effects = \'[]\'::jsonb WHERE user_id = $2', [Date.now() + 300000, userId]);
+            return interaction.update({ content: '💀 Lựa chọn của bạn đã dẫn đến cái chết!', embeds: [embed], components: [] });
+        }
+
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('session_continue').setLabel('Tiếp Tục').setStyle(ButtonStyle.Primary).setEmoji('👣')
+        );
+
+        return interaction.update({ embeds: [embed], components: [row] });
+    }
+
     if (customId === 'session_continue' || customId.startsWith('session_start_resume_')) {
         const session = sessionManager.getSession(userId);
         if (!session) return interaction.reply({ content: 'Không có hành trình nào đang diễn ra.', flags: MessageFlags.Ephemeral });
@@ -98,50 +175,6 @@ async function handleButton(interaction) {
         if (customId.startsWith('session_start_resume_')) {
             const resumeFloor = parseInt(customId.split('_').pop(), 10);
             session.progress = resumeFloor;
-        }
-
-        if (customId.startsWith('evtch_')) {
-            const [, eventCodeStr, choiceId] = customId.split('_');
-            const eventCode = parseInt(eventCodeStr, 10);
-            const session = sessionManager.getSession(userId);
-            if (!session) return interaction.reply({ content: 'Không có hành trình nào đang diễn ra.', flags: MessageFlags.Ephemeral });
-
-            const regionKey = session.region;
-            const regionData = rpgData[regionKey];
-            const event = regionData.events.find(e => e.code === eventCode);
-            const choice = event?.choices?.find(c => c.id === choiceId);
-
-            if (!choice) return interaction.reply({ content: 'Lựa chọn không hợp lệ.', flags: MessageFlags.Ephemeral });
-
-            const effect = choice.effect;
-            let log = effect.msg || '';
-            let pStatusEffects = session.statusEffects || [];
-
-            if (effect.hp) session.hp = Math.max(0, Math.min(session.maxHp, session.hp + effect.hp));
-            if (effect.heal) session.hp = Math.min(session.maxHp, session.hp + effect.heal);
-            if (effect.gold) session.accumulatedRewards.gold += effect.gold;
-            if (effect.exp) session.accumulatedRewards.exp += effect.exp;
-            if (effect.status) pStatusEffects.push({ type: effect.status, duration: 3 });
-
-            session.statusEffects = pStatusEffects;
-            sessionManager.updateSession(userId, session);
-
-            const embed = new EmbedBuilder()
-                .setTitle(`📜 Kết Quả: ${choice.label}`)
-                .setDescription(log)
-                .setColor(session.hp <= 0 ? '#000000' : '#2ecc71');
-
-            if (session.hp <= 0) {
-                sessionManager.endSession(userId);
-                await db.execute('UPDATE players SET hp = 0, dead_until = $1, status_effects = \'[]\'::jsonb WHERE user_id = $2', [Date.now() + 300000, userId]);
-                return interaction.update({ content: '💀 Lựa chọn của bạn đã dẫn đến cái chết!', embeds: [embed], components: [] });
-            }
-
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('session_continue').setLabel('Tiếp Tục').setStyle(ButtonStyle.Primary).setEmoji('👣')
-            );
-
-            return interaction.update({ embeds: [embed], components: [row] });
         }
 
         const regionData = rpgData[session.region] || { name: session.region, monsters: [], events: [] };
