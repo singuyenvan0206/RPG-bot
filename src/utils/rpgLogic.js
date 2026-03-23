@@ -79,7 +79,7 @@ async function addGuildExp(guildId, amount, client = null) {
 }
 
 async function refreshMana(userId, client = null) {
-    const query = 'SELECT mana, max_mana, last_mana_regen FROM players WHERE user_id = $1';
+    const query = 'SELECT * FROM players WHERE user_id = $1';
     const player = await (client ? client.query(query, [userId]).then(r => r.rows[0]) : db.queryOne(query, [userId]));
     if (!player) return null;
 

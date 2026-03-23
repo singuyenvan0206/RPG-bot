@@ -213,10 +213,18 @@ async function handleButton(interaction) {
             // MONSTER ENCOUNTER
             // --- SEQUENTIAL MONSTER SELECTION ---
             const monsters = regionData.monsters;
+            if (!monsters || monsters.length === 0) {
+                return interaction.reply({ content: '❌ Không tìm thấy quái vật ở vùng đất này!', flags: MessageFlags.Ephemeral });
+            }
+
             const monsterIndex = Math.floor((session.progress - 1) / 3) % monsters.length;
             const difficultyIndex = (session.progress - 1) % 3; // 0: Thường, 1: Khó, 2: Ác Mộng
             
             const monster = monsters[monsterIndex];
+            if (!monster) {
+                return interaction.reply({ content: '❌ Lỗi dữ liệu quái vật!', flags: MessageFlags.Ephemeral });
+            }
+
             const difficultyNames = ['Thường', 'Khó', 'Ác Mộng'];
             const diffName = difficultyNames[difficultyIndex];
 
@@ -293,7 +301,14 @@ async function handleButton(interaction) {
                 return interaction.update({ embeds: [embed], components: [row] });
             } else {
                 // REGULAR EVENT
+                if (!regionData.events || regionData.events.length === 0) {
+                     return interaction.reply({ content: '❌ Không tìm thấy sự kiện ở vùng đất này!', flags: MessageFlags.Ephemeral });
+                }
+
                 const event = regionData.events[Math.floor(Math.random() * regionData.events.length)];
+                if (!event) {
+                     return interaction.reply({ content: '❌ Lỗi dữ liệu sự kiện!', flags: MessageFlags.Ephemeral });
+                }
                 
                 if (event.type === 'choice_event') {
                     const embed = new EmbedBuilder()

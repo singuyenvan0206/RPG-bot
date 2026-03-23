@@ -45,7 +45,7 @@ module.exports = {
                 return interaction.reply({ content: '⚔️ Bạn đang trong trận chiến! Hãy kết thúc nó trước.', flags: require('discord.js').MessageFlags.Ephemeral });
             }
 
-            const regionInfo = rpgData[session.region] || { name: session.region };
+            const regionInfo = rpgData[session.region] || { name: session.region || 'Không xác định' };
             const embed = new EmbedBuilder()
                 .setTitle(`🗺️ Hành Trình Tại ${regionInfo.name}`)
                 .setDescription(`Bạn đang ở **Tầng ${session.progress + 1}**.\n\n` +
@@ -95,6 +95,13 @@ module.exports = {
                 activePetType = pet ? pet.pet_type : null;
             }
 
+            if (!rpgData[player.current_region]) {
+                return interaction.reply({ 
+                    content: `❌ Vùng đất **${player.current_region}** hiện chưa được khai phá hoặc không tồn tại!`, 
+                    flags: MessageFlags.Ephemeral 
+                });
+            }
+
             session = sessionManager.getOrCreateSession(userId, {
                 region: player.current_region,
                 hp: player.hp,
@@ -105,7 +112,7 @@ module.exports = {
 
             await db.execute('UPDATE players SET last_explore = $1, mana = mana - 5 WHERE user_id = $2', [Date.now(), userId]);
 
-            const regionName = rpgData[session.region]?.name || session.region;
+            const regionName = rpgData[session.region]?.name || session.region || 'Vùng đất bí ẩn';
             const embed = new EmbedBuilder()
                 .setTitle('🚀 Bắt Đầu Hành Trình')
                 .setDescription(`Bạn đã chuẩn bị hành trang và tiến vào **${regionName}**!${maxCleared > 0 ? `\n\nBạn đã từng thám hiểm đến **Tầng ${maxCleared}** ở đây.` : ''}`)

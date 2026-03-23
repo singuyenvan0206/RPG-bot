@@ -44,7 +44,7 @@ module.exports = {
         await interaction.editReply({ embeds: [gitEmbed] });
 
         // Bước 2: pm2 restart
-        const pm2Result = await runCommand('pm2 restart index --update-env');
+        const pm2Result = await runCommand('pm2 restart index ');
 
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
