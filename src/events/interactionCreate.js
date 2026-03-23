@@ -425,10 +425,11 @@ async function handleButton(interaction) {
     if (customId.startsWith('battle_') || customId.startsWith('use_hp_')) {
         const action = customId.startsWith('use_hp_') ? 'heal' : 'attack';
         const parts = customId.split('_');
+        const difficulty = parseInt(parts.pop(), 10);
         const isShiny = parseInt(parts.pop(), 10) === 1;
         const mHp = parseInt(parts.pop(), 10);
         const monsterId = parts.slice(1).join('_');
-        return CombatService.handleBattle(interaction, userId, monsterId, mHp, isShiny, action);
+        return CombatService.handleBattle(interaction, userId, monsterId, mHp, isShiny, action, difficulty);
     }
 
     if (customId.startsWith('boss_attack_')) {
