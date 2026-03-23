@@ -217,8 +217,8 @@ async function handleButton(interaction) {
                 return interaction.reply({ content: '❌ Không tìm thấy quái vật ở vùng đất này!', flags: MessageFlags.Ephemeral });
             }
 
-            const monsterIndex = Math.floor((session.progress - 1) / 3) % monsters.length;
-            const difficultyIndex = (session.progress - 1) % 3; // 0: Thường, 1: Khó, 2: Ác Mộng
+            const monsterIndex = (session.progress - 1) % monsters.length;
+            const difficultyIndex = Math.floor((session.progress - 1) / monsters.length) % 3; // 0: Thường, 1: Khó, 2: Ác Mộng
             
             const monster = monsters[monsterIndex];
             if (!monster) {
