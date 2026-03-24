@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const itemsData = require('../../utils/itemsData');
 const materialsData = require('../../utils/materialsData');
+const db = require('../../database');
 
 module.exports = {
     category: 'System',
@@ -121,6 +122,33 @@ module.exports = {
             if (specialStr.length > 0) {
                 embed.addFields({ name: '✨ Thuộc tính đặc biệt', value: specialStr, inline: false });
             }
+
+            // Upgrade Materials (Forge info)
+            const player = await db.getPlayer(interaction.user.id);
+            const pClass = player ? player.class : 'Novice';
+            
+            const classMaterials = {
+                'Warrior': { low: 'iron_ore', mid: 'steel_ingot', high: 'demon_horn' },
+                'Ranger': { low: 'oak_wood', mid: 'elven_wood', high: 'spirit_bark' },
+                'Mage': { low: 'magic_core', mid: 'mana_blossom', high: 'light_essence' },
+                'Assassin': { low: 'bronze_scrap', mid: 'emerald', high: 'void_shard' },
+                'Novice': { low: 'iron_ore', mid: 'iron_ore', high: 'iron_ore' }
+            };
+
+            const mats = classMaterials[pClass] || classMaterials['Novice'];
+            const matLow = materialsData.getMaterial(mats.low)?.name || mats.low;
+            const matMid = materialsData.getMaterial(mats.mid)?.name || mats.mid;
+            const matHigh = materialsData.getMaterial(mats.high)?.name || mats.high;
+
+            embed.addFields({ 
+                name: '🛠️ Nguyên liệu Cường hóa (Forge)', 
+                value: `Yêu cầu nguyên liệu đối với Class **${pClass}** của bạn:\n` +
+                       `🔹 **[Cấp 1 - 5]**: ${matLow}\n` +
+                       `🔹 **[Cấp 6 - 10]**: ${matMid}\n` +
+                       `🔹 **[Cấp 11+]**: ${matHigh}\n` +
+                       `*(Tốn thêm Vàng mỗi cấp, tỷ lệ thành công giảm dần)*`, 
+                inline: false 
+            });
         }
         
         return interaction.reply({ embeds: [embed] });
