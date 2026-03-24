@@ -157,7 +157,7 @@ async function handleButton(interaction) {
 
         if (session.hp <= 0) {
             sessionManager.endSession(userId);
-            await db.execute('UPDATE players SET hp = 0, dead_until = $1, status_effects = \'[]\'::jsonb WHERE user_id = $2', [Date.now() + 300000, userId]);
+            await db.execute('UPDATE players SET hp = 0, dead_until = $1, status_effects = \'[]\'::jsonb WHERE user_id = $2', [Date.now() + 1800000, userId]);
             return interaction.update({ content: '💀 Lựa chọn của bạn đã dẫn đến cái chết!', embeds: [embed], components: [] });
         }
 
@@ -192,6 +192,14 @@ async function handleButton(interaction) {
         }
 
         let skipEvent = session.hasEventOnThisFloor || false;
+
+        if (!skipEvent) {
+            const player = await db.getPlayer(userId);
+            if (player.mana < 5) {
+                return interaction.reply({ content: `🔮 Bạn không đủ **5 Mana** để khám phá Tầng ${session.progress + 1}! (Mana hiện tại: ${player.mana}).\nHãy nghỉ ngơi để hồi Mana hoặc dùng /use.`, flags: require('discord.js').MessageFlags.Ephemeral });
+            }
+            await db.execute('UPDATE players SET mana = mana - 5 WHERE user_id = $1', [userId]);
+        }
         
         // --- EVENT OR CHEST ROLL ---
         if (!skipEvent) {
@@ -260,7 +268,7 @@ async function handleButton(interaction) {
 
                         if (session.hp <= 0) {
                             sessionManager.endSession(userId);
-                            await db.execute('UPDATE players SET hp = 0, dead_until = $1, status_effects = \'[]\'::jsonb WHERE user_id = $2', [Date.now() + 300000, userId]);
+                            await db.execute('UPDATE players SET hp = 0, dead_until = $1, status_effects = \'[]\'::jsonb WHERE user_id = $2', [Date.now() + 1800000, userId]);
                             return interaction.update({ content: '💀 Bạn đã gục ngã vì sự kiện này!', embeds: [embed], components: [] });
                         }
 

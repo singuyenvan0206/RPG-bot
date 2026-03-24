@@ -110,7 +110,7 @@ module.exports = {
                 petId: activePetType
             });
 
-            await db.execute('UPDATE players SET last_explore = $1, mana = mana - 5 WHERE user_id = $2', [Date.now(), userId]);
+            await db.execute('UPDATE players SET last_explore = $1 WHERE user_id = $2', [Date.now(), userId]);
 
             const regionName = rpgData[session.region]?.name || session.region || 'Vùng đất bí ẩn';
             const embed = new EmbedBuilder()

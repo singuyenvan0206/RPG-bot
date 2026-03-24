@@ -61,6 +61,7 @@ module.exports = {
                     }
                     if (baseName === 'market' && name === 'item_id') return args[1];
                     if (baseName === 'item' && name === 'query') return args.join(' ');
+                    if (baseName === 'craft' && name === 'recipe_id') return args[0];
                     if (baseName === 'help' && name === 'command') return args[0];
                     if (baseName === 'guild' && name === 'name') return args.slice(1).join(' ');
                     if (baseName === 'guild' && name === 'guild_id') return args[1];
@@ -93,6 +94,7 @@ module.exports = {
                     if (baseName === 'setlevel' && name === 'level') return parseArgs(1);
                     if (baseName === 'givegold' && name === 'amount') return parseArgs(1);
                     if (baseName === 'giveitem' && name === 'amount') return parseArgs(2);
+                    if (baseName === 'craft' && name === 'amount') return parseArgs(1);
                     return null;
                 },
                 getUser: (name) => {

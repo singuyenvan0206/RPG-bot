@@ -246,7 +246,7 @@ class CombatService {
 
         if (pHp <= 0) {
              if (session) sessionManager.endSession(userId);
-             await db.execute('UPDATE players SET hp = 0, dead_until = $1, status_effects = \'[]\'::jsonb WHERE user_id = $2', [Date.now() + 300000, userId]);
+             await db.execute('UPDATE players SET hp = 0, dead_until = $1, status_effects = \'[]\'::jsonb WHERE user_id = $2', [Date.now() + 1800000, userId]);
              return interaction.update({ content: '💀 Bạn đã gục ngã!', embeds: [], components: [] });
         }
 
@@ -255,7 +255,7 @@ class CombatService {
             session.hp = Math.floor(pHp) || 0;
             session.monster.hp = mHp;
             session.monster.statusEffects = mStatusEffects;
-            session.statusEffects = pStatusEffects;
+             session.statusEffects = pStatusEffects;
             sessionManager.updateSession(userId, session);
         }
         await db.execute('UPDATE players SET hp = $1, mana = $2, status_effects = $3 WHERE user_id = $4', [Math.floor(pHp) || 0, player.mana, JSON.stringify(pStatusEffects), userId]);

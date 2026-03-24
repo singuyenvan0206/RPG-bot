@@ -2,8 +2,11 @@ const skillsData = require('./skillsData');
 
 const shopItems = {
     consumables: [
-        { code: 902, id: 'healing_potion', price: 200, type: 'consumable', name: '🧪 Thuốc Hồi Máu', desc: 'Hồi 100 HP ngay lập tức.' },
-        { code: 903, id: 'mana_potion', price: 150, type: 'consumable', name: '🧪 Thuốc Hồi Mana', desc: 'Hồi 50 Mana ngay lập tức.' }
+        { code: 902, id: 'minor_healing_potion', price: 100, type: 'consumable', name: '🧪 Thuốc Hồi Máu Nhỏ', desc: 'Hồi 50 HP ngay lập tức.' },
+        { code: 981, id: 'healing_potion', price: 300, type: 'consumable', name: '🧪 Thuốc Hồi Máu', desc: 'Hồi 150 HP ngay lập tức.' },
+        { code: 982, id: 'major_healing_potion', price: 700, type: 'consumable', name: '🧪 Thuốc Hồi Máu Lớn', desc: 'Hồi 300 HP ngay lập tức.' },
+        { code: 903, id: 'mana_potion', price: 150, type: 'consumable', name: '✨ Thuốc Hồi Mana', desc: 'Hồi 50 Mana ngay lập tức.' },
+        { code: 983, id: 'revive_potion', price: 5000, type: 'consumable', name: '🕊️ Nước Hồi Sinh', desc: 'Phục hồi hoàn toàn sinh lực và lập tức xóa bỏ hình phạt tử vong.' }
     ],
     weapons: [
         // --- COMMON ---
