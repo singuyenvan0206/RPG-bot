@@ -60,16 +60,18 @@ module.exports = {
                 let list = '';
                 itemsArray.forEach(item => {
                     let name = item.name;
-                    const shopCode = item.code || item.id;
+                    let info = null;
+
                     if (item.type === 'weapon' || item.type === 'armor' || item.type === 'accessory') {
-                        const info = itemsData.getItem(item.id);
-                        name = info ? info.name : item.id;
+                        info = itemsData.getItem(item.id);
                     } else if (item.type === 'material') {
-                        const info = materialsData.getMaterial(item.id);
-                        name = info ? info.name : item.id;
-                    } else {
-                        name = item.name || item.id;
+                        info = materialsData.getMaterial(item.id);
                     }
+
+                    if (info) name = info.name;
+                    else if (!name) name = item.id;
+
+                    const shopCode = (info && info.code) ? info.code : (item.code || item.id);
                     list += `\`[${shopCode}]\` **${name}**: 🪙 **${item.price.toLocaleString()}**\n`;
                 });
                 return list || '*Trống*';
