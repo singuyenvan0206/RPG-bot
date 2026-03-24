@@ -19,7 +19,10 @@ module.exports = {
         description: 'Tra cứu thông tin chi tiết về chỉ số, hệ nguyên tố, đặc tính và mô tả của bất kì trang bị hay nguyên liệu nào trong game.'
     },
     async execute(interaction) {
-        const queryStr = interaction.options.getString('query');
+        const queryStr = interaction.options.getString('query') || '';
+        if (!queryStr) {
+            return interaction.reply({ content: '❌ Vui lòng nhập tên, mã (code) hoặc ID vật phẩm!', flags: MessageFlags.Ephemeral });
+        }
         let query = queryStr.toLowerCase().trim();
         
         let foundItem = null;

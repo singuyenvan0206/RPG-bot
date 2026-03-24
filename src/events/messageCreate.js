@@ -60,6 +60,7 @@ module.exports = {
                         return args[0];
                     }
                     if (baseName === 'market' && name === 'item_id') return args[1];
+                    if (baseName === 'item' && name === 'query') return args.join(' ');
                     if (baseName === 'help' && name === 'command') return args[0];
                     if (baseName === 'guild' && name === 'name') return args.slice(1).join(' ');
                     if (baseName === 'guild' && name === 'guild_id') return args[1];
