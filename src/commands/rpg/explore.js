@@ -119,8 +119,15 @@ module.exports = {
                 .setColor('#3498db')
                 .setImage(gifData.explore);
 
+            const regionInfo = rpgData[session.region] || {};
+            const maxFloors = regionInfo.monsters ? regionInfo.monsters.length * 3 : 45;
+
             const row = new ActionRowBuilder();
-            if (maxCleared > 0) {
+            if (maxCleared >= maxFloors) {
+                row.addComponents(
+                    new ButtonBuilder().setCustomId('session_continue').setLabel(`Khám Khá Lại (Đã Clear Tầng ${maxFloors})`).setStyle(ButtonStyle.Secondary).setEmoji('🔄')
+                );
+            } else if (maxCleared > 0) {
                 row.addComponents(
                     new ButtonBuilder().setCustomId(`session_start_resume_${maxCleared}`).setLabel(`Khám Phá Tiếp (Tầng ${maxCleared + 1})`).setStyle(ButtonStyle.Primary).setEmoji('🚀'),
                     new ButtonBuilder().setCustomId('session_continue').setLabel('Làm Lại Từ Tầng 1').setStyle(ButtonStyle.Secondary).setEmoji('🔄')

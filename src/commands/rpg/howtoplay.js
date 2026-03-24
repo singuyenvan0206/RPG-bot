@@ -8,11 +8,6 @@ module.exports = {
         .setDescription('Cẩm nang hướng dẫn chơi trò chơi EchoWorld RPG toàn tập'),
     async execute(interaction) {
         
-        const currentEmbed = new EmbedBuilder()
-            .setTitle('📖 Cẩm nang EchoWorld: Menu Chính')
-            .setColor('#ffffff')
-            .setDescription('Hướng dẫn chi tiết về thế giới mở này. Nhấn các nút Điều hướng bên dưới.');
-
         const pages = [
             // Page 1: Basics
             new EmbedBuilder()
@@ -20,10 +15,10 @@ module.exports = {
                 .setColor('#3498db')
                 .setDescription('Chào mừng đến với **EchoWorld RPG**! Dưới đây là cách để bạn bắt đầu cuộc hành trình.')
                 .addFields(
-                    { name: 'Khởi đầu (`/start`)', value: 'Sử dụng lệnh này để tạo nhân vật và chọn 1 trong 4 Class: Chiến Binh, Xạ Thủ, Pháp Sư, Sát Thủ.' },
-                    { name: 'Thám hiểm (`/explore`)', value: 'Lệnh quan trọng nhất! Dùng để đi bộ trong khu vực hiện tại. Bạn có 70% gặp quái vật và 30% kích hoạt Sự Kiện Ngoại Khóa.' },
-                    { name: 'Túi đồ & Chỉ số (`/inventory`)', value: 'Theo dõi lượng Máu (HP), Mana, Cấp độ, Điểm Kinh Nghiệm (EXP), và xem bạn đang nhặt được những món đồ / nguyên liệu nào.' },
-                    { name: 'Mặc Đồ (`/equip`)', value: 'Mặc Vũ Khí, Áo Giáp, Phụ Kiện để tăng Sát Thương (ATK), Phòng Thủ (DEF), Tốc Độ (AGI) và Chí Mạng (CRIT).' }
+                    { name: 'Khởi đầu (`/start`)', value: 'Bạn sẽ bắt đầu là một **Tân Thủ (Novice)**. Hãy thám hiểm để đạt **Cấp 10**, sau đó dùng lại lệnh này để chọn 1 trong 4 Class: Chiến Binh, Xạ Thủ, Pháp Sư, Sát Thủ.' },
+                    { name: 'Thám hiểm (`/explore`)', value: 'Lệnh quan trọng nhất! Bạn sẽ vượt qua các tầng quái vật. Số tầng tối đa bằng số loại quái vật x 3. Ở mỗi tầng, chắc chắn có quái vật trấn giữ và có tỷ lệ xuất hiện Rương hoặc Sự Kiện bí ẩn ngay trước đó.' },
+                    { name: 'Túi đồ (`/inventory`)', value: 'Theo dõi lượng Máu, Mana, Cấp độ, và xem các vật phẩm/nguyên liệu nhặt được.' },
+                    { name: 'Kĩ năng (`/skill`)', value: 'Học kĩ năng từ `/shop` và trang bị vào **3 slot** chiến đấu để gia tăng sức mạnh đột biến.' }
                 ),
 
             // Page 2: World & Ecosystem
@@ -32,34 +27,31 @@ module.exports = {
                 .setColor('#2ecc71')
                 .setDescription('Vượt ra khỏi Rừng Nguyên Sinh, thế giới này còn rất nhiều thứ.')
                 .addFields(
-                    { name: 'Dịch chuyển (`/travel`)', value: 'Khi đủ cấp độ hoặc tự tin, dùng lệnh này để di chuyển sang các Vùng Đất mới (Sa Mạc, Núi Tuyết, Biển Sâu...). Quái vật mạnh hơn = Rớt đồ xịn hơn.' },
-                    { name: 'Chợ Đen (`/market`)', value: 'Bạn có thể bán các trang bị xịn kiếm được cho người chơi khác với giá Vàng do bạn tự đặt ra, hoặc lướt chợ để mua đồ rẻ.' },
-                    { name: 'Bang Hội (`/guild`)', value: 'Đóng góp 1000 Vàng để tự lập Bang Hội riêng hoặc gia nhập Bang của người khác.' },
-                    { name: 'Săn World Boss (`/boss`)', value: 'Mỗi khu vực có 1 con Trùm. Cả máy chủ phải cùng nhau diệt đủ số lượng quái vật theo yêu cầu để dụ nó ra. Đánh bại Boss nhận phần thưởng vô giá!' }
+                    { name: 'Dịch chuyển (`/travel`)', value: 'Khi chinh phục xong vùng đất cũ, hãy di chuyển sang Vùng Đất mới. Quái vật mạnh hơn = Rớt đồ xịn hơn.' },
+                    { name: 'Bang Hội (`/guild`)', value: 'Gia nhập Bang hội để cùng đồng đội chiếm đóng các khu vực qua hệ thống **Lãnh Thổ** (`/guild territory`). Tính năng Guild Wars sẽ sớm ra mắt!' },
+                    { name: 'Săn World Boss (`/boss`)', value: 'Mỗi khu vực có 1 con Trùm. Cả máy chủ phải cùng nhau diệt đủ số lượng quái để dụ nó ra. Đánh bại Boss nhận phần thưởng vô giá!' }
                 ),
 
             // Page 3: Expansion 1.0 (Crafting & Pets)
             new EmbedBuilder()
                 .setTitle('📖 Cẩm nang EchoWorld: 3. Lò Rèn & Thú Cưng')
                 .setColor('#f1c40f')
-                .setDescription('Bản cập nhật Expansion 1.0 mang đến sức mạnh mới.')
+                .setDescription('Nâng cấp trang bị và tìm kiếm bạn đồng hành.')
                 .addFields(
                     { name: 'Phân Rã Đồ (`/dismantle`)', value: 'Biến các trang bị dư thừa thành Nguyên Liệu Rèn (Quặng sắt, Lõi phép, Mảnh hư không).' },
-                    { name: 'Cường Hóa (`/forge`)', value: 'Mang Trang Bị Đang Mặc + Vàng + Nguyên Liệu đến thợ rèn để đập lên [+1, +2,...]. Đồ càng cao đập càng tốn kém nhưng chỉ số càng khủng.' },
-                    { name: 'Ấp Trứng Thú (`/pet hatch`)', value: 'World Boss có tỷ lệ rớt Trứng Thú Rừng. Ấp nó để sinh ra các Thú Cưng ngẫu nhiên siêu hiếm.' },
-                    { name: 'Trang bị Pet (`/pet equip`)', value: 'Mang thú cưng đi theo để nó cộng hưởng Nội Tại (Buff Máu, Tăng Chí Mạng, Giáp) vào sát thương của bạn.' }
+                    { name: 'Cường Hóa (`/forge`)', value: 'Mang Trang Bị + Vàng + Nguyên Liệu đến thợ rèn để đập lên [+1, +2,...]. Chỉ số sẽ tăng cực mạnh theo cấp cường hóa.' },
+                    { name: 'Thú Cưng (`/pet`)', value: 'Ấp trứng rơi từ Boss để nhận Pet. Mang theo Pet cung cấp buff sức mạnh và thay đổi chỉ số trong thám hiểm.' }
                 ),
 
             // Page 4: Daily Quests & Arena
             new EmbedBuilder()
                 .setTitle('📖 Cẩm nang EchoWorld: 4. Nhiệm Vụ & Đấu Trường')
                 .setColor('#e74c3c')
-                .setDescription('Tìm kiếm vinh quang và tiền tài.')
+                .setDescription('Tìm kiếm vinh quang thông qua thử thách.')
                 .addFields(
-                    { name: 'Nhận Nhiệm Vụ (`/quest list`)', value: 'Mỗi ngày bạn sẽ được Hội Thợ Săn giao 3 nhiệm vụ (Ví dụ: Giết 15 quái, Săn Boss, Kiếm 5000 Vàng). Hệ thống tự đếm tiến độ khi bạn chơi.' },
-                    { name: 'Trả Nhiệm Vụ (`/quest claim`)', value: 'Nhận cơn mưa EXP và Vàng khi thanh tiến độ Nhiệm vụ đạt 100%.' },
-                    { name: 'Xếp hạng PVP (`/arena rank`)', value: 'Bảng xếp hạng những kẻ mạnh nhất EchoWorld tính theo điểm Elo.' },
-                    { name: 'Đấu Trường Sinh Tử (`/arena match`)', value: 'Hệ thống tự ghép bạn với một người chơi có Elo ngang ngửa bạn. Các chỉ số hai bên sẽ tự động gầm rú và chiến đấu trong 10 hiệp. Kẻ thắng lấy Elo kẻ thất bại!' }
+                    { name: 'Nhiệm Vụ (`/quest`)', value: 'Hoàn thành 3 nhiệm vụ hằng ngày mỗi ngày để nhận cơn mưa EXP và Vàng.' },
+                    { name: 'Đấu Trường PvP (`/arena`)', value: 'Quyết đấu với người chơi khác để leo Bảng Xếp Hạng. Hệ thống tính điểm **Elo** để phân chia thứ hạng từ Đồng đến Thách Đấu.' },
+                    { name: 'Phần Thưởng Top', value: 'Những người đứng đầu bảng xếp hạng Elo sẽ nhận được danh hiệu và phần thưởng đặc biệt mỗi mùa.' }
                 ),
 
             // Page 5: Activities & Fun
@@ -69,10 +61,43 @@ module.exports = {
                 .setDescription('Những cách khác để kiếm tài nguyên và thử vận may.')
                 .addFields(
                     { name: 'Điểm Danh Hằng Ngày (`/daily`)', value: 'Nhận 500 Vàng và 200 EXP miễn phí mỗi 24 giờ. Đừng quên ghé thăm mỗi ngày!' },
-                    { name: 'Khai Thác Mỏ (`/mine`)', value: 'Tiêu tốn 10 Mana để đào quặng (Sắt, Lõi Phép, Mảnh Hư Không). Rất quan trọng để thu thập nguyên liệu rèn đồ.' },
-                    { name: 'Câu Cá (`/fish`)', value: 'Buông cần tại các vùng nước để bắt Cá Chép, Cá Hồi... Mỗi lần câu tốn 5 Mana.' },
-                    { name: 'Máy Quay Slots (`/slots`)', value: 'Đặt cược Vàng và quay máy. Trúng 2 hoặc 3 biểu tượng để nhận thưởng gấp bội.' },
-                    { name: 'Tung Đồng Xu (`/flip`)', value: 'Cá cược 50/50 với mặt Ngửa (Heads) hoặc Sấp (Tails). Thắng nhận x2 số tiền!' }
+                    { name: 'Khai Thác Mỏ (`/mine` & `/fish`)', value: 'Tiêu tốn Mana để đào quặng sắt, lõi phép, hoặc câu cá làm thực phẩm/bán lấy tiền.' },
+                    { name: 'Giải Trí (`/slots` & `/flip`)', value: 'Thử vận may với các trò chơi cá cược để nhân đôi số vàng đang có.' }
+                ),
+
+            // Page 6: Skills System
+            new EmbedBuilder()
+                .setTitle('📖 Cẩm nang EchoWorld: 6. Hệ Thống Kĩ Năng')
+                .setColor('#9b59b6')
+                .setDescription('Làm chủ sức mạnh nguyên tố và kĩ năng đặc trưng.')
+                .addFields(
+                    { name: 'Học Kĩ Năng', value: 'Mua sách kĩ năng trong `/shop`. Mỗi Class (Chiến binh, Pháp sư...) có bộ kĩ năng riêng biệt.' },
+                    { name: 'Trang Bị Kĩ Năng', value: 'Sử dụng `/skill equip <id> <slot>` để lắp kĩ năng vào 1 trong **3 slot** chiến đấu.' },
+                    { name: 'Cơ Chế Kích Hoạt', value: 'Kĩ năng chủ động (Mana) sẽ tự kích hoạt mỗi lượt khi bạn tấn công (`/explore`). Kĩ năng bị động sẽ buff chỉ số vĩnh viễn.' },
+                    { name: 'Nguyên Tố', value: 'Các kĩ năng bị ảnh hưởng bởi khắc chế nguyên tố (Lửa, Nước, Gió, Đất, Ánh Sáng, Bóng Tối). Chọn đúng nguyên tố khắc chế, sát thương sẽ tăng cao.' }
+                ),
+
+            // Page 7: Market, Trade & Economy
+            new EmbedBuilder()
+                .setTitle('📖 Cẩm nang EchoWorld: 7. Kinh Tế & Chợ')
+                .setColor('#f39c12')
+                .setDescription('Giao thương với người chơi khác để làm giàu.')
+                .addFields(
+                    { name: 'Chợ Giao Dịch (`/market list`)', value: 'Mua bán vật phẩm ngang giá. Dùng `/market sell` để đang bán món đồ dư thừa.' },
+                    { name: 'Đấu Giá Cơ Bản (`auction: true`)', value: 'Một số món hiếm có thể lên Đấu Giá. Dùng lệnh `/market bid` để đấu giá với những người khác.' },
+                    { name: 'Giao Dịch Trực Tiếp (`/trade`)', value: 'Dùng lệnh này để gửi Vàng hoặc Vật Phẩm trực tiếp cho người chơi khác với thuế phí thấp.' },
+                    { name: '💡 Mẹo viết tắt số tiền', value: 'Ở bất kỳ lệnh liên quan đến nhập Vàng, bạn có thể dùng **k, m, b**. Ví dụ: `1k5` = 1500, `2m` = 2,000,000.' }
+                ),
+
+            // Page 8: Progression & Rebirth
+            new EmbedBuilder()
+                .setTitle('📖 Cẩm nang EchoWorld: 8. Chuyển Sinh Vĩnh Cửu')
+                .setColor('#1abc9c')
+                .setDescription('Vượt qua giới hạn của sinh tử để mạnh mẽ hơn bao giờ hết.')
+                .addFields(
+                    { name: 'Thức Tỉnh Sức Mạnh (`/rebirth`)', value: 'Khi nhân vật của bạn đạt đến **Cấp 100**, bạn có thể tiến hành Chuyển Sinh.' },
+                    { name: 'Kết Quả Chuyển Sinh', value: 'Level của bạn sẽ quay về 1, tuy nhiên bạn sẽ nhận được một luồng sức mạnh mới cộng dồn (ví dụ: +10% mọi chỉ số và +1% Chí Mạng cho mỗi lần Chuyển Sinh).' },
+                    { name: 'Tài Sản Hội Tụ', value: 'Túi đồ, Vàng, Trang bị đã rèn và thú cưng của bạn đều được giữ lại hoàn toàn sau khi Chuyển Sinh.' }
                 )
         ];
 
@@ -142,4 +167,3 @@ module.exports = {
         });
     }
 };
-

@@ -178,38 +178,135 @@ async function handleButton(interaction) {
         }
 
         const regionData = rpgData[session.region] || { name: session.region, monsters: [], events: [] };
-        session.progress++;
+        const maxFloors = regionData.monsters ? regionData.monsters.length * 3 : 45;
 
-        // --- PET EXPLORE BUFFS ---
-        let petMsg = '';
-        if (session.petId) {
-            const petsData = require('../utils/petsData');
-            const pet = petsData.getPet(session.petId);
-            if (pet && pet.explore_buffs) {
-                const eb = pet.explore_buffs;
-                if (eb.heal_per_floor) {
-                    const heal = Math.floor(session.maxHp * eb.heal_per_floor);
-                    session.hp = Math.min(session.maxHp, session.hp + heal);
-                    petMsg = `\n💖 **${pet.name}** đã hồi phục cho bạn **+${heal} HP**!`;
+        if (session.progress >= maxFloors) {
+            const embed = new EmbedBuilder()
+                .setTitle('🎉 Chinh Phục Vùng Đất')
+                .setDescription(`Bạn đã đánh bại toàn bộ quái vật và dọn dẹp **${regionData.name || session.region}**!\nHãy rút lui an toàn và dùng \`/travel\` để chuẩn bị vùng đất mới.`)
+                .setColor('#f1c40f');
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('session_finish').setLabel('Nhận Thưởng & Rút Lui').setStyle(ButtonStyle.Success).setEmoji('🏆')
+            );
+            return interaction.update({ embeds: [embed], components: [row] });
+        }
+
+        let skipEvent = session.hasEventOnThisFloor || false;
+        
+        // --- EVENT OR CHEST ROLL ---
+        if (!skipEvent) {
+            const eventRoll = Math.random();
+            if (eventRoll < 0.25) { // 25% chance of event before monster
+                session.hasEventOnThisFloor = true;
+                sessionManager.updateSession(userId, session);
+
+                const isChest = Math.random() < 0.3; // 30% of events are chests
+                if (isChest) {
+                    const embed = new EmbedBuilder()
+                        .setTitle(`🧰 Tầng ${session.progress + 1}: Rương Kho Báu Bí Ẩn`)
+                        .setDescription('Bạn tình cờ tìm thấy một chiếc rương cũ kỹ bám đầy rêu phong. Bạn sẽ làm gì?')
+                        .setColor('#f1c40f');
+
+                    if (session.modifier) {
+                        const mod = rpgData.EXPLORE_MODIFIERS[session.modifier];
+                        embed.addFields({ name: '🌐 Môi trường', value: `**${mod.name}**: ${mod.desc}`, inline: false });
+                    }
+                    
+                    const row = new ActionRowBuilder().addComponents(
+                        new ButtonBuilder().setCustomId('chest_safe').setLabel('Mở Cẩn Thận').setStyle(ButtonStyle.Success).setEmoji('🧤'),
+                        new ButtonBuilder().setCustomId('chest_risky').setLabel('Phá Khóa').setStyle(ButtonStyle.Danger).setEmoji('🔨'),
+                        new ButtonBuilder().setCustomId('session_continue').setLabel('Bỏ Qua').setStyle(ButtonStyle.Secondary).setEmoji('👣')
+                    );
+
+                    return interaction.update({ embeds: [embed], components: [row] });
+                } else {
+                    if (!regionData.events || regionData.events.length === 0) {
+                        skipEvent = true;
+                    } else {
+                        const event = regionData.events[Math.floor(Math.random() * regionData.events.length)];
+                        if (event.type === 'choice_event') {
+                            const embed = new EmbedBuilder()
+                                .setTitle(`📖 Tầng ${session.progress + 1}: Sự Kiện Kỳ Lạ`)
+                                .setDescription(event.text)
+                                .setColor('#9b59b6');
+                            
+                            if (session.modifier) {
+                                const mod = rpgData.EXPLORE_MODIFIERS[session.modifier];
+                                embed.addFields({ name: '🌐 Môi trường', value: `**${mod.name}**: ${mod.desc}`, inline: false });
+                            }
+
+                            const row = new ActionRowBuilder().addComponents(
+                                event.choices.map(c => 
+                                    new ButtonBuilder()
+                                        .setCustomId(`evtch_${event.code}_${c.id}`)
+                                        .setLabel(c.label)
+                                        .setStyle(ButtonStyle.Primary)
+                                )
+                            );
+                            return interaction.update({ embeds: [embed], components: [row] });
+                        }
+
+                        // Simple Event
+                        let outcomeMsg = event.text;
+                        if (event.heal) session.hp = Math.min(session.maxHp, session.hp + event.heal);
+                        if (event.damage) session.hp = Math.max(0, session.hp - event.damage);
+                        if (event.gold) session.accumulatedRewards.gold += event.gold;
+                        if (event.exp) session.accumulatedRewards.exp += event.exp;
+
+                        const embed = new EmbedBuilder()
+                            .setTitle(`📜 Tầng ${session.progress + 1}: Sự Kiện`)
+                            .setDescription(outcomeMsg)
+                            .setColor('#3498db');
+
+                        if (session.hp <= 0) {
+                            sessionManager.endSession(userId);
+                            await db.execute('UPDATE players SET hp = 0, dead_until = $1, status_effects = \'[]\'::jsonb WHERE user_id = $2', [Date.now() + 300000, userId]);
+                            return interaction.update({ content: '💀 Bạn đã gục ngã vì sự kiện này!', embeds: [embed], components: [] });
+                        }
+
+                        const row = new ActionRowBuilder().addComponents(
+                            new ButtonBuilder().setCustomId('session_continue').setLabel('Tiến Tới (Gặp Quái)').setStyle(ButtonStyle.Primary).setEmoji('👣')
+                        );
+                        return interaction.update({ embeds: [embed], components: [row] });
+                    }
                 }
-                if (eb.gold_mult || eb.exp_mult || eb.reward_mult) {
-                    petMsg += `\n✨ **${pet.name}** đang giúp bạn tìm thêm phần thưởng!`;
-                }
+            } else {
+                skipEvent = true;
             }
         }
-        
-        // --- FLOOR MODIFIER ROLL ---
-        session.modifier = null;
-        if (Math.random() < 0.15) {
-            const modKeys = Object.keys(rpgData.EXPLORE_MODIFIERS);
-            session.modifier = modKeys[Math.floor(Math.random() * modKeys.length)];
-        }
 
-        // --- QUEST PROGRESS ---
-        await questLogic.addProgress(userId, 'explore', 1);
+        if (skipEvent) {
+            session.progress++;
+            session.hasEventOnThisFloor = false;
 
-        const roll = Math.random();
-        if (roll < 0.7) {
+            // --- PET EXPLORE BUFFS ---
+            let petMsg = '';
+            if (session.petId) {
+                const petsData = require('../utils/petsData');
+                const pet = petsData.getPet(session.petId);
+                if (pet && pet.explore_buffs) {
+                    const eb = pet.explore_buffs;
+                    if (eb.heal_per_floor) {
+                        const heal = Math.floor(session.maxHp * eb.heal_per_floor);
+                        session.hp = Math.min(session.maxHp, session.hp + heal);
+                        petMsg = `\n💖 **${pet.name}** đã hồi phục cho bạn **+${heal} HP**!`;
+                    }
+                    if (eb.gold_mult || eb.exp_mult || eb.reward_mult) {
+                        petMsg += `\n✨ **${pet.name}** đang giúp bạn tìm thêm phần thưởng!`;
+                    }
+                }
+            }
+            
+            // --- FLOOR MODIFIER ROLL ---
+            session.modifier = null;
+            if (Math.random() < 0.15) {
+                const modKeys = Object.keys(rpgData.EXPLORE_MODIFIERS);
+                session.modifier = modKeys[Math.floor(Math.random() * modKeys.length)];
+            }
+
+            // --- QUEST PROGRESS ---
+            await questLogic.addProgress(userId, 'explore', 1);
+
             // MONSTER ENCOUNTER
             // --- SEQUENTIAL MONSTER SELECTION ---
             const monsters = regionData.monsters;
@@ -218,7 +315,7 @@ async function handleButton(interaction) {
             }
 
             const monsterIndex = (session.progress - 1) % monsters.length;
-            const difficultyIndex = Math.floor((session.progress - 1) / monsters.length) % 3; // 0: Thường, 1: Khó, 2: Ác Mộng
+            const difficultyIndex = Math.min(2, Math.floor((session.progress - 1) / monsters.length));
             
             const monster = monsters[monsterIndex];
             if (!monster) {
@@ -228,9 +325,17 @@ async function handleButton(interaction) {
             const difficultyNames = ['Thường', 'Khó', 'Ác Mộng'];
             const diffName = difficultyNames[difficultyIndex];
 
+            const diffStatsMult = [1.0, 1.5, 2.5][difficultyIndex] || 1.0;
+            const scalingMod = 1 + (session.progress * 0.03);
+
             const isShiny = Math.random() < 0.01;
-            const mHp = isShiny ? Math.floor(monster.hp * 1.5) : monster.hp;
             
+            let mHpBase = isShiny ? Math.floor(monster.hp * 1.5) : monster.hp;
+            let mHp = Math.floor(Math.floor(mHpBase * diffStatsMult) * scalingMod);
+            
+            let mAtkBase = isShiny ? Math.floor(monster.atk * 1.5) : monster.atk;
+            let mAtk = Math.floor(Math.floor(mAtkBase * diffStatsMult) * scalingMod);
+
             session.monster = {
                 id: monster.id,
                 hp: mHp,
@@ -247,7 +352,7 @@ async function handleButton(interaction) {
                 .setDescription(`Một kẻ thù cản bước thám hiểm của bạn!${petMsg}`)
                 .setColor(difficultyIndex === 2 ? '#e74c3c' : (difficultyIndex === 1 ? '#e67e22' : '#2ecc71'))
                 .addFields(
-                    { name: 'Kẻ thù', value: `❤️ HP: ${mHp} | 🗡️ ATK: ${isShiny ? Math.floor(monster.atk * 1.5) : monster.atk}`, inline: true },
+                    { name: 'Kẻ thù', value: `❤️ HP: ${mHp} | 🗡️ ATK: ${mAtk}`, inline: true },
                     { name: 'Của bạn', value: `❤️ HP: ${session.hp}/${session.maxHp}`, inline: true }
                 );
 
@@ -272,90 +377,13 @@ async function handleButton(interaction) {
                 );
 
             // Floor Milestone Feedback
-            if (session.progress % 10 === 0) {
+            if (session.progress % 10 === 0 || session.progress === maxFloors) {
                 embed.setFooter({ text: `🚩 TẦNG CỘT MỐC! Bạn đang đối đầu với kẻ thù mạnh mẽ.` });
                 embed.setColor('#9b59b6'); // Purple for milestone
             }
 
             return interaction.update({ embeds: [embed], components: [row], files: files });
-        } else {
-            // EVENT OR MYSTERY CHEST
-            const eventRoll = Math.random();
-            if (eventRoll < 0.2) { // 20% of events are chests (6% total)
-                const embed = new EmbedBuilder()
-                    .setTitle(`🧰 Tầng ${session.progress}: Rương Kho Báu Bí Ẩn`)
-                    .setDescription('Bạn tình cờ tìm thấy một chiếc rương cũ kỹ bám đầy rêu phong. Bạn sẽ làm gì?')
-                    .setColor('#f1c40f');
-
-                if (session.modifier) {
-                    const mod = rpgData.EXPLORE_MODIFIERS[session.modifier];
-                    embed.addFields({ name: '🌐 Môi trường', value: `**${mod.name}**: ${mod.desc}`, inline: false });
-                }
-                
-                const row = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder().setCustomId('chest_safe').setLabel('Mở Cẩn Thận').setStyle(ButtonStyle.Success).setEmoji('🧤'),
-                    new ButtonBuilder().setCustomId('chest_risky').setLabel('Phá Khóa').setStyle(ButtonStyle.Danger).setEmoji('🔨'),
-                    new ButtonBuilder().setCustomId('session_continue').setLabel('Bỏ Qua').setStyle(ButtonStyle.Secondary).setEmoji('👣')
-                );
-
-                return interaction.update({ embeds: [embed], components: [row] });
-            } else {
-                // REGULAR EVENT
-                if (!regionData.events || regionData.events.length === 0) {
-                     return interaction.reply({ content: '❌ Không tìm thấy sự kiện ở vùng đất này!', flags: MessageFlags.Ephemeral });
-                }
-
-                const event = regionData.events[Math.floor(Math.random() * regionData.events.length)];
-                if (!event) {
-                     return interaction.reply({ content: '❌ Lỗi dữ liệu sự kiện!', flags: MessageFlags.Ephemeral });
-                }
-                
-                if (event.type === 'choice_event') {
-                    const embed = new EmbedBuilder()
-                        .setTitle(`📖 Tầng ${session.progress}: Sự Kiện Kỳ Lạ`)
-                        .setDescription(event.text)
-                        .setColor('#9b59b6');
-                    
-                    if (session.modifier) {
-                        const mod = rpgData.EXPLORE_MODIFIERS[session.modifier];
-                        embed.addFields({ name: '🌐 Môi trường', value: `**${mod.name}**: ${mod.desc}`, inline: false });
-                    }
-
-                    const row = new ActionRowBuilder().addComponents(
-                        event.choices.map(c => 
-                            new ButtonBuilder()
-                                .setCustomId(`evtch_${event.code}_${c.id}`)
-                                .setLabel(c.label)
-                                .setStyle(ButtonStyle.Primary)
-                        )
-                    );
-                    return interaction.update({ embeds: [embed], components: [row] });
-                }
-
-                // Simple Event Logic (Existing)
-                let outcomeMsg = event.text;
-                if (event.heal) session.hp = Math.min(session.maxHp, session.hp + event.heal);
-                if (event.damage) session.hp = Math.max(0, session.hp - event.damage);
-                if (event.gold) session.accumulatedRewards.gold += event.gold;
-                if (event.exp) session.accumulatedRewards.exp += event.exp;
-
-                const embed = new EmbedBuilder()
-                    .setTitle(`📜 Tầng ${session.progress}: Sự Kiện`)
-                    .setDescription(outcomeMsg + petMsg)
-                    .setColor('#3498db');
-
-                if (session.hp <= 0) {
-                    sessionManager.endSession(userId);
-                    await db.execute('UPDATE players SET hp = 0, dead_until = $1, status_effects = \'[]\'::jsonb WHERE user_id = $2', [Date.now() + 300000, userId]);
-                    return interaction.update({ content: '💀 Bạn đã gục ngã vì sự kiện này!', embeds: [embed], components: [] });
-                }
-
-                const row = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder().setCustomId('session_continue').setLabel('Tiếp Tục').setStyle(ButtonStyle.Primary).setEmoji('👣')
-                );
-                return interaction.update({ embeds: [embed], components: [row] });
         }
-    }
     }
 
     if (customId === 'chest_safe' || customId === 'chest_risky') {
@@ -404,6 +432,7 @@ async function handleButton(interaction) {
             return interaction.update({ content: '💀 Bạn đã gục ngã vì bẫy rương!', embeds: [embed], components: [] });
         }
 
+        sessionManager.updateSession(userId, session);
         return interaction.update({ embeds: [embed], components: [row] });
     }
 

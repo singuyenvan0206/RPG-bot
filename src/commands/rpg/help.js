@@ -45,6 +45,7 @@ module.exports = {
             'Crafting': { emoji: '🛠️', label: 'Khai Thác & Chế Tạo' },
             'Economy': { emoji: '💰', label: 'Kinh Tế & Chợ' },
             'Gambling': { emoji: '🎰', label: 'Trò Chơi Cá Cược' },
+            'Progression': { emoji: '📈', label: 'Tiến Trình & Thăng Cấp' },
             'System': { emoji: '⚙️', label: 'Hệ Thống & Thông Tin' }
         };
 
@@ -56,7 +57,7 @@ module.exports = {
                 .setFooter({ text: 'Dùng menu bên dưới để chọn Category | Gõ /help [tên_lệnh] để xem chi tiết' });
 
             if (!categoryKey) {
-                embed.setDescription('Chào mừng dũng sĩ đến với EchoWorld! Hãy chọn một danh mục bên dưới để khám phá các lệnh hỗ trợ cho hành trình của bạn.');
+                embed.setDescription('Chào mừng dũng sĩ đến với EchoWorld! Hãy chọn một danh mục bên dưới để khám phá.\n\n✨ **Tính Năng Mới:** Đấu Trường (Arena), Bang Hội (Guild), Kĩ Năng (Skill), Chợ Đấu Giá (Market) đã ra mắt!');
                 for (const [key, cat] of Object.entries(categories)) {
                     const count = commands.filter(cmd => cmd.category === key).size;
                     embed.addFields({ name: `${cat.emoji} ${cat.label}`, value: `> Có **${count}** lệnh trong mục này.`, inline: true });
