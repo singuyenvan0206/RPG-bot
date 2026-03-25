@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const db = require('../../database');
 const itemsData = require('../../utils/itemsData');
 const materialsData = require('../../utils/materialsData');
+const shopData = require('../../utils/shopData');
 
 module.exports = {
     category: 'RPG',
@@ -58,8 +59,15 @@ module.exports = {
                 eqBp.push(`\`[${eqInf.code}]\` **${eqInf.name}** [${eqInf.rarity}]${tag} (x${b.amount})`);
             } else {
                 const matInf = materialsData.getMaterial(b.item_id);
-                if (matInf) matBp.push(`**${matInf.name}** [${matInf.rarity}] (x${b.amount})`);
-                else matBp.push(`**${b.item_id}** (x${b.amount})`);
+                const conInf = shopData.consumables?.find(c => c.id === b.item_id);
+                
+                if (matInf) {
+                    matBp.push(`**${matInf.name}** [${matInf.rarity || 'Common'}] (x${b.amount})`);
+                } else if (conInf) {
+                    matBp.push(`**${conInf.name}** [Tiêu hao] (x${b.amount})`);
+                } else {
+                    matBp.push(`**${b.item_id}** (x${b.amount})`);
+                }
             }
         });
 

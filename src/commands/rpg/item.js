@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const itemsData = require('../../utils/itemsData');
 const materialsData = require('../../utils/materialsData');
+const shopData = require('../../utils/shopData');
 const db = require('../../database');
 
 module.exports = {
@@ -56,6 +57,23 @@ module.exports = {
                     const mat = allMats[key];
                     if (mat.code == query || mat.name.toLowerCase().includes(query)) {
                         foundItem = mat;
+                        isMaterial = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 3. Search in Consumables (shopData) if still not found
+        if (!foundItem) {
+            const allConsumables = shopData.consumables || [];
+            if (allConsumables.find(c => c.id === query)) {
+                foundItem = allConsumables.find(c => c.id === query);
+                isMaterial = true;
+            } else {
+                for (const con of allConsumables) {
+                    if (con.code == query || con.name.toLowerCase().includes(query)) {
+                        foundItem = con;
                         isMaterial = true;
                         break;
                     }

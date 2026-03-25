@@ -8,9 +8,21 @@ module.exports = {
         if (message.author.bot) return;
 
         const PREFIX = await getPrefix(message.guild?.id);
-        if (!message.content.startsWith(PREFIX)) return;
+        const botMention = `<@${client.user.id}>`;
+        const botMentionBang = `<@!${client.user.id}>`;
 
-        const args = message.content.slice(PREFIX.length).trim().split(/ +/);
+        let prefixUsed = null;
+        if (message.content.startsWith(PREFIX)) {
+            prefixUsed = PREFIX;
+        } else if (message.content.startsWith(botMention)) {
+            prefixUsed = botMention;
+        } else if (message.content.startsWith(botMentionBang)) {
+            prefixUsed = botMentionBang;
+        }
+
+        if (!prefixUsed) return;
+
+        const args = message.content.slice(prefixUsed.length).trim().split(/ +/);
         const commandName = args.shift().toLowerCase();
 
         let command = client.commands.get(commandName);
