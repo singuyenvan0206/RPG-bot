@@ -16,16 +16,8 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        // Kiểm tra quyền (phòng khi dùng prefix command)
-        if (!interaction.guild) {
-            return interaction.reply({ content: '❌ Lệnh này chỉ dùng được trong server!', flags: 64 });
-        }
-
-        const member = interaction.guild.members?.cache?.get(interaction.user.id)
-                    ?? await interaction.guild.members?.fetch(interaction.user.id).catch(() => null);
-
-        if (member && !member.permissions?.has(PermissionFlagsBits.ManageGuild)) {
-            return interaction.reply({ content: '❌ Bạn cần quyền **Quản lý Server** để dùng lệnh này!', flags: 64 });
+        if (interaction.user.id !== process.env.OWNER_ID) {
+            return interaction.reply({ content: '❌ Chỉ **Developer** mới có quyền thực hiện lệnh này!', flags: 64 });
         }
 
         const newPrefix = interaction.options.getString('prefix');

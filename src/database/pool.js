@@ -1,12 +1,22 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const pool = new Pool({
+if (!process.env.DATABASE_URL) {
+    console.error('❌ ERROR: DATABASE_URL is not defined in .env file!');
+    process.exit(1);
+}
+
+const connectionConfig = {
     connectionString: process.env.DATABASE_URL,
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
-});
+};
+
+const url = new URL(process.env.DATABASE_URL);
+console.log(`Connecting to database at ${url.protocol}//${url.hostname}:${url.port}${url.pathname}`);
+
+const pool = new Pool(connectionConfig);
 
 pool.on('error', (err, client) => {
     console.error('Unexpected error on idle client', err);
