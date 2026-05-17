@@ -26,17 +26,27 @@ module.exports = {
         }
 
         const now = Math.floor(Date.now() / 1000);
-        const cooldown = 24 * 60 * 60; // 24 hours
-        const streakWindow = 48 * 60 * 60; // 48 hours
         const lastDaily = Number(player.last_daily || 0);
         let streak = Number(player.daily_streak || 0);
 
-        if (now - lastDaily < cooldown) {
-            const timeLeft = cooldown - (now - lastDaily);
+        // Daily reset threshold at 12:00 PM GMT+7 (5:00 AM UTC)
+        const todayResetDate = new Date();
+        todayResetDate.setUTCHours(5, 0, 0, 0);
+        let currentResetThreshold = Math.floor(todayResetDate.getTime() / 1000);
+
+        // If the current time is before 12h GMT+7, the active threshold is yesterday's 12h reset
+        if (now < currentResetThreshold) {
+            currentResetThreshold -= 24 * 60 * 60;
+        }
+
+        // If the user claimed their daily after the current reset threshold, they must wait
+        if (lastDaily >= currentResetThreshold) {
+            const nextResetTime = currentResetThreshold + 24 * 60 * 60;
+            const timeLeft = nextResetTime - now;
             const hours = Math.floor(timeLeft / 3600);
             const minutes = Math.floor((timeLeft % 3600) / 60);
             return interaction.reply({
-                content: `⏳ Bạn đã nhận thưởng hôm nay rồi! Hãy quay lại sau **${hours} giờ ${minutes} phút**.`,
+                content: `⏳ Bạn đã nhận thưởng hôm nay rồi! Hãy quay lại sau **${hours} giờ ${minutes} phút** (Reset vào lúc **12:00 GMT+7**).`,
                 flags: require('discord.js').MessageFlags.Ephemeral
             });
         }
@@ -52,8 +62,8 @@ module.exports = {
         const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         await sleep(3000); // Chest opening duration
 
-        // Streak check
-        if (lastDaily === 0 || (now - lastDaily > streakWindow)) {
+        // Streak check (Streak is kept if they claimed within the previous 24h reset period)
+        if (lastDaily === 0 || lastDaily < currentResetThreshold - 24 * 60 * 60) {
             streak = 1;
         } else {
             streak++;
