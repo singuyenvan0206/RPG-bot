@@ -119,6 +119,7 @@ async function forgeSlot(userId, player, equip, slotKey, client) {
     // Deduct
     await client.query('UPDATE players SET gold = gold - $1 WHERE user_id = $2', [goldCost, userId]);
     await client.query('UPDATE inventory SET amount = amount - $1 WHERE user_id = $2 AND item_id = $3', [matAmount, userId, matNeed]);
+    await client.query('DELETE FROM inventory WHERE user_id = $1 AND amount <= 0', [userId]);
     player.gold -= goldCost;
 
     let successChance = 1.0;

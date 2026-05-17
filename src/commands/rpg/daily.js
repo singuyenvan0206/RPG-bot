@@ -91,6 +91,13 @@ module.exports = {
             'UPDATE players SET gold = gold + $1, last_daily = $2, daily_streak = $3 WHERE user_id = $4', 
             [totalGold, now, streak, userId]
         );
+        
+        // Reset and generate new daily and weekly quests
+        const questLogic = require('../../utils/questLogic');
+        await db.execute("DELETE FROM quests WHERE user_id = $1 AND quest_type = 'daily'", [userId]);
+        await questLogic.generateDailyQuests(userId);
+        await questLogic.checkAndGenerateWeeklyQuests(userId);
+
         const expResult = await rpgLogic.addExp(userId, totalExp);
 
         let resultMsg = `🔥 Chuỗi điểm danh: **${streak} ngày**\n\n`;

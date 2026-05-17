@@ -52,6 +52,13 @@ module.exports = {
 
         let log = '';
         if (userInput === 'minor_healing_potion' || userInput === 'healing_potion' || userInput === 'major_healing_potion') {
+            const now = Date.now();
+            if (player.dead_until && player.dead_until > now) {
+                return interaction.reply({ 
+                    content: `❌ Bạn đang trong trạng thái tử vong (chết)... Hãy đợi hồi sinh hoặc sử dụng **🕊️ Nước Hồi Sinh** (\`/use revive_potion\`) để sống lại lập tức!`, 
+                    flags: MessageFlags.Ephemeral 
+                });
+            }
             if (player.hp >= player.max_hp) {
                 return interaction.reply({ content: `❌ Máu của bạn đã đầy rồi! (${player.hp}/${player.max_hp})`, flags: MessageFlags.Ephemeral });
             }

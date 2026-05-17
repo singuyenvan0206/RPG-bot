@@ -56,8 +56,10 @@ class PvpService {
             log += `**[Lượt ${turn}]**\n`;
 
             // --- Player 1 Status ---
-            const s1 = combatLogic.processStatusEffects({ hp: p1Hp, max_hp: p1MaxHp, statusEffects: p1Status });
+            const s1Obj = { hp: p1Hp, max_hp: p1MaxHp, statusEffects: p1Status };
+            const s1 = combatLogic.processStatusEffects(s1Obj);
             p1Hp -= s1.damageTaken;
+            p1Status = s1Obj.statusEffects;
             if (s1.log) log += `🔹 ${interaction.user.username}: ${s1.log}`;
 
             // --- Player 1 Action ---
@@ -81,8 +83,10 @@ class PvpService {
             if (p2Hp <= 0) break;
 
             // --- Player 2 Status ---
-            const s2 = combatLogic.processStatusEffects({ hp: p2Hp, max_hp: p2MaxHp, statusEffects: p2Status });
+            const s2Obj = { hp: p2Hp, max_hp: p2MaxHp, statusEffects: p2Status };
+            const s2 = combatLogic.processStatusEffects(s2Obj);
             p2Hp -= s2.damageTaken;
+            p2Status = s2Obj.statusEffects;
             if (s2.log) log += `🔸 Đối thủ: ${s2.log}`;
 
             // --- Player 2 Action ---

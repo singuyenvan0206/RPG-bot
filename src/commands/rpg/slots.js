@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const db = require('../../database');
 const { parseAmount } = require('../../utils/numberHelper');
 const gifData = require('../../utils/gifData');
+const UserLock = require('../../utils/UserLock');
 
 module.exports = {
     category: 'Gambling',
@@ -21,86 +22,99 @@ module.exports = {
     },
     async execute(interaction) {
         const userId = interaction.user.id;
+        const { MessageFlags } = require('discord.js');
         const MIN_BET = 50;
         const betStr = interaction.options.getString('bet');
         let bet = betStr ? parseAmount(betStr) : null;
 
-        // Auto-default to minbet if not provided
-        if (bet === null || bet === undefined) {
-            bet = MIN_BET;
-        }
-
-        if (isNaN(bet) || bet < MIN_BET) {
+        if (!UserLock.acquire(userId)) {
             return interaction.reply({
-                content: `❌ Số tiền cược phải là số và tối thiểu là **${MIN_BET}** Vàng!`,
-                flags: require('discord.js').MessageFlags.Ephemeral
+                content: '⏳ Thao tác quá nhanh! Vui lòng đợi hành động trước đó kết thúc.',
+                flags: MessageFlags.Ephemeral
             });
         }
 
-        const player = await db.getPlayer(userId);
-        if (!player) {
-            return interaction.reply({
-                content: '❌ Bạn chưa tham gia thế giới này!',
-                flags: require('discord.js').MessageFlags.Ephemeral
-            });
-        }
+        try {
+            // Auto-default to minbet if not provided
+            if (bet === null || bet === undefined) {
+                bet = MIN_BET;
+            }
 
-        if (player.gold < bet) {
-            return interaction.reply({
-                content: `❌ Bạn không đủ vàng! (Bạn hiện có **${player.gold}** Vàng).`,
-                flags: require('discord.js').MessageFlags.Ephemeral
-            });
-        }
+            if (isNaN(bet) || bet < MIN_BET) {
+                return interaction.reply({
+                    content: `❌ Số tiền cược phải là số và tối thiểu là **${MIN_BET}** Vàng!`,
+                    flags: MessageFlags.Ephemeral
+                });
+            }
 
-        const emojis = ['🍎', '💎', '🔔', '🍇', '🍋', '⭐'];
-        const reel1 = emojis[Math.floor(Math.random() * emojis.length)];
-        const reel2 = emojis[Math.floor(Math.random() * emojis.length)];
-        const reel3 = emojis[Math.floor(Math.random() * emojis.length)];
+            const player = await db.getPlayer(userId);
+            if (!player) {
+                return interaction.reply({
+                    content: '❌ Bạn chưa tham gia thế giới này!',
+                    flags: MessageFlags.Ephemeral
+                });
+            }
 
-        // Animation
-        const embed = new EmbedBuilder()
-            .setTitle('🎰 Máy Quay May Mắn')
-            .setColor('#3498db')
-            .setDescription('Các guồng quay đang bắt đầu xoay nhanh...')
-            .setImage(gifData.slots);
+            if (player.gold < bet) {
+                return interaction.reply({
+                    content: `❌ Bạn không đủ vàng! (Bạn hiện có **${player.gold}** Vàng).`,
+                    flags: MessageFlags.Ephemeral
+                });
+            }
 
-        const msg = await interaction.reply({ embeds: [embed], fetchReply: true });
-
-        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-        
-        await sleep(3000); // GIF duration
-
-        let win = false;
-        let multiplier = 0;
-
-        if (reel1 === reel2 && reel2 === reel3) {
-            win = true;
-            multiplier = 5; // Jackpot
-        } else if (reel1 === reel2 || reel2 === reel3 || reel1 === reel3) {
-            win = true;
-            multiplier = 2; // Pair
-        }
-
-        let resultMsg = '';
-        let finalGold = Number(player.gold);
-
-        if (win) {
-            const winnings = bet * multiplier;
-            finalGold += winnings;
-            await db.execute('UPDATE players SET gold = gold + $1 WHERE user_id = $2', [winnings, userId]);
-            resultMsg = `🎉 **THẮNG RỒI!** Bạn nhận được **${winnings} Vàng** (x${multiplier})`;
-        } else {
-            finalGold -= bet;
+            // Deduct bet from DB immediately before animation to prevent concurrent spending exploits!
             await db.execute('UPDATE players SET gold = gold - $1 WHERE user_id = $2', [bet, userId]);
-            resultMsg = '💀 **THẤT BẠI!** Bạn đã mất số tiền đặt cược.';
+
+            const emojis = ['🍎', '💎', '🔔', '🍇', '🍋', '⭐'];
+            const reel1 = emojis[Math.floor(Math.random() * emojis.length)];
+            const reel2 = emojis[Math.floor(Math.random() * emojis.length)];
+            const reel3 = emojis[Math.floor(Math.random() * emojis.length)];
+
+            // Animation
+            const embed = new EmbedBuilder()
+                .setTitle('🎰 Máy Quay May Mắn')
+                .setColor('#3498db')
+                .setDescription('Các guồng quay đang bắt đầu xoay nhanh...')
+                .setImage(gifData.slots);
+
+            const msg = await interaction.reply({ embeds: [embed], fetchReply: true });
+
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+            
+            await sleep(3000); // GIF duration
+
+            let win = false;
+            let multiplier = 0;
+
+            if (reel1 === reel2 && reel2 === reel3) {
+                win = true;
+                multiplier = 5; // Jackpot
+            } else if (reel1 === reel2 || reel2 === reel3 || reel1 === reel3) {
+                win = true;
+                multiplier = 2; // Pair
+            }
+
+            let resultMsg = '';
+            let finalGold = Number(player.gold) - bet; // Start with subtracted balance
+
+            if (win) {
+                const winnings = bet * multiplier;
+                finalGold += winnings;
+                await db.execute('UPDATE players SET gold = gold + $1 WHERE user_id = $2', [winnings, userId]);
+                resultMsg = `🎉 **THẮNG RỒI!** Bạn nhận được **${winnings} Vàng** (x${multiplier})`;
+            } else {
+                resultMsg = '💀 **THẤT BẠI!** Bạn đã mất số tiền đặt cược.';
+            }
+
+            const finalEmbed = new EmbedBuilder()
+                .setTitle('🎰 Máy Quay May Mắn')
+                .setDescription(`**[ ${reel1} | ${reel2} | ${reel3} ]**\n\n${resultMsg}\n💰 Tài sản hiện tại: **${finalGold}** Vàng`)
+                .setColor(win ? '#f1c40f' : '#e74c3c')
+                .setTimestamp();
+
+            return msg.edit({ embeds: [finalEmbed] });
+        } finally {
+            UserLock.release(userId);
         }
-
-        const finalEmbed = new EmbedBuilder()
-            .setTitle('🎰 Máy Quay May Mắn')
-            .setDescription(`**[ ${reel1} | ${reel2} | ${reel3} ]**\n\n${resultMsg}\n💰 Tài sản hiện tại: **${finalGold}** Vàng`)
-            .setColor(win ? '#f1c40f' : '#e74c3c')
-            .setTimestamp();
-
-        return msg.edit({ embeds: [finalEmbed] });
     },
 };

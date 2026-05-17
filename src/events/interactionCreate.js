@@ -76,7 +76,7 @@ async function handleButton(interaction) {
         if (!session) return interaction.reply({ content: 'Không có hành trình nào đang diễn ra.', flags: MessageFlags.Ephemeral });
 
         const rewards = session.accumulatedRewards;
-        await db.execute('UPDATE players SET gold = gold + $1 WHERE user_id = $2', [rewards.gold, userId]);
+        await db.execute('UPDATE players SET gold = gold + $1, hp = $2 WHERE user_id = $3', [rewards.gold, session.hp, userId]);
         await rpgLogic.addExp(userId, rewards.exp);
         
         // Add items to inventory
@@ -498,6 +498,7 @@ async function handleButton(interaction) {
                 }
                 if (trade.item_id) {
                     await client.query('UPDATE inventory SET amount = amount - $1 WHERE user_id = $2 AND item_id = $3', [trade.amount, trade.sender_id, trade.item_id]);
+                    await client.query('DELETE FROM inventory WHERE user_id = $1 AND item_id = $2 AND amount <= 0', [trade.sender_id, trade.item_id]);
                     await client.query('INSERT INTO inventory (user_id, item_id, amount) VALUES ($1, $2, $3) ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + EXCLUDED.amount', [trade.receiver_id, trade.item_id, trade.amount]);
                 }
                 await client.query('UPDATE trades SET status = \'accepted\' WHERE trade_id = $1', [tradeId]);

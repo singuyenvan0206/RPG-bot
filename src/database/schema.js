@@ -193,6 +193,11 @@ async function initSchema() {
         ALTER TABLE players ADD COLUMN IF NOT EXISTS last_mana_regen BIGINT NOT NULL DEFAULT (extract(epoch from now()) * 1000)
     `);
 
+    // Migration: add last_pvp column if it doesn't exist
+    await pool.query(`
+        ALTER TABLE players ADD COLUMN IF NOT EXISTS last_pvp BIGINT DEFAULT 0
+    `);
+
     // Unique Items (for items with rolled stats/passives)
     await pool.query(`
         CREATE TABLE IF NOT EXISTS player_unique_items (

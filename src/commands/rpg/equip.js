@@ -83,7 +83,9 @@ module.exports = {
 
 async function recalculateStats(userId, client = null) {
     const dbObj = client || db;
-    const player = await db.getPlayer(userId); // Use pool for player to ensure fresh data or use client if needed
+    const player = client 
+        ? await client.query('SELECT * FROM players WHERE user_id = $1', [userId]).then(r => (r.rows ? r.rows[0] : null))
+        : await db.getPlayer(userId);
     const equip = await dbObj.query('SELECT * FROM player_equipment WHERE user_id = $1', [userId]).then(r => (r.rows ? r.rows[0] : r));
     
     const level = player.level || 1;
@@ -116,12 +118,15 @@ async function recalculateStats(userId, client = null) {
         }
         
         if (equip.pet_id) {
-            const petInfo = require('../../utils/petsData').getPet(equip.pet_id);
-            if (petInfo?.buffs) {
-                if (petInfo.buffs.atk) baseAtk += petInfo.buffs.atk;
-                if (petInfo.buffs.def) baseDef += petInfo.buffs.def;
-                if (petInfo.buffs.agi) baseAgi += petInfo.buffs.agi;
-                if (petInfo.buffs.crit) baseCrit += petInfo.buffs.crit;
+            const petRow = await dbObj.query('SELECT pet_type FROM player_pets WHERE id = $1', [equip.pet_id]).then(r => (r.rows ? r.rows[0] : null));
+            if (petRow) {
+                const petInfo = require('../../utils/petsData').getPet(petRow.pet_type);
+                if (petInfo?.buffs) {
+                    if (petInfo.buffs.atk) baseAtk += petInfo.buffs.atk;
+                    if (petInfo.buffs.def) baseDef += petInfo.buffs.def;
+                    if (petInfo.buffs.agi) baseAgi += petInfo.buffs.agi;
+                    if (petInfo.buffs.crit) baseCrit += petInfo.buffs.crit;
+                }
             }
         }
     }

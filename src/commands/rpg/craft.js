@@ -172,6 +172,7 @@ module.exports = {
                 const need = qty * amount;
                 await client.query('UPDATE inventory SET amount = amount - $1 WHERE user_id = $2 AND item_id = $3', [need, userId, matId]);
             }
+            await client.query('DELETE FROM inventory WHERE user_id = $1 AND amount <= 0', [userId]);
             // Add result
             await client.query('INSERT INTO inventory (user_id, item_id, amount) VALUES ($1, $2, $3) ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + $3', [userId, recipe.id, amount]);
         });

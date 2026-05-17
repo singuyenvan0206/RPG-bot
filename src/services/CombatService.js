@@ -6,7 +6,7 @@ const sessionManager = require('../utils/sessionManager');
 const itemsData = require('../utils/itemsData');
 const { sendGlobal } = require('../utils/broadcast');
 const { createHealthBar } = require('../utils/uiHelper');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, MessageFlags } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -15,7 +15,7 @@ class CombatService {
         const session = sessionManager.getSession(userId);
         const player = await db.getPlayer(userId);
         if (!player || (player.hp <= 0 && (!session || session.hp <= 0))) {
-            return interaction.reply({ content: 'Bạn không thể chiến đấu!', flags: 64 });
+            return interaction.reply({ content: 'Bạn không thể chiến đấu!', flags: MessageFlags.Ephemeral });
         }
 
         const stats = await db.queryOne('SELECT * FROM player_stats WHERE user_id = $1', [userId]);
@@ -32,10 +32,10 @@ class CombatService {
 
         const rpgData = require('../utils/rpgData');
         const region = rpgData[player.current_region];
-        if (!region) return interaction.reply({ content: '❌ Vùng đất không hợp lệ!', flags: 64 });
+        if (!region) return interaction.reply({ content: '❌ Vùng đất không hợp lệ!', flags: MessageFlags.Ephemeral });
         
         const monster = region.monsters.find(m => m.id === monsterId);
-        if (!monster) return interaction.reply({ content: 'Quái vật đã hết hạn!', flags: 64 });
+        if (!monster) return interaction.reply({ content: 'Quái vật đã hết hạn!', flags: MessageFlags.Ephemeral });
 
         let mMaxHp = isShiny ? Math.floor(monster.hp * 1.5) : monster.hp;
         let mAtk = isShiny ? Math.floor(monster.atk * 1.5) : monster.atk;
@@ -88,10 +88,44 @@ class CombatService {
         let log = isGuildTerritory ? `Castle **Lãnh Địa Bang Hội**: Buff vùng đất x2!\n` : '';
 
         // --- TURN PROCESSING ---
+        let usedPotion = null;
+        let healAmount = 0;
+        let potionName = '';
+
         if (action === 'heal') {
-            const heal = Math.floor(pMaxHp * 0.3);
-            pHp = Math.min(pMaxHp, pHp + heal);
-            log += `🧪 Bạn sử dụng thuốc hồi phục **+${heal} HP**.\n`;
+            const potions = await db.queryAll(
+                'SELECT item_id, amount FROM inventory WHERE user_id = $1 AND item_id IN (\'minor_healing_potion\', \'healing_potion\', \'major_healing_potion\') AND amount > 0 ORDER BY CASE item_id WHEN \'minor_healing_potion\' THEN 1 WHEN \'healing_potion\' THEN 2 WHEN \'major_healing_potion\' THEN 3 END ASC', 
+                [userId]
+            );
+
+            if (!potions || potions.length === 0) {
+                return interaction.reply({ 
+                    content: '❌ Bạn không có bất kỳ thuốc hồi phục nào trong túi đồ (Gồm: Thuốc hồi máu nhỏ/vừa/lớn)! Hãy mua thêm ở `/shop`.', 
+                    flags: MessageFlags.Ephemeral 
+                });
+            }
+
+            const potion = potions[0];
+            usedPotion = potion.item_id;
+            if (usedPotion === 'minor_healing_potion') {
+                healAmount = 50;
+                potionName = 'Thuốc Hồi Máu Nhỏ 🧪';
+            } else if (usedPotion === 'healing_potion') {
+                healAmount = 150;
+                potionName = 'Thuốc Hồi Máu 🧪';
+            } else {
+                healAmount = 300;
+                potionName = 'Thuốc Hồi Máu Lớn 🧪';
+            }
+
+            pHp = Math.min(pMaxHp, pHp + healAmount);
+            log += `🧪 Bạn sử dụng **${potionName}**, phục hồi **+${healAmount} HP**.\n`;
+
+            if (potion.amount <= 1) {
+                await db.execute('DELETE FROM inventory WHERE user_id = $1 AND item_id = $2', [userId, usedPotion]);
+            } else {
+                await db.execute('UPDATE inventory SET amount = amount - 1 WHERE user_id = $1 AND item_id = $2', [userId, usedPotion]);
+            }
         }
 
         const { playerHP: nextPHp, monsterHP: nextMHp, log: statusLog, effects: nextEffects, pEffects: nextPEffects } = combatLogic.processStatusEffects(pHp, mHp, player.status_effects || [], mStatusEffects);
@@ -191,6 +225,47 @@ class CombatService {
             await db.withTransaction(async (client) => {
                 await questLogic.addProgress(userId, 'kill_monster', 1, client);
                 await questLogic.addProgress(userId, 'earn_gold', gold, client);
+
+                // Increment region kills for boss spawn if boss exists and is currently dead/hidden
+                const regionId = player.current_region;
+                const boss = require('../utils/bossData')[regionId];
+                if (boss) {
+                    const hpState = await client.query('SELECT value FROM world_states WHERE key = $1', [`${regionId}_boss_hp`]).then(r => r.rows[0]);
+                    const currentHp = hpState ? parseInt(hpState.value) : 0;
+                    
+                    if (currentHp <= 0) {
+                        const killsState = await client.query('SELECT value FROM world_states WHERE key = $1', [`${regionId}_kills`]).then(r => r.rows[0]);
+                        let currentKills = killsState ? parseInt(killsState.value) : 0;
+                        currentKills++;
+                        
+                        if (currentKills >= boss.spawn_req) {
+                            // Spawn the boss!
+                            await client.query(
+                                'INSERT INTO world_states (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value', 
+                                [`${regionId}_boss_hp`, boss.max_hp.toString()]
+                            );
+                            await client.query(
+                                'INSERT INTO world_states (key, value) VALUES ($1, \'0\') ON CONFLICT (key) DO UPDATE SET value = \'0\'', 
+                                [`${regionId}_kills`]
+                            );
+                            
+                            // Send spawn global broadcast announcement
+                            const rpgData = require('../utils/rpgData');
+                            const regionName = rpgData[regionId]?.name || regionId;
+                            await sendGlobal(
+                                interaction.client, 
+                                '💥 BOSS XUẤT HIỆN! 💥', 
+                                `⚠️ **${boss.name}** đã xuất hiện tại **${regionName}**!\nHãy dùng lệnh \`/boss\` để lập tức tham gia tiêu diệt nó!`, 
+                                '#e74c3c'
+                            );
+                        } else {
+                            await client.query(
+                                'INSERT INTO world_states (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value', 
+                                [`${regionId}_kills`, currentKills.toString()]
+                            );
+                        }
+                    }
+                }
 
                 for (const item of itemsToClaim) {
                     const it = itemsData.getItem(item) || require('../utils/materialsData').getMaterial(item);
@@ -294,10 +369,10 @@ class CombatService {
     static async handleBossBattle(interaction, userId, regionId) {
         const bossData = require('../utils/bossData');
         const boss = bossData[regionId];
-        if (!boss) return interaction.reply({ content: 'Lỗi Boss dữ liệu.', flags: 64 });
+        if (!boss) return interaction.reply({ content: 'Lỗi Boss dữ liệu.', flags: MessageFlags.Ephemeral });
 
         const player = await db.getPlayer(userId);
-        if (!player || player.hp <= 0) return interaction.reply({ content: 'Bạn không thể chiến đấu!', flags: 64 });
+        if (!player || player.hp <= 0) return interaction.reply({ content: 'Bạn không thể chiến đấu!', flags: MessageFlags.Ephemeral });
 
         const stats = await db.queryOne('SELECT * FROM player_stats WHERE user_id = $1', [userId]);
         const equip = await db.queryOne('SELECT * FROM player_equipment WHERE user_id = $1', [userId]);
@@ -314,6 +389,7 @@ class CombatService {
         finalDmg = Math.min(finalDmg, currentHp);
         currentHp -= finalDmg;
 
+        let contributors = [];
         await db.withTransaction(async (client) => {
             await client.query('INSERT INTO world_boss_damage (region_id, user_id, damage) VALUES ($1, $2, $3) ON CONFLICT (region_id, user_id) DO UPDATE SET damage = world_boss_damage.damage + $3, last_hit = CURRENT_TIMESTAMP', [regionId, userId, finalDmg]);
             await client.query('UPDATE world_states SET value = $1 WHERE key = $2', [currentHp.toString(), `${regionId}_boss_hp`]);
@@ -324,7 +400,7 @@ class CombatService {
 
             if (currentHp <= 0) {
                 const rpgData = require('../utils/rpgData');
-                const contributors = await client.query('SELECT * FROM world_boss_damage WHERE region_id = $1 ORDER BY damage DESC', [regionId]).then(r => r.rows);
+                contributors = await client.query('SELECT * FROM world_boss_damage WHERE region_id = $1 ORDER BY damage DESC', [regionId]).then(r => r.rows);
                 
                 for (const [index, cont] of contributors.entries()) {
                     const totalDamage = Number(cont.damage);
@@ -347,12 +423,35 @@ class CombatService {
         const pHpReal = Math.max(0, player.hp - mDmgReal);
 
         if (currentHp <= 0) {
-             // Re-fetch for display
              const rpgData = require('../utils/rpgData');
-             const contributors = await db.query('SELECT * FROM world_boss_damage WHERE region_id = $1 ORDER BY damage DESC', [regionId]); // This is empty now due to delete above, wait
-             // Actually I should have kept them for the final message. 
-             // Let's just return a generic success for now or fix the logic to hold onto data.
-             return interaction.update({ content: '🎉 Boss đã bị tiêu diệt! Kiểm tra bảng xếp hạng!', embeds: [], components: [] });
+             const regionName = rpgData[regionId]?.name || regionId;
+             
+             let description = `🏆 **${boss.name}** đã bị tiêu diệt tại **${regionName}**!\n\n` +
+                               `📊 **Bảng Xếp Hạng Sát Thương:**\n`;
+             
+             for (const [index, cont] of contributors.entries()) {
+                 const medal = index === 0 ? '🥇' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : '👤'));
+                 description += `${medal} <@${cont.user_id}>: **${Number(cont.damage).toLocaleString()} Sát thương**\n`;
+             }
+             
+             const winEmbed = new EmbedBuilder()
+                 .setTitle('🎉 CHIẾN THẮNG WORLD BOSS! 🎉')
+                 .setDescription(description)
+                 .setColor('#f1c40f')
+                 .setTimestamp();
+             
+             const messageText = `🎉 **${boss.name}** đã ngã xuống! Chúc mừng các dũng sĩ đã tham gia trận chiến. Phần thưởng đã được gửi trực tiếp vào tài khoản!`;
+
+             // Send a global victory announcement
+             await sendGlobal(
+                 interaction.client, 
+                 '🏆 TIÊU DIỆT WORLD BOSS SUCCESS! 🏆', 
+                 `🎉 **${boss.name}** tại **${regionName}** đã bị tiêu diệt bởi các dũng sĩ!\n` +
+                 `🥇 MVP gây sát thương lớn nhất: ${contributors[0] ? `<@${contributors[0].user_id}>` : 'Không rõ'}!`,
+                 '#f1c40f'
+             );
+
+             return interaction.update({ content: messageText, embeds: [winEmbed], components: [] });
         }
 
         const embed = new EmbedBuilder()

@@ -77,50 +77,57 @@ module.exports = {
         const errors = [];
         const materialsTotals = {};
 
-        for (const rawId of targetItemIds) {
-            const itemInfo = itemsData.getItem(rawId);
-            if (!itemInfo) {
-                errors.push(`❌ \`${rawId}\` — Không tồn tại.`);
-                continue;
-            }
+        try {
+            await db.withTransaction(async (client) => {
+                for (const rawId of targetItemIds) {
+                    const itemInfo = itemsData.getItem(rawId);
+                    if (!itemInfo) {
+                        errors.push(`❌ \`${rawId}\` — Không tồn tại.`);
+                        continue;
+                    }
 
-            const itemId = itemInfo.id;
+                    const itemId = itemInfo.id;
 
-            if (equippedIds.has(itemId)) {
-                errors.push(`🔒 \`${itemInfo.name}\` — Đang mặc, không thể phân rã.`);
-                continue;
-            }
+                    if (equippedIds.has(itemId)) {
+                        errors.push(`🔒 \`${itemInfo.name}\` — Đang mặc, không thể phân rã.`);
+                        continue;
+                    }
 
-            const inventoryRow = await db.queryOne('SELECT * FROM inventory WHERE user_id = $1 AND item_id = $2 AND amount > 0', [userId, itemId]);
-            if (!inventoryRow) {
-                errors.push(`❌ \`${itemInfo.name}\` — Không có trong túi đồ.`);
-                continue;
-            }
+                    const inventoryRow = await client.query('SELECT * FROM inventory WHERE user_id = $1 AND item_id = $2 AND amount > 0', [userId, itemId]).then(r => r.rows[0]);
+                    if (!inventoryRow) {
+                        errors.push(`❌ \`${itemInfo.name}\` — Không có trong túi đồ.`);
+                        continue;
+                    }
 
-            // Remove from inventory
-            if (inventoryRow.amount <= 1) {
-                await db.execute('DELETE FROM inventory WHERE id = $1', [inventoryRow.id]);
-            } else {
-                await db.execute('UPDATE inventory SET amount = amount - 1 WHERE id = $1', [inventoryRow.id]);
-            }
+                    // Remove from inventory
+                    if (inventoryRow.amount <= 1) {
+                        await client.query('DELETE FROM inventory WHERE id = $1', [inventoryRow.id]);
+                    } else {
+                        await client.query('UPDATE inventory SET amount = amount - 1 WHERE id = $1', [inventoryRow.id]);
+                    }
 
-            // Calculate material reward
-            let matReward = 'iron_ore';
-            let matAmount = 3;
+                    // Calculate material reward
+                    let matReward = 'iron_ore';
+                    let matAmount = 3;
 
-            if (itemInfo.rarity === 'Rare') { matReward = 'magic_core'; matAmount = 1; }
-            else if (itemInfo.rarity === 'Epic') { matReward = 'void_shard'; matAmount = 1; }
+                    if (itemInfo.rarity === 'Rare') { matReward = 'magic_core'; matAmount = 1; }
+                    else if (itemInfo.rarity === 'Epic') { matReward = 'void_shard'; matAmount = 1; }
 
-            materialsTotals[matReward] = (materialsTotals[matReward] || 0) + matAmount;
-            results.push(`✅ **${itemInfo.name}** → ${matAmount}x ${materialsData.getMaterial(matReward).name}`);
-        }
+                    materialsTotals[matReward] = (materialsTotals[matReward] || 0) + matAmount;
+                    results.push(`✅ **${itemInfo.name}** → ${matAmount}x ${materialsData.getMaterial(matReward).name}`);
+                }
 
-        // Give all collected materials
-        for (const [matId, total] of Object.entries(materialsTotals)) {
-            await db.execute(
-                'INSERT INTO inventory (user_id, item_id, amount) VALUES ($1, $2, $3) ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + $3',
-                [userId, matId, total]
-            );
+                // Give all collected materials
+                for (const [matId, total] of Object.entries(materialsTotals)) {
+                    await client.query(
+                        'INSERT INTO inventory (user_id, item_id, amount) VALUES ($1, $2, $3) ON CONFLICT (user_id, item_id) DO UPDATE SET amount = inventory.amount + $3',
+                        [userId, matId, total]
+                    );
+                }
+            });
+        } catch (err) {
+            console.error('[Dismantle Error]', err);
+            return msg.edit({ content: '❌ Giao dịch phân rã thất bại do lỗi hệ thống.' });
         }
 
         // Build result embed

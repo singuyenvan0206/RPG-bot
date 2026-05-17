@@ -69,4 +69,25 @@ async function claimQuest(userId, questId) {
     return { success: true, gold: quest.reward_gold, exp: quest.reward_exp };
 }
 
-module.exports = { addProgress, generateDailyQuests, generateWeeklyQuests, claimQuest };
+async function checkAndGenerateWeeklyQuests(userId) {
+    const now = Math.floor(Date.now() / 1000);
+    const weeklyQuests = await db.queryAll("SELECT * FROM quests WHERE user_id = $1 AND quest_type = 'weekly'", [userId]);
+    
+    let needNew = false;
+    if (weeklyQuests.length === 0) {
+        needNew = true;
+    } else {
+        const oldest = Math.min(...weeklyQuests.map(q => Number(q.created_at || 0)));
+        if (now - oldest >= 7 * 24 * 3600) {
+            await db.execute("DELETE FROM quests WHERE user_id = $1 AND quest_type = 'weekly'", [userId]);
+            needNew = true;
+        }
+    }
+    
+    if (needNew) {
+        await generateWeeklyQuests(userId);
+    }
+}
+
+module.exports = { addProgress, generateDailyQuests, generateWeeklyQuests, claimQuest, checkAndGenerateWeeklyQuests };
+

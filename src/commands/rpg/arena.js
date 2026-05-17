@@ -63,6 +63,14 @@ module.exports = {
                 return interaction.reply({ content: `💀 Bạn đang hồi sinh... Còn **${secsLeft} giây**.`, flags: MessageFlags.Ephemeral });
             }
 
+            const cooldown = 30000; // 30s PvP cooldown
+            if (nowMs - (Number(player.last_pvp) || 0) < cooldown) {
+                const secs = Math.ceil((cooldown - (nowMs - Number(player.last_pvp))) / 1000);
+                return interaction.reply({ content: `⏳ Bạn cần chuẩn bị chiến thuật **${secs} giây** trước khi vào trận đấu mới.`, flags: MessageFlags.Ephemeral });
+            }
+
+            await db.execute('UPDATE players SET last_pvp = $1 WHERE user_id = $2', [nowMs, userId]);
+
             const myStats = await db.queryOne('SELECT * FROM arena_stats WHERE user_id = $1', [userId]);
             const myElo = parseInt(myStats.elo);
 
