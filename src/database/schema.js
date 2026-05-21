@@ -198,6 +198,11 @@ async function initSchema() {
         ALTER TABLE players ADD COLUMN IF NOT EXISTS last_pvp BIGINT DEFAULT 0
     `);
 
+    // Migration: add quest_type column to quests if it doesn't exist
+    await pool.query(`
+        ALTER TABLE quests ADD COLUMN IF NOT EXISTS quest_type TEXT NOT NULL DEFAULT 'daily'
+    `);
+
     // Unique Items (for items with rolled stats/passives)
     await pool.query(`
         CREATE TABLE IF NOT EXISTS player_unique_items (
