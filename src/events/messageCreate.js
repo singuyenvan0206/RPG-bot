@@ -107,6 +107,7 @@ module.exports = {
                     if (baseName === 'givegold' && name === 'amount') return parseArgs(1);
                     if (baseName === 'giveitem' && name === 'amount') return parseArgs(2);
                     if (baseName === 'craft' && name === 'amount') return parseArgs(1);
+                    if (baseName === 'quest' && name === 'id') return parseArgs(1);
                     return null;
                 },
                 getUser: (name) => {

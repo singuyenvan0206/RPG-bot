@@ -203,6 +203,16 @@ async function initSchema() {
         ALTER TABLE quests ADD COLUMN IF NOT EXISTS quest_type TEXT NOT NULL DEFAULT 'daily'
     `);
 
+    // Migration: add is_claimed column to quests if it doesn't exist
+    await pool.query(`
+        ALTER TABLE quests ADD COLUMN IF NOT EXISTS is_claimed BOOLEAN NOT NULL DEFAULT FALSE
+    `);
+
+    // Migration: add unlocked_by_id column to quests if it doesn't exist
+    await pool.query(`
+        ALTER TABLE quests ADD COLUMN IF NOT EXISTS unlocked_by_id INTEGER DEFAULT NULL
+    `);
+
     // Unique Items (for items with rolled stats/passives)
     await pool.query(`
         CREATE TABLE IF NOT EXISTS player_unique_items (

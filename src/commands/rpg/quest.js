@@ -11,7 +11,7 @@ module.exports = {
         .addSubcommand(sub => sub.setName('claim').setDescription('Nhận thưởng nhiệm vụ đã hoàn thành').addIntegerOption(opt => opt.setName('id').setDescription('Mã nhiệm vụ (ID)').setRequired(true))),
     async execute(interaction) {
         const userId = interaction.user.id;
-        const sub = interaction.options.getSubcommand();
+        const sub = interaction.options.getSubcommand() || 'list';
 
         if (sub === 'list') {
             const quests = await db.queryAll('SELECT * FROM quests WHERE user_id = $1 AND is_claimed = FALSE ORDER BY quest_type DESC, created_at DESC', [userId]);
