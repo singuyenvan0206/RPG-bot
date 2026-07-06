@@ -269,10 +269,10 @@ graph TB
     end
 
     %% Connections
-    NextJS <-->|REST APIs / JSON| NextJS
-    POS2 <--|WebSockets / HTTP Polling| NextJS
-    NestJS <-->|Prisma Queries| MySQL
-    NestJS <-->|Webhook callback / REST API| SePay
+    NextJS -->|REST APIs / JSON| NestJS
+    NestJS -->|WebSockets / HTTP Polling| POS2
+    NestJS -->|Prisma Queries| MySQL
+    NestJS -->|Webhook callback / REST API| SePay
     NestJS -->|Sends Email Notifications| Mailer
 ```
 
@@ -291,6 +291,69 @@ graph TB
     *   **JWT (JSON Web Token)**: Xác thực không trạng thái (stateless) giữa Client và Server.
     *   **Bcryptjs & Pepper**: Mã hóa mật khẩu an toàn mức độ cao.
     *   **SePay VietQR API**: Hỗ trợ thanh toán nhanh bằng quét mã QR với cơ chế đối soát tự động qua Webhook bảo mật bằng `SEPAY_API_TOKEN`.
+
+### 5. Các biểu đồ thống kê trong Dashboard Admin
+Để giúp quản trị viên nắm bắt nhanh chóng tình hình hoạt động, Dashboard Admin tích hợp các biểu đồ trực quan (charts) được thiết kế đồng bộ với hệ thống.
+
+#### a. Biểu đồ tỷ trọng doanh thu theo thể loại phim (Pie Chart)
+Biểu đồ này hiển thị phân bổ phần trăm doanh thu thu được từ các thể loại phim khác nhau trong tháng, giúp Admin hiểu rõ thị hiếu của khách hàng.
+```mermaid
+pie title Tỷ lệ doanh thu theo Thể loại Phim (Tháng 06/2026)
+    "Hành động" : 45.2
+    "Kinh dị" : 22.8
+    "Hoạt hình (Anime)" : 15.5
+    "Tình cảm / Lãng mạn" : 10.5
+    "Thể loại khác" : 6.0
+```
+
+#### b. Sơ đồ bố cục giao diện Dashboard Admin (UI Mockup Layout)
+Sơ đồ khối thể hiện cách sắp xếp vị trí các thẻ thống kê tổng quan (Cards) và các biểu đồ cột, biểu đồ tròn trên giao diện Next.js:
+```mermaid
+graph TB
+    subgraph UI_Admin_Dashboard [Giao diện Admin Dashboard - Bố cục chính]
+        direction TB
+        subgraph Summary_Cards [Khu vực chỉ số tổng quan - Dashboard Overview Cards]
+            Card1[Doanh thu hôm nay <br> 15,200,000 VND]
+            Card2[Vé đã bán <br> 142 vé]
+            Card3[Người dùng mới <br> 12 tài khoản]
+            Card4[Tỷ lệ lấp đầy ghế <br> 64.5%]
+        end
+
+        subgraph Chart_Area [Khu vực Biểu đồ thống kê - Analytics Section]
+            direction LR
+            ChartLine[Biểu đồ cột/đường: <br> Doanh thu theo Ngày/Tháng]
+            ChartPie[Biểu đồ tròn: <br> Tỷ lệ doanh thu thể loại phim]
+        end
+
+        subgraph Data_Tables [Khu vực Bảng danh sách - Recent Data Tables]
+            direction LR
+            TablePayments[Giao dịch VietQR mới nhất <br> Webhook SePay]
+            TableMovies[Top 5 phim ăn khách nhất <br> Doanh thu / Suất chiếu]
+        end
+
+        Summary_Cards --> Chart_Area
+        Chart_Area --> Data_Tables
+    end
+```
+
+#### c. Luồng tổng hợp dữ liệu cho biểu đồ thống kê (Data Aggregation Flow)
+Mô tả cách thức hệ thống Backend NestJS truy vấn qua Prisma ORM để thu thập và biến đổi dữ liệu thô từ database MySQL trước khi trả về cấu trúc JSON phù hợp cho các thư viện biểu đồ ở Frontend (ví dụ: Recharts hoặc Chart.js):
+```mermaid
+graph LR
+    PaymentTable[(Bảng payment)] -->|payment_status = COMPLETED| JoinProcess{Prisma Join Query}
+    BookingTable[(Bảng booking)] --> JoinProcess
+    ShowtimeTable[(Bảng showtime)] --> JoinProcess
+    MovieTable[(Bảng movie)] --> JoinProcess
+    
+    JoinProcess -->|Nhóm theo ngày & tổng hợp amount| GroupDate[Tổng doanh thu theo ngày]
+    JoinProcess -->|Nhóm theo movie_id & đếm quantity| GroupMovie[Số vé bán theo phim]
+    
+    GroupDate -->|Format sang JSON| Resp1[API /admin/stats/revenue-trend]
+    GroupMovie -->|Format sang JSON| Resp2[API /admin/stats/top-movies]
+    
+    Resp1 -->|Frontend Recharts| Render1[Biểu đồ Cột Doanh Thu]
+    Resp2 -->|Frontend Recharts| Render2[Biểu đồ Tròn Thị Phần]
+```
 
 ---
 
