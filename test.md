@@ -13,12 +13,19 @@ Báo cáo này tài liệu hóa chi tiết về mục tiêu, phạm vi, thiết 
     *   **Đối với khách hàng**: Cho phép duyệt phim đang chiếu/sắp chiếu, xem thông tin chi tiết phim (trailer, diễn viên, thời lượng), xem lịch chiếu của từng rạp, chọn ghế trống trên sơ đồ trực quan và thực hiện thanh toán trực tuyến qua VietQR (tích hợp SePay) hoặc các cổng thanh toán. Sau khi đặt vé thành công, hệ thống tự động gửi email xác nhận kèm thông tin chi tiết vé.
     *   **Đối với nhân viên tại quầy (POS)**: Hỗ trợ đặt vé trực tiếp cho khách hàng và đồng bộ hiển thị màn hình phụ POS2 (màn hình hiển thị tĩnh một chiều dành riêng cho khách hàng đối chiếu thông tin đặt vé mà không gây lỗi lặp điều hướng vô hạn).
     *   **Đối với quản trị viên (Admin)**: Cung cấp trang quản lý (Dashboard) để theo dõi doanh thu, số lượng vé bán ra, quản lý thông tin phim, rạp chiếu, phòng chiếu (`screen`), lịch chiếu (`showtime`), sơ đồ ghế (`seat`), giá vé (`ticketprice`), tin tức (`news`), lễ hội phim (`festival`) và quản lý tài khoản người dùng (`user`).
-*   **Giải quyết vấn đề gì?**
-    *   **Thời gian chờ đợi**: Khách hàng không cần xếp hàng mua vé trực tiếp tại quầy, giảm tải cho nhân viên rạp vào các khung giờ cao điểm.
-    *   **Lỗi trùng lịch chiếu (Overlap Showtime)**: Hệ thống giải quyết triệt để bài toán chồng chéo lịch chiếu tại cùng một phòng chiếu thông qua thuật toán tự động kiểm tra khoảng thời gian (`start_time`, `end_time`) khi Admin tạo hoặc sửa lịch chiếu.
-    *   **Hiện tượng đầu cơ vé**: Giới hạn tối đa **8 ghế** cho mỗi giao dịch thanh toán của khách hàng để đảm bảo tính công bằng.
-    *   **Rủi ro thanh toán**: Sử dụng cơ chế Webhook kết hợp Active Polling từ cổng SePay giúp đối soát chính xác mã giao dịch chuyển khoản VietQR, tự động kiểm tra ghế trống trước khi hoàn tất để tránh trường hợp mua trùng ghế khi thanh toán bị trễ (quá hạn giữ ghế).
-    *   **Bảo mật dữ liệu**: Sử dụng thuật toán băm mật khẩu `bcryptjs` kết hợp cơ chế thêm chuỗi bí mật `PASSWORD_PEPPER` cấu hình tập trung từ biến môi trường giúp ngăn chặn tấn công dò mật khẩu.
+*   **Giải quyết vấn đề gì? (Customer Pain Points & Needs)**
+    *   *Xếp hàng chờ đợi mua vé truyền thống*: Khách hàng mất quá nhiều thời gian xếp hàng tại quầy vào các khung giờ cao điểm hoặc dịp lễ. Hệ thống đáp ứng nhu cầu đặt vé trực tuyến 24/7 từ xa của khách hàng.
+    *   *Mơ hồ về vị trí ghế ngồi*: Khi mua vé trực tiếp, khách hàng khó chọn được vị trí ghế ưng ý do không có sơ đồ trực quan. Hệ thống cung cấp sơ đồ ghế trực quan thời gian thực để đáp ứng nhu cầu tự chọn vị trí tối ưu.
+    *   *Rủi ro chuyển khoản sai lệch hoặc xác nhận thủ công chậm*: Chuyển khoản truyền thống mất thời gian đối soát thủ công và dễ sai thông tin. Khách hàng cần một cơ chế thanh toán quét mã QR tự động hóa xác nhận tức thì.
+    *   *Bất tiện khi mua vé trực tiếp tại quầy*: Khách mua vé tại quầy không được đối chiếu thông tin ghế và hóa đơn, dễ xảy ra sai sót từ nhân viên. Khách hàng cần một màn hình phụ hiển thị trực quan thông tin đặt vé tại quầy.
+    *   *Thiếu thông tin ưu đãi và sự kiện*: Khách hàng bỏ lỡ các chương trình khuyến mãi hoặc tin tức phim do thông tin phân tán. Họ cần một giao diện tổng hợp tin tức điện ảnh và sự kiện ưu đãi trực quan.
+
+*   **Phạm vi dự án giải quyết các Pain Points cụ thể (Implementation Scope)**
+    *   *Hệ thống Đặt vé & Chọn ghế trực quan (Frontend/Backend)*: Xây dựng sơ đồ ghế ngồi động theo thời gian thực giúp khách hàng tự do lựa chọn vị trí và đặt vé trực tuyến nhanh chóng trong vòng 1-2 phút, giải quyết triệt để nỗi đau xếp hàng chờ đợi.
+    *   *Tự động hóa thanh toán VietQR (SePay)*: Tích hợp Webhook kết hợp Active Polling đối soát tự động giao dịch chuyển khoản. Hệ thống tự động kiểm tra trạng thái ghế trống trước khi hoàn tất giao dịch để tránh trường hợp trùng ghế khi thanh toán trễ, đồng thời gửi email hóa đơn tự động qua SMTP giúp nâng cao độ tin cậy.
+    *   *Đồng bộ màn hình phụ POS2 một chiều*: Triển khai màn hình phụ POS2 hiển thị thông tin đặt vé trực tiếp cho khách hàng đối chiếu tại quầy, loại bỏ hoàn toàn rủi ro sai sót thông tin và không gây ra hiện tượng lặp điều hướng vô hạn (endless routing loop).
+    *   *Thuật toán kiểm tra trùng lịch chiếu (Showtimes Overlap Check)*: Xử lý ở tầng nghiệp vụ Backend NestJS để ngăn chặn Admin tạo hoặc sửa suất chiếu bị chồng chéo thời gian tại cùng một phòng chiếu, đảm bảo lịch vận hành rạp luôn thông suốt.
+    *   *Trang Admin Dashboard & Slideshow Tin tức/Khuyến mãi*: Quản trị viên dễ dàng CRUD tin tức bài viết, khuyến mãi và liên hoan phim để tự động cập nhật, xoay chuyển slideshow mỗi 10 giây trên trang chủ khách hàng giúp tăng trải nghiệm tiếp cận thông tin.
 
 ### 2. Phạm vi dự án & Vai trò thành viên
 Đây là một **Dự án Nhóm (Group Project)** được phát triển theo mô hình Agile/Scrum với 4 thành viên. Dưới đây là phân chia vai trò và nhiệm vụ chi tiết:
@@ -96,6 +103,23 @@ graph TD
     Admin --> UC14
     Admin --> UC15
     Admin --> UC16
+```
+
+### 1.1. Sơ đồ Use Case chi tiết vai trò Admin (Quản trị viên)
+Dưới đây là sơ đồ đặc tả các phân hệ quản lý và nghiệp vụ kiểm tra chặt chẽ dành riêng cho Admin:
+
+```mermaid
+graph TD
+    Admin[Quản trị viên] --> UC20(Đăng nhập hệ thống Admin)
+    Admin --> UC21(Quản lý Phim & Thể loại)
+    Admin --> UC22(Quản lý Lịch chiếu - Showtime)
+    UC22 -->|include| UC23(Kiểm tra trùng lịch - Overlap Check)
+    Admin --> UC23_1(Quản lý Giá vé - Ticket Prices)
+    Admin --> UC24(Quản lý Phòng chiếu & Sơ đồ ghế)
+    Admin --> UC25(Quản lý Rạp chiếu - Theaters)
+    Admin --> UC26(Quản lý Người dùng & Phân quyền)
+    Admin --> UC27(Xem Dashboard & Biểu đồ thống kê)
+    Admin --> UC28(Quản lý Tin tức, Sự kiện & Khuyến mãi)
 ```
 
 ### 2. Mô hình Thực thể Kết hợp (ERD)
@@ -276,86 +300,110 @@ graph TB
     NestJS -->|Sends Email Notifications| Mailer
 ```
 
-### 4. Công nghệ sử dụng
-*   **Tầng Giao Diện (Frontend)**:
-    *   **Next.js 16+ (App Router)**: Cung cấp tính năng Server Component tối ưu SEO và Client Component hỗ trợ các tương tác động (chọn ghế, thanh toán).
-    *   **React 19**: Tận dụng các hook quản lý trạng thái mới.
-    *   **Tailwind CSS v4**: Xây dựng hệ thống styling đồng bộ, giao diện hiện đại, responsive hoàn hảo trên mọi thiết bị.
-*   **Tầng Xử Lý Logic (Backend)**:
-    *   **NestJS 11+**: Khung làm việc Node.js mạnh mẽ, quản lý code theo các Module tách biệt (Controller xử lý DTO validation, Service xử lý Database).
-    *   **Prisma Client**: Thư viện ORM hiện đại hỗ trợ tự động sinh các kiểu dữ liệu an toàn (Type-safe queries) kết nối MySQL.
-    *   **TypeScript**: Đảm bảo tính nhất quán của kiểu dữ liệu toàn hệ thống.
-*   **Cơ sở dữ liệu**:
-    *   **MySQL 8.x**: Hệ quản trị cơ sở dữ liệu quan hệ mạnh mẽ, đảm bảo tính toàn vẹn dữ liệu (ACID).
-*   **Bảo mật & Tích hợp**:
-    *   **JWT (JSON Web Token)**: Xác thực không trạng thái (stateless) giữa Client và Server.
-    *   **Bcryptjs & Pepper**: Mã hóa mật khẩu an toàn mức độ cao.
-    *   **SePay VietQR API**: Hỗ trợ thanh toán nhanh bằng quét mã QR với cơ chế đối soát tự động qua Webhook bảo mật bằng `SEPAY_API_TOKEN`.
-
-### 5. Các biểu đồ thống kê trong Dashboard Admin
-Để giúp quản trị viên nắm bắt nhanh chóng tình hình hoạt động, Dashboard Admin tích hợp các biểu đồ trực quan (charts) được thiết kế đồng bộ với hệ thống.
-
-#### a. Biểu đồ tỷ trọng doanh thu theo thể loại phim (Pie Chart)
-Biểu đồ này hiển thị phân bổ phần trăm doanh thu thu được từ các thể loại phim khác nhau trong tháng, giúp Admin hiểu rõ thị hiếu của khách hàng.
-```mermaid
-pie title Tỷ lệ doanh thu theo Thể loại Phim (Tháng 06/2026)
-    "Hành động" : 45.2
-    "Kinh dị" : 22.8
-    "Hoạt hình (Anime)" : 15.5
-    "Tình cảm / Lãng mạn" : 10.5
-    "Thể loại khác" : 6.0
-```
-
-#### b. Sơ đồ bố cục giao diện Dashboard Admin (UI Mockup Layout)
-Sơ đồ khối thể hiện cách sắp xếp vị trí các thẻ thống kê tổng quan (Cards) và các biểu đồ cột, biểu đồ tròn trên giao diện Next.js:
-```mermaid
-graph TB
-    subgraph UI_Admin_Dashboard [Giao diện Admin Dashboard - Bố cục chính]
-        direction TB
-        subgraph Summary_Cards [Khu vực chỉ số tổng quan - Dashboard Overview Cards]
-            Card1[Doanh thu hôm nay <br> 15,200,000 VND]
-            Card2[Vé đã bán <br> 142 vé]
-            Card3[Người dùng mới <br> 12 tài khoản]
-            Card4[Tỷ lệ lấp đầy ghế <br> 64.5%]
-        end
-
-        subgraph Chart_Area [Khu vực Biểu đồ thống kê - Analytics Section]
-            direction LR
-            ChartLine[Biểu đồ cột/đường: <br> Doanh thu theo Ngày/Tháng]
-            ChartPie[Biểu đồ tròn: <br> Tỷ lệ doanh thu thể loại phim]
-        end
-
-        subgraph Data_Tables [Khu vực Bảng danh sách - Recent Data Tables]
-            direction LR
-            TablePayments[Giao dịch VietQR mới nhất <br> Webhook SePay]
-            TableMovies[Top 5 phim ăn khách nhất <br> Doanh thu / Suất chiếu]
-        end
-
-        Summary_Cards --> Chart_Area
-        Chart_Area --> Data_Tables
-    end
-```
-
-#### c. Luồng tổng hợp dữ liệu cho biểu đồ thống kê (Data Aggregation Flow)
-Mô tả cách thức hệ thống Backend NestJS truy vấn qua Prisma ORM để thu thập và biến đổi dữ liệu thô từ database MySQL trước khi trả về cấu trúc JSON phù hợp cho các thư viện biểu đồ ở Frontend (ví dụ: Recharts hoặc Chart.js):
-```mermaid
-graph LR
-    PaymentTable[(Bảng payment)] -->|payment_status = COMPLETED| JoinProcess{Prisma Join Query}
-    BookingTable[(Bảng booking)] --> JoinProcess
-    ShowtimeTable[(Bảng showtime)] --> JoinProcess
-    MovieTable[(Bảng movie)] --> JoinProcess
-    
-    JoinProcess -->|Nhóm theo ngày & tổng hợp amount| GroupDate[Tổng doanh thu theo ngày]
-    JoinProcess -->|Nhóm theo movie_id & đếm quantity| GroupMovie[Số vé bán theo phim]
-    
-    GroupDate -->|Format sang JSON| Resp1[API /admin/stats/revenue-trend]
-    GroupMovie -->|Format sang JSON| Resp2[API /admin/stats/top-movies]
-    
-    Resp1 -->|Frontend Recharts| Render1[Biểu đồ Cột Doanh Thu]
-    Resp2 -->|Frontend Recharts| Render2[Biểu đồ Tròn Thị Phần]
-```
+#### Phân tích chi tiết Sơ đồ Kiến trúc:
+*   **Tầng Giao Diện (Presentation Layer)**:
+    *   *Next.js 16 Client App Router*: Đóng vai trò là điểm tương tác trực tiếp với khách hàng. Sử dụng React Server Components (RSC) cho các trang tĩnh cần tối ưu hóa tốc độ tải trang và SEO (như danh sách phim, tin tức). Sử dụng Client Components cho các thành phần cần quản lý trạng thái phức tạp (sơ đồ ghế ngồi động, thanh toán quét mã QR).
+    *   *Màn hình phụ POS2 (Passive Display)*: Được thiết kế là một client tĩnh đặc biệt kết nối một chiều nhận dữ liệu trạng thái thông tin đơn vé từ nhân viên quầy POS thông qua giao thức WebSockets hoặc HTTP Polling liên tục, giúp loại bỏ hoàn toàn khả năng xảy ra lỗi lặp điều hướng vô hạn (endless routing loop).
+*   **Tầng Xử Lý Logic (Business Logic Layer)**:
+    *   *NestJS 11 Web Framework*: Đóng vai trò là hạt nhân điều phối toàn bộ nghiệp vụ (Backend API). Nhận các REST HTTP request từ Client, thực hiện kiểm tra dữ liệu đầu vào bằng validation DTO, bảo vệ các API riêng tư bằng JWT Auth Guard kết hợp phân quyền Roles Guard.
+    *   *Nghiệp vụ cốt lõi*: Xử lý kiểm tra chống trùng lịch chiếu phim (`Showtimes Overlap Check`), chặn đầu cơ (giới hạn tối đa 8 ghế/đơn đặt vé), mã hóa mật khẩu thông qua Bcryptjs kết hợp chuỗi Pepper tĩnh lấy từ biến môi trường.
+    *   *Prisma ORM Client*: Đóng vai trò là cầu nối truy vấn dữ liệu an toàn kiểu dữ liệu (Type-safe queries) giữa NestJS và MySQL.
+*   **Tầng Dữ Liệu (Database Layer)**:
+    *   *MySQL 8.x Database*: Lưu trữ toàn bộ dữ liệu quan hệ của hệ thống. Nhờ cơ chế ACID, MySQL bảo đảm độ nhất quán dữ liệu ở mức cao nhất, ngăn chặn tình trạng hai khách hàng đặt trùng một ghế trong cùng một thời điểm.
+*   **Tích Hợp Hệ Thống Bên Ngoài (External Services)**:
+    *   *SePay API (VietQR)*: Tích hợp Webhook kết hợp Active Polling để nhận và đối soát tự động giao dịch chuyển khoản VietQR dựa theo mã đơn vé (`bookingId`) và số tiền (`amount`), tự động hoàn tất vé quá hạn nếu ghế chưa bị trùng.
+    *   *SMTP Mail Service*: Gửi email tự động xác nhận thông tin vé kèm mã QR check-in ngay sau khi giao dịch thành công.
 
 ---
+
+### 3.1. Sơ đồ Triển khai hệ thống trên AWS (AWS Deployment Diagram)
+Để vận hành hệ thống MTBA trong môi trường Production thực tế với độ sẵn sàng cao (High Availability), khả năng tự động co giãn (Auto Scaling) và bảo mật nghiêm ngặt, hệ thống được đề xuất triển khai trên nền tảng Amazon Web Services (AWS) theo sơ đồ sau:
+
+```mermaid
+graph TB
+    ClientApp[Khách hàng / Máy POS Nhân viên / POS2] -->|HTTPS Requests| Route53[AWS Route 53 - DNS Routing]
+    
+    subgraph VPC [Amazon VPC - Virtual Private Cloud]
+        subgraph Public_Subnets [Public Subnets - Mạng Công Cộng]
+            ALB[Application Load Balancer]
+            Amplify[AWS Amplify - Host Next.js Client Static]
+        end
+        
+        subgraph Private_Subnets [Private Subnets - Mạng Nội Bộ Bảo Mật]
+            ECS[ECS Fargate - Docker Containers NestJS Backend]
+            RDS[(Amazon RDS MySQL - Multi-AZ Database)]
+        end
+    end
+    
+    Route53 -->|Static / SSR Assets| Amplify
+    Route53 -->|API Traffic / Dynamic requests| ALB
+    ALB -->|Forward Port 3001| ECS
+    ECS -->|Prisma Client TLS Connection| RDS
+    
+    %% Config & External integration
+    ECS -->|Load environment variables| SecretsManager[AWS Secrets Manager / SSM Parameter Store]
+    ECS -->|Sends Event logs| CloudWatch[AWS CloudWatch - Monitoring & Logging]
+    ECS <--|Webhook callback realtime| SePay[SePay VietQR Gateway]
+    ECS -->|SMTP Emails| SES[Amazon SES / SMTP Mail Service]
+```
+
+#### Phân tích chi tiết mô hình Deploy trên AWS:
+1.  **AWS Route 53 & AWS Amplify**:
+    *   *AWS Route 53*: Đóng vai trò là dịch vụ quản lý DNS, chịu trách nhiệm định tuyến người dùng đến các endpoint phù hợp (Amplify cho giao diện tĩnh và Application Load Balancer cho các request API).
+    *   *AWS Amplify (Frontend Next.js)*: Tự động biên dịch và phân phối mã nguồn Next.js. Amplify tích hợp sẵn CDN toàn cầu giúp phân phối các tệp tin tĩnh (JS, CSS, hình ảnh) đến khách hàng với độ trễ cực thấp.
+2.  **Amazon VPC & Private Subnets (Bảo mật mạng)**:
+    *   Toàn bộ Backend NestJS và Database MySQL được cô lập hoàn toàn bên trong các **Private Subnets** (Mạng nội bộ) của **Amazon VPC** (Virtual Private Cloud). Các thành phần này không có IP công cộng và không thể bị truy cập trực tiếp từ Internet, giúp triệt tiêu các cuộc tấn công mạng trực tiếp.
+3.  **Application Load Balancer (ALB)**:
+    *   Đứng ở **Public Subnet** để tiếp nhận các REST API requests từ Next.js Client. ALB chịu trách nhiệm giải mã SSL/TLS (HTTPS) và phân phối các request API vào các container NestJS chạy dưới mạng nội bộ, đồng thời thực hiện cơ chế lọc traffic cơ bản.
+4.  **Amazon ECS Fargate (Tầng Backend container)**:
+    *   Backend NestJS được đóng gói thành các Docker Image và chạy trong **Amazon ECS (Elastic Container Service)** với chế độ chạy **AWS Fargate** (Serverless container). 
+    *   Cấu hình **Auto Scaling** dựa trên mức độ sử dụng CPU/RAM để tự động tăng hoặc giảm số lượng task (container) đang chạy, đảm bảo hệ thống không bị sập khi lượng khách đặt vé tăng đột biến (ví dụ: giờ cao điểm ra mắt phim bom tấn).
+5.  **Amazon RDS MySQL (Tầng lưu trữ)**:
+    *   Sử dụng dịch vụ **Amazon RDS (Relational Database Service) MySQL**. 
+    *   Cấu hình **Multi-AZ (Multiple Availability Zones)**: RDS tự động đồng bộ dữ liệu sang một vùng dự phòng độc lập vật lý khác. Nếu vùng chính gặp sự cố thiên tai hoặc mất điện, RDS tự động failover (chuyển đổi) sang vùng dự phòng trong vài giây để hệ thống hoạt động không bị gián đoạn.
+6.  **AWS Secrets Manager & CloudWatch**:
+    *   *AWS Secrets Manager*: Quản lý tập trung các thông tin nhạy cảm của hệ thống như mật khẩu DB (`DATABASE_URL`), JWT secret key, khóa bí mật băm mật khẩu `PASSWORD_PEPPER`, và mã token webhook của SePay `SEPAY_API_TOKEN`. ECS Fargate sẽ load động các cấu hình này vào biến môi trường khi khởi chạy thay vì lưu cứng trong source code.
+    *   *AWS CloudWatch*: Giám sát tài nguyên phần cứng, thu thập logs thời gian thực từ các task ECS để hỗ trợ đội ngũ phát triển debug và bảo trì hệ thống.
+
+---
+
+### 4. Công nghệ sử dụng
+*   **Tầng Giao Diện (Presentation Layer - Frontend)**:
+    *   **Next.js 16+ (App Router)**: Nền tảng framework React hiện đại nhất.
+        *   *Lý do lựa chọn*: Tách biệt rõ ràng giữa **React Server Components (RSC)** để kết xuất (render) tĩnh phía máy chủ cho các trang tin tức, thông tin phim giúp tăng tốc độ tải trang ban đầu (First Contentful Paint) và cải thiện điểm số SEO. Ngược lại, sử dụng **Client Components** (`'use client'`) cho các thành phần có tính tương tác cao như sơ đồ chọn ghế thời gian thực, bộ đếm thời gian giữ ghế và các hộp thoại pop-up thanh toán VietQR.
+        *   *Ứng dụng thực tiễn*: Triển khai luồng điều hướng mượt mà, tối ưu tài nguyên tải và quản lý router động (`/movies/[id]`, `/booking/[showtimeId]`).
+    *   **React 19**: Phiên bản thư viện giao diện mới nhất.
+        *   *Lý do lựa chọn*: Tối ưu hoá quá trình render lại (re-render) của các component, tích hợp tốt với cơ chế Server Actions và tối ưu state quản lý ghế ngồi trống thời gian thực.
+    *   **Tailwind CSS v4**: Thư viện styling theo hướng Utility-first thế hệ mới.
+        *   *Lý do lựa chọn*: Sử dụng hệ thống theme mới dựa trên CSS Variables giúp dễ dàng tùy biến giao diện tối/sáng (Dark Mode) và tạo hiệu ứng Glassmorphism hiện đại cho các khối thẻ. Hỗ trợ xây dựng giao diện hoàn toàn Responsive từ thiết bị di động của khách hàng cho đến màn hình tablet POS cỡ lớn của nhân viên và màn hình Passive Display POS2.
+
+*   **Tầng Xử Lý Logic (Business Logic Layer - Backend)**:
+    *   **NestJS 11+**: Framework Node.js được thiết kế theo kiến trúc hướng đối tượng (OOP).
+        *   *Lý do lựa chọn*: Cấu trúc module rõ ràng (`Module`, `Controller`, `Service`), áp dụng nguyên lý SOLID giúp dễ bảo trì và mở rộng code.
+        *   *Ứng dụng thực tiễn*:
+            *   *Controller*: Chịu trách nhiệm tiếp nhận request, kiểm tra định dạng dữ liệu đầu vào thông qua `ValidationPipe` cùng Class-Validator DTOs, ngăn chặn dữ liệu bẩn.
+            *   *Service*: Nơi xử lý toàn bộ logic nghiệp vụ cốt lõi như kiểm tra chống trùng lịch chiếu (`Showtimes Overlap Check`), giới hạn đặt tối đa 8 ghế, tính toán tổng số tiền dựa theo khung giờ ngày/đêm và loại ghế.
+            *   *Guards*: Sử dụng `JwtAuthGuard` kết hợp `RolesGuard` để phân quyền chặt chẽ các API mật thiết dành riêng cho Admin hoặc Staff dựa trên vai trò người dùng trong cơ sở dữ liệu.
+    *   **Prisma Client**: Công cụ ORM (Object-Relational Mapping) thế hệ mới cho Node.js và TypeScript.
+        *   *Lý do lựa chọn*: Tự động sinh kiểu dữ liệu (auto-generated types) dựa trên schema DB giúp ngăn ngừa lỗi truy vấn ngay từ thời điểm viết code (compile-time). Hỗ trợ các câu lệnh truy vấn phức tạp (Join, Aggregate) giữa các bảng `booking`, `showtime`, `screen`, `payment` một cách nhanh chóng và an toàn.
+    *   **TypeScript**: Ngôn ngữ lập trình mã nguồn mở phát triển trên nền JavaScript.
+        *   *Lý do lựa chọn*: Giúp định nghĩa kiểu dữ liệu chặt chẽ từ Frontend sang Backend, giảm thiểu tối đa các lỗi runtime phổ biến như `null` hoặc `undefined`.
+
+*   **Cơ Sở Dữ Liệu (Database Layer)**:
+    *   **MySQL 8.x**: Hệ quản trị cơ sở dữ liệu quan hệ (RDBMS) mạnh mẽ và phổ biến.
+        *   *Lý do lựa chọn*: Đảm bảo tính toàn vẹn dữ liệu cực kỳ khắt khe theo tiêu chuẩn ACID (Atomicity, Consistency, Isolation, Durability) - điều tối quan trọng trong các nghiệp vụ giao dịch tài chính và đặt vé xem phim để tránh tình trạng hai khách hàng đặt trùng một ghế trong cùng một thời điểm.
+
+*   **Bảo Mật & Tích Hợp Hệ Thống**:
+    *   **Mã Hóa Mật Khẩu (Bcryptjs & Pepper)**:
+        *   *Cơ chế hoạt động*: Thay vì chỉ băm (hash) mật khẩu bằng Salt mặc định của Bcryptjs, hệ thống kết hợp thêm một chuỗi bí mật tĩnh gọi là **Pepper** (`PASSWORD_PEPPER`) được cấu hình duy nhất trong biến môi trường `.env` phía Server. Mật khẩu trước khi băm sẽ được ghép nối: `password + PEPPER`. Điều này ngăn chặn việc hacker có được database cũng không thể dùng bảng Rainbow Table để giải mã mật khẩu nếu không có chuỗi Pepper.
+    *   **Xác Thực Không Trạng Thái (JWT - JSON Web Token)**:
+        *   *Cơ chế hoạt động*: Sau khi người dùng đăng nhập thành công, Server ký và cấp một Access Token mã hóa chứa thông tin định danh và vai trò người dùng. Token này được lưu ở `localStorage` phía Frontend và đính kèm vào header `Authorization: Bearer <token>` trong các request gọi API tiếp theo để Server xác thực mà không cần truy vấn lại bảng session trong database.
+    *   **Tích Hợp Cổng Thanh Toán VietQR (SePay API)**:
+        *   *Cơ chế hoạt động*:
+            *   *Active Polling*: Frontend định kỳ gọi API quét trạng thái giao dịch nhằm cập nhật nhanh cho người dùng.
+            *   *Webhook Callback*: Cổng SePay tự động bắn một HTTP POST request chứa chi tiết giao dịch về endpoint `/payments-webhook` của Backend. Backend tiến hành xác thực webhook bằng token bảo mật `SEPAY_API_TOKEN` từ header. Sau khi khớp mã giao dịch (chứa `bookingId`) và số tiền, hệ thống cập nhật trạng thái đơn vé và giải phóng trạng thái giữ ghế trống.
+
+
 
 ## 📌 Nội dung 4: Quản lý Dự án với Agile/Scrum (Project Management)
 
