@@ -1,13 +1,15 @@
-Sơ đồ Use Case chi tiết của vai trò Nhân viên (Staff):*
+Dưới đây là sơ đồ đặc tả các phân hệ quản lý và nghiệp vụ kiểm tra chặt chẽ dành riêng cho Admin:
+
 ```mermaid
 graph TD
-    Staff[Nhân viên quầy POS] --> UC10(Đăng nhập hệ thống POS)
-    Staff --> UC11(Xem lịch chiếu và sơ đồ phòng chiếu tại quầy)
-    Staff --> UC12(Đặt vé trực tiếp cho khách hàng)
-    UC12 -->|include| UC13(Chọn phim, suất chiếu & ghế ngồi)
-    UC12 -->|include| UC14(Đồng bộ thông tin sang màn hình phụ POS2)
-    Staff --> UC15(Xử lý thanh toán tại quầy)
-    UC15 -->|extends| UC16(Thanh toán Tiền mặt - CASH)
-    UC15 -->|extends| UC17(Thanh toán Chuyển khoản/VietQR)
-    Staff --> UC18(In vé giấy cho khách hàng)
+    Admin[Quản trị viên] --> UC20(Đăng nhập hệ thống Admin)
+    Admin --> UC21(Quản lý Phim & Thể loại)
+    Admin --> UC22(Quản lý Lịch chiếu - Showtime)
+    UC22 -->|include| UC23(Kiểm tra trùng lịch - Overlap Check)
+    Admin --> UC23_1(Quản lý Giá vé - Ticket Prices)
+    Admin --> UC24(Quản lý Phòng chiếu & Sơ đồ ghế)
+    Admin --> UC25(Quản lý Rạp chiếu - Theaters)
+    Admin --> UC26(Quản lý Người dùng & Phân quyền)
+    Admin --> UC27(Xem Dashboard & Biểu đồ thống kê)
+    Admin --> UC28(Quản lý Tin tức, Sự kiện & Khuyến mãi)
 ```
