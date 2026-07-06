@@ -343,7 +343,7 @@ graph TB
     %% Config & External integration
     ECS -->|Load environment variables| SecretsManager[AWS Secrets Manager / SSM Parameter Store]
     ECS -->|Sends Event logs| CloudWatch[AWS CloudWatch - Monitoring & Logging]
-    ECS <--|Webhook callback realtime| SePay[SePay VietQR Gateway]
+    SePay[SePay VietQR Gateway] -->|Webhook callback realtime| ECS
     ECS -->|SMTP Emails| SES[Amazon SES / SMTP Mail Service]
 ```
 
