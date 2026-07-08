@@ -282,6 +282,46 @@ erDiagram
     festival ||--o{ news : "contains"
 ```
 
+### 3.2.1. Luồng dữ liệu đặt vé chi tiết qua các thực thể (Booking Data Flow)
+
+*Kính thưa Hội đồng, để làm rõ cách các bảng dữ liệu phối hợp xử lý trong quá trình khách hàng thực hiện một giao dịch đặt vé, dữ liệu sẽ đi qua các thực thể trong ERD theo luồng như sau:*
+
+1. **Khởi tạo ngữ cảnh (Movie → Showtime → Seat):**
+   * Hệ thống truy vấn phim (`movie`) và phòng chiếu (`screen`) để xác định các suất chiếu cụ thể (`showtime`).
+   * Khi khách hàng xem sơ đồ phòng chiếu, hệ thống tải danh sách các ghế (`seat`) thuộc phòng (`screen_id`) của suất chiếu đó để hiển thị trạng thái trống/đã được giữ.
+
+2. **Xác định giá vé (Ticket Price):**
+   * Dựa trên loại ghế khách chọn (`seat.type`: Standard, VIP, Sweetbox) kết hợp cấu hình phòng (`roomtype_id`) và khung giờ suất chiếu (`showtime.start_time`), hệ thống truy vấn bảng `ticketprice` tương ứng để lấy ra giá vé chính xác cho từng ghế.
+
+3. **Tạo giao dịch đặt vé (User → Booking → Booking Seat):**
+   * Sau khi kiểm tra hợp lệ (không vượt quá 8 ghế), một bản ghi mới được ghi nhận vào bảng `booking` liên kết với tài khoản khách hàng (`user_id`) và suất chiếu (`showtime_id`).
+   * Đồng thời, danh sách các ghế được chọn sẽ được lưu vào bảng trung gian `bookingseat` (liên kết `booking_id` với các `seat_id` tương ứng). Lúc này, trạng thái của các ghế liên quan tạm thời được khóa ở mức ứng dụng (soft-lock).
+
+4. **Xử lý thanh toán (Booking → Payment):**
+   * Một bản ghi thanh toán được tạo trong bảng `payment` liên kết với `booking_id` vừa tạo, mang trạng thái mặc định ban đầu là `PENDING` (chờ thanh toán).
+   * Khi nhận được tín hiệu Webhook/Active Polling từ cổng SePay xác nhận chuyển khoản thành công với nội dung chứa mã đơn vé và số tiền khớp nhau:
+     * Trạng thái `payment.payment_status` chuyển thành `COMPLETED`.
+     * Ghế ngồi trong bảng `seat` chính thức được chuyển sang trạng thái đã bán (`is_booked = true`).
+     * Đơn hàng hoàn tất và email vé QR được kích hoạt gửi tới người dùng.
+
+5. **Kịch bản đặc thù 1: Xử lý vé quá hạn & Trùng ghế khi thanh toán trễ (Expired Booking / Seat Overlap)**
+   * Nếu khách hàng chuyển khoản trễ khi bộ đếm giữ ghế đã về 0, bản ghi `booking` đã bị chuyển sang trạng thái quá hạn.
+   * Khi Webhook của SePay kích hoạt, hệ thống sẽ thực hiện một lệnh truy vấn đối soát: kiểm tra xem các `seat_id` trong `bookingseat` thuộc đơn này đã bị một `booking` thành công (`payment_status = COMPLETED`) khác mua mất chưa.
+   * **Trường hợp chưa bị trùng:** Hệ thống cập nhật trạng thái `payment.payment_status = COMPLETED`, đổi `is_booked = true` cho các ghế đó, cứu đơn thành công.
+   * **Trường hợp đã bị trùng:** Hệ thống đánh dấu giao dịch thanh toán thất bại (`payment_status = FAILED`), giữ nguyên trạng thái ghế của người đặt sau và kích hoạt quy trình hoàn tiền (Refund).
+
+6. **Kịch bản đặc thù 2: Đặt vé trực tiếp tại quầy của Nhân viên (POS Staff Booking)**
+   * Nhân viên POS đăng nhập bằng tài khoản thuộc nhóm `user` liên kết với `userrole` là `ROLE_STAFF`.
+   * Luồng tạo đơn `booking` và `bookingseat` diễn ra tương tự khách hàng trực tuyến.
+   * Khác biệt ở phương thức thanh toán: Bản ghi `payment.payment_method` được thiết lập là `CASH` (tiền mặt) hoặc `TRANSFER` (chuyển khoản quầy). Trạng thái đơn được chuyển ngay sang `COMPLETED` mà không cần đợi Webhook từ SePay nếu nhân viên xác nhận đã nhận đủ tiền mặt.
+
+7. **Kịch bản đặc thù 3: Admin quản lý và kiểm tra trùng lịch chiếu (Admin Showtime Collision)**
+   * Admin thao tác thêm/sửa suất chiếu trong bảng `showtime`.
+   * Trước khi lưu bản ghi vào MySQL, hệ thống truy vấn bảng `showtime` để đối chiếu: Tìm các suất chiếu có cùng `screen_id` mà khoảng thời gian (`start_time`, `end_time`) bị chồng chéo với suất chiếu mới (`new_start_time < existing_end_time` và `new_end_time > existing_start_time`).
+   * Nếu phát hiện trùng lặp, hệ thống chặn không ghi dữ liệu và ném ra lỗi `OVERLAP`.
+
+---
+
 **Giải thích các nhóm bảng trọng tâm:**
 
 | Nhóm | Các bảng | Vai trò |
@@ -294,47 +334,27 @@ erDiagram
 
 ---
 
-### 3.3. Sơ đồ Kiến trúc & Triển khai trên AWS EC2 (Architecture & AWS EC2 Deployment)
+### 3.3. Sơ đồ Kiến trúc (Architecture Diagram)
 
-Hệ thống được thiết kế theo mô hình **3-Tier Architecture** (3 lớp) và triển khai trên hạ tầng điện toán đám mây **Amazon AWS** bằng cách sử dụng các máy ảo **EC2** để chạy ứng dụng độc lập, đảm bảo bảo mật và hiệu năng cao nhất:
+Hệ thống được xây dựng theo mô hình **3-Tier Architecture** — phân tách rõ ràng 3 tầng: Giao diện, Logic nghiệp vụ và Lưu trữ:
 
 ```mermaid
 graph TB
-    %% Client & Routing
-    Client[Khách hàng / Nhân viên POS] -->|HTTPS Requests| Route53[AWS Route 53 - DNS]
-    Route53 -->|Forward Traffic| ALB[Application Load Balancer]
+    subgraph Client ["Tầng Giao Diện - Presentation Layer"]
+        NextJS["Next.js 16+ (App Router, RSC)"]
+        Tailwind["Tailwind CSS v4"]
+        POS2["Màn hình phụ POS2 - Passive Display"]
+    end
 
-    subgraph VPC ["Amazon VPC (Virtual Private Cloud)"]
-        subgraph Public_Subnet ["Public Subnet (Mạng Công Cộng - Nhận Traffic)"]
-            ALB
-            Bastion[Bastion Host - SSH Gateway]
-        end
-        
-        subgraph Private_Subnet ["Private Subnet (Mạng Nội Bộ Bảo Mật - Chứa Logic & DB)"]
-            %% EC2 Frontend
-            subgraph EC2_Frontend ["EC2 Instance: Frontend (Presentation Layer)"]
-                NginxFE["Nginx (Reverse Proxy & SSL)"]
-                NextJS["Next.js 16+ App (RSC, Port 3000)"]
-                NginxFE -->|Local Proxy| NextJS
-            end
+    subgraph Server ["Tầng Xử Lý Logic - Business Logic Layer"]
+        NestJS["NestJS 11+ (Controller → Service)"]
+        Auth["Auth: JWT + bcrypt + Pepper"]
+        Booking["Booking: Seat Limit + Showtime Overlap"]
+        Prisma["Prisma ORM Client"]
+    end
 
-            %% EC2 Backend
-            subgraph EC2_Backend ["EC2 Instance: Backend (Business Logic Layer)"]
-                NginxBE["Nginx (Reverse Proxy)"]
-                NestJS["NestJS 11+ App (Port 3001)"]
-                Auth["Auth Module (JWT, bcrypt + Pepper)"]
-                Booking["Booking Module (Seat Limit, Overlap Check)"]
-                Prisma["Prisma ORM Client"]
-                
-                NginxBE -->|Local Proxy| NestJS
-                NestJS --- Auth
-                NestJS --- Booking
-                NestJS --- Prisma
-            end
-
-            %% Database Layer
-            RDS[("Amazon RDS - MySQL 8.x Database (Multi-AZ)")]
-        end
+    subgraph Storage ["Tầng Dữ Liệu - Database Layer"]
+        MySQL[("MySQL 8.x Database")]
     end
 
     subgraph External ["Hệ Thống Bên Ngoài"]
@@ -342,39 +362,14 @@ graph TB
         Mailer["SMTP Mail Service"]
     end
 
-    %% Routing to instances
-    ALB -->|HTTPS Port 443 -> Port 80/443| NginxFE
-    ALB -->|HTTPS Port 8000 -> Port 80/443| NginxBE
-    
-    %% Communication between layers
-    NextJS -->|"REST API (fetch) qua Public Domain"| ALB
-    Prisma -->|Prisma Client TLS Connection| RDS
-    SePay -->|"Webhook POST /payments-webhook"| ALB
+    NextJS -->|"REST API / fetch()"| NestJS
+    NestJS -->|"HTTP Polling / Path Sync"| POS2
+    NestJS -->|"Prisma Queries"| MySQL
+    SePay -->|"Webhook POST /payments-webhook"| NestJS
     NestJS -->|"Gửi email xác nhận vé"| Mailer
 ```
 
-**Phân tích chi tiết mô hình Kiến trúc & Triển khai:**
-
-* **Tầng Giao Diện (Presentation Layer) trên EC2 Frontend:**
-  * Sử dụng **Next.js 16+ App Router** chạy trên môi trường Node.js (port 3000). Có các trang tĩnh render tại server (RSC) giúp tối ưu SEO, và Client Components xử lý sơ đồ ghế, thanh toán.
-  * **Nginx** làm Reverse Proxy phía trước đón nhận traffic từ Load Balancer chuyển tiếp vào Next.js.
-  * *Màn hình phụ POS2* là một client tĩnh đặc biệt kết nối một chiều nhận dữ liệu từ POS Staff để đồng bộ hiển thị, tránh lỗi lặp điều hướng vô hạn.
-
-* **Tầng Logic Nghiệp Vụ (Business Logic Layer) trên EC2 Backend:**
-  * **NestJS 11+ App** chạy độc lập trên port 3001, được proxy qua Nginx BE. 
-  * Chứa các module nghiệp vụ quan trọng: Auth Service (bảo mật qua JWT và Salt & Pepper + bcrypt), Booking Service (giới hạn 8 ghế/giao dịch, thuật toán chặn trùng lịch chiếu phim Showtime Overlap), và Prisma Client.
-
-* **Tầng Dữ Liệu (Database Layer) qua Amazon RDS MySQL:**
-  * Cơ sở dữ liệu MySQL 8.x được vận hành thông qua dịch vụ **Amazon RDS Multi-AZ**. RDS tự động nhân bản dữ liệu sang vùng dự phòng để tự động khôi phục (failover) nếu Datacenter chính gặp sự cố vật lý.
-  * Đảm bảo tính toàn vẹn dữ liệu (ACID) tuyệt đối cho các giao dịch chọn ghế và thanh toán vé.
-
-* **Bảo mật và Tác nhân bên ngoài:**
-  * **Bảo mật mạng VPC**: Toàn bộ máy chủ EC2 chứa mã nguồn và RDS Database đều nằm ở **Private Subnet**, hoàn toàn không có IP public, ngăn chặn tấn công mạng trực diện. Chỉ có Application Load Balancer (ALB) nằm ở **Public Subnet** tiếp nhận yêu cầu từ Route 53.
-  * **SePay Webhook**: Nhận sự kiện chuyển khoản tự động và gửi tín hiệu API đến ALB để backend xử lý, cập nhật trạng thái đơn vé ngay tức thì.
-
 ---
-
-
 
 ### 3.4. Công nghệ sử dụng
 
