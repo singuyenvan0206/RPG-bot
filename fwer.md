@@ -334,27 +334,47 @@ erDiagram
 
 ---
 
-### 3.3. Sơ đồ Kiến trúc (Architecture Diagram)
+### 3.3. Sơ đồ Kiến trúc & Triển khai trên AWS EC2 (Architecture & AWS EC2 Deployment)
 
-Hệ thống được xây dựng theo mô hình **3-Tier Architecture** — phân tách rõ ràng 3 tầng: Giao diện, Logic nghiệp vụ và Lưu trữ:
+Hệ thống được thiết kế theo mô hình **3-Tier Architecture** (3 lớp) và triển khai trên hạ tầng điện toán đám mây **Amazon AWS** bằng cách sử dụng các máy ảo **EC2** để chạy ứng dụng độc lập, đảm bảo bảo mật và hiệu năng cao nhất:
 
 ```mermaid
 graph TB
-    subgraph Client ["Tầng Giao Diện - Presentation Layer"]
-        NextJS["Next.js 16+ (App Router, RSC)"]
-        Tailwind["Tailwind CSS v4"]
-        POS2["Màn hình phụ POS2 - Passive Display"]
-    end
+    %% Client & Routing
+    Client[Khách hàng / Nhân viên POS] -->|HTTPS Requests| Route53[AWS Route 53 - DNS]
+    Route53 -->|Forward Traffic| ALB[Application Load Balancer]
 
-    subgraph Server ["Tầng Xử Lý Logic - Business Logic Layer"]
-        NestJS["NestJS 11+ (Controller → Service)"]
-        Auth["Auth: JWT + bcrypt + Pepper"]
-        Booking["Booking: Seat Limit + Showtime Overlap"]
-        Prisma["Prisma ORM Client"]
-    end
+    subgraph VPC ["Amazon VPC (Virtual Private Cloud)"]
+        subgraph Public_Subnet ["Public Subnet (Mạng Công Cộng - Nhận Traffic)"]
+            ALB
+            Bastion[Bastion Host - SSH Gateway]
+        end
+        
+        subgraph Private_Subnet ["Private Subnet (Mạng Nội Bộ Bảo Mật - Chứa Logic & DB)"]
+            %% EC2 Frontend
+            subgraph EC2_Frontend ["EC2 Instance: Frontend (Presentation Layer)"]
+                NginxFE["Nginx (Reverse Proxy & SSL)"]
+                NextJS["Next.js 16+ App (RSC, Port 3000)"]
+                NginxFE -->|Local Proxy| NextJS
+            end
 
-    subgraph Storage ["Tầng Dữ Liệu - Database Layer"]
-        MySQL[("MySQL 8.x Database")]
+            %% EC2 Backend
+            subgraph EC2_Backend ["EC2 Instance: Backend (Business Logic Layer)"]
+                NginxBE["Nginx (Reverse Proxy)"]
+                NestJS["NestJS 11+ App (Port 3001)"]
+                Auth["Auth Module (JWT, bcrypt + Pepper)"]
+                Booking["Booking Module (Seat Limit, Overlap Check)"]
+                Prisma["Prisma ORM Client"]
+                
+                NginxBE -->|Local Proxy| NestJS
+                NestJS --- Auth
+                NestJS --- Booking
+                NestJS --- Prisma
+            end
+
+            %% Database Layer
+            RDS[("Amazon RDS - MySQL 8.x Database (Multi-AZ)")]
+        end
     end
 
     subgraph External ["Hệ Thống Bên Ngoài"]
@@ -362,14 +382,38 @@ graph TB
         Mailer["SMTP Mail Service"]
     end
 
-    NextJS -->|"REST API / fetch()"| NestJS
-    NestJS -->|"HTTP Polling / Path Sync"| POS2
-    NestJS -->|"Prisma Queries"| MySQL
-    SePay -->|"Webhook POST /payments-webhook"| NestJS
+    %% Routing to instances
+    ALB -->|HTTPS Port 443 -> Port 80/443| NginxFE
+    ALB -->|HTTPS Port 8000 -> Port 80/443| NginxBE
+    
+    %% Communication between layers
+    NextJS -->|"REST API (fetch) qua Public Domain"| ALB
+    Prisma -->|Prisma Client TLS Connection| RDS
+    SePay -->|"Webhook POST /payments-webhook"| ALB
     NestJS -->|"Gửi email xác nhận vé"| Mailer
 ```
 
+**Phân tích chi tiết mô hình Kiến trúc & Triển khai:**
+
+* **Tầng Giao Diện (Presentation Layer) trên EC2 Frontend:**
+  * Sử dụng **Next.js 16+ App Router** chạy trên môi trường Node.js (port 3000). Có các trang tĩnh render tại server (RSC) giúp tối ưu SEO, và Client Components xử lý sơ đồ ghế, thanh toán.
+  * **Nginx** làm Reverse Proxy phía trước đón nhận traffic từ Load Balancer chuyển tiếp vào Next.js.
+  * *Màn hình phụ POS2* là một client tĩnh đặc biệt kết nối một chiều nhận dữ liệu từ POS Staff để đồng bộ hiển thị, tránh lỗi lặp điều hướng vô hạn.
+
+* **Tầng Logic Nghiệp Vụ (Business Logic Layer) trên EC2 Backend:**
+  * **NestJS 11+ App** chạy độc lập trên port 3001, được proxy qua Nginx BE. 
+  * Chứa các module nghiệp vụ quan trọng: Auth Service (bảo mật qua JWT và Salt & Pepper + bcrypt), Booking Service (giới hạn 8 ghế/giao dịch, thuật toán chặn trùng lịch chiếu phim Showtime Overlap), và Prisma Client.
+
+* **Tầng Dữ Liệu (Database Layer) qua Amazon RDS MySQL:**
+  * Cơ sở dữ liệu MySQL 8.x được vận hành thông qua dịch vụ **Amazon RDS Multi-AZ**. RDS tự động nhân bản dữ liệu sang vùng dự phòng để tự động khôi phục (failover) nếu Datacenter chính gặp sự cố vật lý.
+  * Đảm bảo tính toàn vẹn dữ liệu (ACID) tuyệt đối cho các giao dịch chọn ghế và thanh toán vé.
+
+* **Bảo mật và Tác nhân bên ngoài:**
+  * **Bảo mật mạng VPC**: Toàn bộ máy chủ EC2 chứa mã nguồn và RDS Database đều nằm ở **Private Subnet**, hoàn toàn không có IP public, ngăn chặn tấn công mạng trực diện. Chỉ có Application Load Balancer (ALB) nằm ở **Public Subnet** tiếp nhận yêu cầu từ Route 53.
+  * **SePay Webhook**: Nhận sự kiện chuyển khoản tự động và gửi tín hiệu API đến ALB để backend xử lý, cập nhật trạng thái đơn vé ngay tức thì.
+
 ---
+
 
 ### 3.4. Công nghệ sử dụng
 
