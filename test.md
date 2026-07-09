@@ -345,25 +345,25 @@ erDiagram
 ```mermaid
 graph TB
     subgraph Client [Tầng Giao Diện - Presentation Layer]
-        NextJS[Next.js 16 Client App Router]
+        NextJS["Next.js 16 Client App Router<br>(Triển khai: AWS EC2 / Amplify)"]
         Tailwind[Tailwind CSS v4]
-        POS2[Màn hình phụ POS2 - Passive Display]
+        POS2["Màn hình phụ POS2 - Passive Display<br>(Đồng bộ một chiều)"]
     end
 
     subgraph Server [Tầng Xử Lý Logic - Business Logic Layer]
-        NestJS[NestJS 11 Web Framework]
+        NestJS["NestJS 11 Web Framework<br>(Triển khai: AWS EC2 / ECS Fargate)"]
         Auth[Auth Service - JWT, bcrypt + pepper]
         Booking[Booking Service - Seat Limit Check, Showtime Overlap Check]
         Prisma[Prisma ORM Client]
     end
 
     subgraph Storage [Tầng Dữ Liệu - Database Layer]
-        MySQL[(MySQL Database)]
+        MySQL[("MySQL Database<br>(Triển khai: Amazon RDS Multi-AZ)")]
     end
 
     subgraph External [Hệ Thống Bên Ngoài - External Services]
         SePay[Cổng VietQR - SePay Webhook / Active Polling]
-        Mailer[Mail Service - SMTP / SendGrid]
+        Mailer["Mail Service<br>(Triển khai: Amazon SES / SMTP)"]
     end
 
     %% Connections
