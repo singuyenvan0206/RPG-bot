@@ -367,10 +367,57 @@ graph TB
 
 ---
 
+### 3.2. Sơ đồ Triển khai thực tế trên VPS (Actual VPS Deployment Diagram)
+Để vận hành hệ thống MTBA thử nghiệm thực tế với chi phí tối ưu và dễ dàng phát triển, hệ thống được triển khai trên máy chủ ảo VPS độc lập chạy hệ điều hành Ubuntu Server. Dưới đây là sơ đồ chi tiết kiến trúc triển khai thực tế của hệ thống:
+
+```mermaid
+graph TD
+    Client[Khách hàng / Nhân viên POS / POS2] -->|Cổng 80/443 HTTP/HTTPS| Nginx["Nginx (Reverse Proxy & SSL termination)"]
+    
+    subgraph VPS [Máy chủ ảo VPS - Ubuntu OS]
+        Nginx -->|Proxy cổng 3000| NextJS["Next.js Frontend (Port 3000)"]
+        Nginx -->|Proxy cổng 3001| NestJS["NestJS Backend (Port 3001)"]
+        
+        subgraph PM2 ["PM2 (Process Manager)"]
+            NextJS
+            NestJS
+        end
+    end
+
+    subgraph External ["Hạ tầng & Dịch vụ ngoài"]
+        NestJS -->|Kết nối Prisma Client| TiDB[("TiDB Cloud MySQL")]
+        NestJS -->|Gửi Mail OTP/Vé| SMTP["SMTP Server (Gmail)"]
+        SePay["Cổng SePay VietQR"] -->|Webhook callback| Nginx
+    end
+```
+
+#### Phân tích chi tiết mô hình Deploy trên VPS:
+1. **Nginx (Web Server / Reverse Proxy & SSL)**:
+    * **Reverse Proxy**: Nginx tiếp nhận các request từ ngoài mạng Internet trên cổng mặc định 80 (HTTP) và 443 (HTTPS) sau đó chuyển tiếp (forward) các request tương ứng vào các dịch vụ chạy nội bộ. Cụ thể, các request trang chính `/` sẽ chuyển vào Next.js (cổng 3000), và các request API `/api/` sẽ chuyển thẳng vào NestJS (cổng 3001) bằng cơ chế rewrite và proxy pass của Nginx (loại bỏ tiền tố `/api/` trước khi gửi đến NestJS).
+    * **SSL Termination**: Nginx kết hợp với Certbot (Let's Encrypt) để cài đặt chứng chỉ SSL tự động, mã hóa toàn bộ dữ liệu truyền tải qua giao thức HTTPS bảo mật, đáp ứng yêu cầu truyền thông tin an toàn của các cổng thanh toán.
+2. **PM2 (Node.js Process Manager)**:
+    * **Duy trì dịch vụ (Daemon Mode)**: Giúp chạy ẩn ứng dụng Next.js và NestJS dưới nền hệ thống mà không cần giữ cửa sổ dòng lệnh terminal luôn mở.
+    * **Khởi phục lỗi tự động (Auto-restart)**: Theo dõi trạng thái của các tiến trình. Nếu tiến trình bị crash do lỗi ngoại lệ chưa bắt được hoặc do rò rỉ bộ nhớ, PM2 tự động khởi động lại trong vòng vài mili-giây.
+    * **Startup System**: Tích hợp với dịch vụ `systemd` của Linux để tự động khôi phục các tiến trình ngay sau khi hệ thống VPS khởi động lại hoặc mất nguồn điện đột ngột.
+3. **Prisma ORM & Client**:
+    * Đóng vai trò đồng bộ trực tiếp cấu trúc dữ liệu (`schema.prisma`) từ local lên VPS database thông qua lệnh `npx prisma db push`, giúp tự động đồng bộ hóa các bảng mà không cần quản lý các file migration thủ công phức tạp trong giai đoạn phát triển nhanh.
+4. **TiDB Cloud (Database Service)**:
+    * Cơ sở dữ liệu MySQL chạy trên nền đám mây của TiDB giúp VPS giảm thiểu tải CPU/RAM cho việc vận hành database nội bộ, đồng thời tận dụng hiệu năng cao của hạ tầng điện toán đám mây.
+
+---
+
 ### 4. Công nghệ sử dụng
+
+#### 💡 Nguyên tắc lựa chọn: Sử dụng Framework thay vì Thư viện tự do
+Trong quá trình thiết kế hệ thống MTBA, đội ngũ phát triển quyết định sử dụng các **Framework hoàn chỉnh (Next.js, NestJS)** thay vì các **Thư viện riêng lẻ (React, Express)** hoặc viết mã nguồn Node.js thuần. Lý do cốt lõi bao gồm:
+1.  **Inversion of Control (IoC - Đảo ngược điều khiển)**: Framework tự quản lý vòng đời của ứng dụng và điều hướng luồng chạy, bắt buộc lập trình viên viết code theo các quy chuẩn tốt nhất (Best Practices). Ngược lại, thư viện yêu cầu lập trình viên tự chắp vá các thư viện phụ (routing, state, build tools) dễ dẫn đến xung đột phiên bản và cấu trúc spaghetti.
+2.  **Chuẩn hóa cấu trúc dự án (Convention over Configuration)**: Việc sử dụng framework giúp toàn bộ thành viên trong nhóm thống nhất tuyệt đối về cấu trúc thư mục, cách quản lý route, gọi API và xử lý middleware, giúp giảm thiểu thời gian setup ban đầu và tối ưu hóa hiệu quả bảo trì dài hạn.
+
+---
+
 *   **Tầng Giao Diện (Presentation Layer - Frontend)**:
     *   **Next.js 16+ (App Router)**: Nền tảng framework React hiện đại nhất.
-        *   *Lý do lựa chọn*: Tách biệt rõ ràng giữa **React Server Components (RSC)** để kết xuất (render) tĩnh phía máy chủ cho các trang tin tức, thông tin phim giúp tăng tốc độ tải trang ban đầu (First Contentful Paint) và cải thiện điểm số SEO. Ngược lại, sử dụng **Client Components** (`'use client'`) cho các thành phần có tính tương tác cao như sơ đồ chọn ghế thời gian thực, bộ đếm thời gian giữ ghế và các hộp thoại pop-up thanh toán VietQR.
+        *   *Tại sao chọn Next.js (Framework) thay vì React thuần (Thư viện)*: React chỉ là thư viện hỗ trợ render giao diện người dùng. Nếu dùng React thuần, dự án sẽ phải tự cấu hình Router (React Router), tự thiết lập Webpack/Vite và chỉ có thể render hoàn toàn ở phía Client (CSR) - điều này gây ảnh hưởng nghiêm trọng tới SEO của các trang thông tin phim và tin tức. Next.js cung cấp giải pháp toàn diện bao gồm cơ chế **React Server Components (RSC)** để kết xuất tĩnh phía máy chủ giúp tăng tốc độ tải trang ban đầu (First Contentful Paint) và tối ưu SEO, đồng thời vẫn hỗ trợ **Client Components** cho các trang tương tác cao như sơ đồ chọn ghế và thanh toán.
         *   *Ứng dụng thực tiễn*: Triển khai luồng điều hướng mượt mà, tối ưu tài nguyên tải và quản lý router động (`/movies/[id]`, `/booking/[showtimeId]`).
     *   **React 19**: Phiên bản thư viện giao diện mới nhất.
         *   *Lý do lựa chọn*: Tối ưu hoá quá trình render lại (re-render) của các component, tích hợp tốt với cơ chế Server Actions và tối ưu state quản lý ghế ngồi trống thời gian thực.
@@ -379,7 +426,10 @@ graph TB
 
 *   **Tầng Xử Lý Logic (Business Logic Layer - Backend)**:
     *   **NestJS 11+**: Framework Node.js được thiết kế theo kiến trúc hướng đối tượng (OOP).
-        *   *Lý do lựa chọn*: Cấu trúc module rõ ràng (`Module`, `Controller`, `Service`), áp dụng nguyên lý SOLID giúp dễ bảo trì và mở rộng code.
+        *   *Tại sao chọn NestJS (Framework) thay vì Node.js / Express thuần (Thư viện)*: 
+            *   *Tránh hỗn loạn kiến trúc (Architecture Enforcement)*: Node.js/Express thuần là thư viện routing cực kỳ tự do và không áp đặt bất kỳ kiến trúc thư mục nào. Khi dự án phình to với hàng chục phân hệ quản lý phức tạp (Movie, Showtime, Screen, Booking, User, Payment, News...), Express sẽ trở nên vô cùng lộn xộn nếu không có cấu trúc quản lý chặt chẽ. NestJS giải quyết triệt để vấn đề này bằng cách ép buộc thiết kế theo các **Modules riêng biệt**, áp dụng nguyên lý SOLID và kiến trúc hướng đối tượng (OOP) vững chắc.
+            *   *Tích hợp Dependency Injection (DI) & Providers*: Giúp tự động quản lý vòng đời của các Services, giảm thiểu sự phụ thuộc trực tiếp (tight coupling) và dễ dàng giả lập (mock) dữ liệu khi viết Unit Test.
+            *   *Hệ sinh thái xử lý trung gian hoàn chỉnh*: Cung cấp sẵn hệ thống `Pipes` để tự động hóa validate dữ liệu đầu vào (DTO) ở Controller, `Guards` để phân quyền bảo mật cấp API, và `Exception Filters` giúp quản lý và định dạng lỗi tập trung thay vì lặp đi lặp lại code try-catch.
         *   *Ứng dụng thực tiễn*:
             *   *Controller*: Chịu trách nhiệm tiếp nhận request, kiểm tra định dạng dữ liệu đầu vào thông qua `ValidationPipe` cùng Class-Validator DTOs, ngăn chặn dữ liệu bẩn.
             *   *Service*: Nơi xử lý toàn bộ logic nghiệp vụ cốt lõi như kiểm tra chống trùng lịch chiếu (`Showtimes Overlap Check`), giới hạn đặt tối đa 8 ghế, tính toán tổng số tiền dựa theo khung giờ ngày/đêm và loại ghế.
@@ -393,7 +443,7 @@ graph TB
     *   **MySQL 8.x**: Hệ quản trị cơ sở dữ liệu quan hệ (RDBMS) mạnh mẽ và phổ biến.
         *   *Lý do lựa chọn*: Đảm bảo tính toàn vẹn dữ liệu cực kỳ khắt khe theo tiêu chuẩn ACID (Atomicity, Consistency, Isolation, Durability) - điều tối quan trọng trong các nghiệp vụ giao dịch tài chính và đặt vé xem phim để tránh tình trạng hai khách hàng đặt trùng một ghế trong cùng một thời điểm.
 
-*   **Bảo Mật & Tích Hợp Hệ Thống**:
+*   **Bảo Mật & Tích Hợp Hệ Thống**: 
     *   **Mã Hóa Mật Khẩu (Bcryptjs & Pepper)**:
         *   *Cơ chế hoạt động*: Thay vì chỉ băm (hash) mật khẩu bằng Salt mặc định của Bcryptjs, hệ thống kết hợp thêm một chuỗi bí mật tĩnh gọi là **Pepper** (`PASSWORD_PEPPER`) được cấu hình duy nhất trong biến môi trường `.env` phía Server. Mật khẩu trước khi băm sẽ được ghép nối: `password + PEPPER`. Điều này ngăn chặn việc hacker có được database cũng không thể dùng bảng Rainbow Table để giải mã mật khẩu nếu không có chuỗi Pepper.
     *   **Xác Thực Không Trạng Thái (JWT - JSON Web Token)**:
