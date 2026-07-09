@@ -1,48 +1,65 @@
-# BÁO CÁO DỰ ÁN: HỆ THỐNG ĐẶT VÉ XEM PHIM TRỰC TUYẾN (MTBA)
-
-Báo cáo này tài liệu hóa chi tiết về mục tiêu, phạm vi, thiết kế hệ thống, phân tích dữ liệu và quy trình quản lý dự án Movie Ticket Booking App (MTBA).
+# KỊCH BẢN THUYẾT TRÌNH DỰ ÁN MTBA (Movie Ticket Booking App)
 
 ---
 
-## 📌 Nội dung 2: Mục tiêu & Phạm vi Dự án (Project Scope)
+## Nội dung 1: Lời mở đầu (Hook & Khởi động)
 
-### 1. Mô tả ngắn gọn dự án
-**Hệ thống Đặt vé xem phim trực tuyến (MTBA - Movie Ticket Booking App)** là một nền tảng trực tuyến toàn diện được thiết kế nhằm phục vụ nhu cầu đặt vé của khách hàng và tối ưu hóa quy trình quản lý rạp chiếu phim cho các quản trị viên và nhân viên.
+**Kính chào Hội đồng Giám khảo/Quý Thầy Cô và các bạn sinh viên/khán giả đang có mặt trong buổi bảo vệ/thuyết trình ngày hôm nay.**
 
-*   **Hệ thống này làm gì?**
-    *   **Đối với khách hàng**: Cho phép duyệt phim đang chiếu/sắp chiếu, xem thông tin chi tiết phim (trailer, diễn viên, thời lượng), xem lịch chiếu của từng rạp, chọn ghế trống trên sơ đồ trực quan và thực hiện thanh toán trực tuyến qua VietQR (tích hợp SePay) hoặc các cổng thanh toán. Sau khi đặt vé thành công, hệ thống tự động gửi email xác nhận kèm thông tin chi tiết vé.
-    *   **Đối với nhân viên tại quầy (POS)**: Hỗ trợ đặt vé trực tiếp cho khách hàng và đồng bộ hiển thị màn hình phụ POS2 (màn hình hiển thị tĩnh một chiều dành riêng cho khách hàng đối chiếu thông tin đặt vé mà không gây lỗi lặp điều hướng vô hạn).
-    *   **Đối với quản trị viên (Admin)**: Cung cấp trang quản lý (Dashboard) để theo dõi doanh thu, số lượng vé bán ra, quản lý thông tin phim, rạp chiếu, phòng chiếu (`screen`), lịch chiếu (`showtime`), sơ đồ ghế (`seat`), giá vé (`ticketprice`), tin tức (`news`), lễ hội phim (`festival`) và quản lý tài khoản người dùng (`user`).
-*   **Giải quyết vấn đề gì? (Customer Pain Points & Needs)**
-    *   *Xếp hàng chờ đợi mua vé truyền thống*: Khách hàng mất quá nhiều thời gian xếp hàng tại quầy vào các khung giờ cao điểm hoặc dịp lễ. Hệ thống đáp ứng nhu cầu đặt vé trực tuyến 24/7 từ xa của khách hàng.
-    *   *Mơ hồ về vị trí ghế ngồi*: Khi mua vé trực tiếp, khách hàng khó chọn được vị trí ghế ưng ý do không có sơ đồ trực quan. Hệ thống cung cấp sơ đồ ghế trực quan thời gian thực để đáp ứng nhu cầu tự chọn vị trí tối ưu.
-    *   *Rủi ro chuyển khoản sai lệch hoặc xác nhận thủ công chậm*: Chuyển khoản truyền thống mất thời gian đối soát thủ công và dễ sai thông tin. Khách hàng cần một cơ chế thanh toán quét mã QR tự động hóa xác nhận tức thì.
-    *   *Bất tiện khi mua vé trực tiếp tại quầy*: Khách mua vé tại quầy không được đối chiếu thông tin ghế và hóa đơn, dễ xảy ra sai sót từ nhân viên. Khách hàng cần một màn hình phụ hiển thị trực quan thông tin đặt vé tại quầy.
-    *   *Thiếu thông tin ưu đãi và sự kiện*: Khách hàng bỏ lỡ các chương trình khuyến mãi hoặc tin tức phim do thông tin phân tán. Họ cần một giao diện tổng hợp tin tức điện ảnh và sự kiện ưu đãi trực quan.
+*Kính thưa quý vị,*
+Chắc hẳn ở đây, hầu hết chúng ta đều đã từng ít nhất một lần đặt vé xem phim qua các ứng dụng như CGV, Lotte hay Galaxy. Và không ít lần chúng ta gặp phải những trải nghiệm "cười ra nước mắt": Đang thanh toán thì app bị văng, chuyển khoản xong tiền bị trừ nhưng vé thì không thấy đâu, hay khi ra quầy mua vé trực tiếp thì nhân viên phải xoay vội cái màn hình hoặc in tạm một tờ giấy có mã QR mờ tịt để chúng ta quét thanh toán.
 
-*   **Phạm vi dự án giải quyết các Pain Points cụ thể (Implementation Scope)**
-    *   *Hệ thống Đặt vé & Chọn ghế trực quan (Frontend/Backend)*: Xây dựng sơ đồ ghế ngồi động theo thời gian thực giúp khách hàng tự do lựa chọn vị trí và đặt vé trực tuyến nhanh chóng trong vòng 1-2 phút, giải quyết triệt để nỗi đau xếp hàng chờ đợi.
-    *   *Tự động hóa thanh toán VietQR (SePay)*: Tích hợp Webhook kết hợp Active Polling đối soát tự động giao dịch chuyển khoản. Hệ thống tự động kiểm tra trạng thái ghế trống trước khi hoàn tất giao dịch để tránh trường hợp trùng ghế khi thanh toán trễ, đồng thời gửi email hóa đơn tự động qua SMTP giúp nâng cao độ tin cậy.
-    *   *Đồng bộ màn hình phụ POS2 một chiều*: Triển khai màn hình phụ POS2 hiển thị thông tin đặt vé trực tiếp cho khách hàng đối chiếu tại quầy, loại bỏ hoàn toàn rủi ro sai sót thông tin và không gây ra hiện tượng lặp điều hướng vô hạn (endless routing loop).
-    *   *Thuật toán kiểm tra trùng lịch chiếu (Showtimes Overlap Check)*: Xử lý ở tầng nghiệp vụ Backend NestJS để ngăn chặn Admin tạo hoặc sửa suất chiếu bị chồng chéo thời gian tại cùng một phòng chiếu, đảm bảo lịch vận hành rạp luôn thông suốt.
-    *   *Trang Admin Dashboard & Slideshow Tin tức/Khuyến mãi*: Quản trị viên dễ dàng CRUD tin tức bài viết, khuyến mãi và liên hoan phim để tự động cập nhật, xoay chuyển slideshow mỗi 10 giây trên trang chủ khách hàng giúp tăng trải nghiệm tiếp cận thông tin.
+Những "điểm nghẽn" (pain-points) nhỏ đó không chỉ gây khó chịu cho khách hàng mà còn làm tăng chi phí vận hành và chăm sóc khách hàng cho các rạp phim.
 
-### 2. Phạm vi dự án & Vai trò thành viên
-Đây là một **Dự án Nhóm (Group Project)** được phát triển theo mô hình Agile/Scrum với 4 thành viên. Dưới đây là phân chia vai trò và nhiệm vụ chi tiết:
+Từ chính những trăn trở về trải nghiệm thực tế đó, nhóm chúng em đã nghiên cứu và phát triển dự án **MTBA - Movie Ticket Booking App**.
+
+---
+
+## Nội dung 2: Mục tiêu & Phạm vi Dự án (Project Scope)
+
+### 2.1. Mô tả ngắn gọn dự án
+
+**MTBA - Movie Ticket Booking App** là một nền tảng trực tuyến toàn diện được thiết kế nhằm phục vụ nhu cầu đặt vé của khách hàng và tối ưu hóa quy trình quản lý rạp chiếu phim.
+
+**Hệ thống này làm gì?**
+
+* **Đối với Khách hàng**: Cho phép duyệt phim đang chiếu/sắp chiếu, xem thông tin chi tiết (trailer, diễn viên), chọn ghế trống trên sơ đồ trực quan và thanh toán qua VietQR. Sau khi đặt thành công, hệ thống tự động gửi email xác nhận kèm mã QR vé.
+* **Đối với Nhân viên tại quầy (POS)**: Hỗ trợ đặt vé trực tiếp cho khách và đồng bộ hiển thị màn hình phụ POS2 một chiều — khách hàng tự đối chiếu thông tin, không gây lỗi lặp điều hướng vô hạn.
+* **Đối với Quản trị viên (Admin)**: Cung cấp Dashboard thống kê doanh thu, quản lý phim, rạp chiếu, lịch chiếu (có kiểm tra trùng giờ), giá vé, tin tức và tài khoản người dùng.
+
+**Hệ thống giải quyết các vấn đề thực tế nào?**
+
+| Pain Point | Giải pháp của MTBA |
+|---|---|
+| Xếp hàng chờ mua vé | Đặt vé trực tuyến 24/7 từ bất kỳ thiết bị nào |
+| Không thấy vị trí ghế khi mua trực tiếp | Sơ đồ ghế trực quan real-time (Standard / VIP / Sweetbox) |
+| Chuyển khoản sai, xác nhận thủ công chậm | Webhook SePay + Active Polling, tự động đối soát tức thì |
+| Màn hình POS nhân viên quay lưng về phía khách | Passive Display POS2 hiển thị đồng bộ hóa đơn và mã QR |
+| Bỏ lỡ khuyến mãi, sự kiện | Trang chủ slideshow tổng hợp Festival, News, Promotion |
+
+### 2.2. Phạm vi dự án & Vai trò thành viên
+
+Đây là một **Dự án Nhóm (Group Project)** được phát triển theo mô hình **Agile/Scrum** với **4 thành viên**, chia thành **4 Sprints** trong vòng 8 tuần.
 
 | Thành viên | Vai trò chính | Nhiệm vụ chi tiết |
 | :--- | :--- | :--- |
-| **Thành viên A** | Scrum Master & Backend Developer | - Điều phối các buổi họp của nhóm (Daily Standup, Sprint Planning).<br>- Thiết kế kiến trúc Backend bằng NestJS.<br>- Triển khai các API nghiệp vụ chính: Đặt vé (`booking`), quản lý thanh toán (`payment`), tích hợp cổng VietQR (SePay Webhook & Active Polling).<br>- Viết hệ thống quản lý lỗi tập trung và bảo mật mật khẩu (Bcrypt + Pepper). |
-| **Thành viên B** | Frontend Developer | - Thiết kế giao diện UI/UX trực quan bằng Next.js (App Router, React 19) và Tailwind CSS v4.<br>- Triển khai luồng đặt vé trực tuyến cho Khách hàng và giao diện POS cho Nhân viên.<br>- Xây dựng cơ chế đồng bộ một chiều màn hình phụ POS2, loại bỏ vòng lặp điều hướng vô hạn (endless routing ping-pong).<br>- Tích hợp các API từ Backend, xử lý hiển thị thông báo lỗi chi tiết từ máy chủ. |
-| **Thành viên C** | Database Designer & Backend Developer | - Thiết kế cơ sở dữ liệu và triển khai thông qua Prisma ORM.<br>- Xây dựng các API quản trị: Quản lý phim, rạp chiếu, phòng chiếu, lịch chiếu, giá vé.<br>- Triển khai logic kiểm tra trùng lặp lịch chiếu (`Showtimes Overlap Check`) và giới hạn số lượng ghế đặt tối đa.<br>- Cập nhật cấu trúc DB thông qua Prisma Migrations. |
-| **Thành viên D** | Product Owner & Quality Assurance (QA) | - Quản lý Product Backlog, viết User Stories và nghiệm thu tính năng.<br>- Thiết kế các ca kiểm thử (Test Cases).<br>- Viết Unit Test cho cả Frontend và Backend (đặc biệt là các API Đăng ký/Đăng nhập, Đặt vé, cập nhật thông tin).<br>- Quản lý tiến độ trên bảng Trello/Jira của nhóm. |
+| **Thành viên A** | Scrum Master & Backend Developer | Điều phối Sprint, thiết kế kiến trúc NestJS. Triển khai API đặt vé, thanh toán, tích hợp SePay Webhook & Active Polling. Hệ thống xử lý lỗi tập trung, bảo mật Bcrypt + Pepper. |
+| **Thành viên B** | Frontend Developer | Thiết kế UI/UX bằng Next.js + Tailwind CSS v4. Luồng đặt vé online, giao diện POS. Cơ chế đồng bộ một chiều Passive Display POS2. Tích hợp & xử lý lỗi API từ Backend. |
+| **Thành viên C** | Database Designer & Backend Developer | Thiết kế CSDL qua Prisma ORM. API quản trị (phim, rạp, lịch chiếu, giá vé). Thuật toán kiểm tra trùng lịch chiếu (Overlap Check). Quản lý Prisma Migrations. |
+| **Thành viên D** | Product Owner & QA | Quản lý Product Backlog, viết User Stories. Thiết kế Test Cases. Viết Unit Test bằng Jest (Đăng ký/Đăng nhập, Đặt vé, Thanh toán). Theo dõi tiến độ trên Trello. |
+
+**Cách quản lý tiến độ:**
+* **Sprint Planning**: Đầu mỗi Sprint, nhóm họp để xác định User Stories sẽ hoàn thành trong 2 tuần.
+* **Daily Standup**: Cập nhật nhanh tiến độ hằng ngày — làm gì hôm qua, làm gì hôm nay, vướng mắc gì.
+* **Sprint Review & Retrospective**: Cuối Sprint, demo tính năng và rút kinh nghiệm để cải thiện Sprint tiếp theo.
 
 ---
 
-## 📌 Nội dung 3: Thiết kế Hệ thống & Phân tích Dữ liệu (System Design & DB)
+## Nội dung 3: Thiết kế Hệ thống & Phân tích Dữ liệu (System Design & DB)
 
-### 1. Biểu đồ Use Case
-Dưới đây là sơ đồ phân cấp các chức năng của hệ thống MTBA tương ứng với từng tác nhân (Guest, Customer, Staff, Admin):
+### 3.1. Biểu đồ Use Case
+
+Dưới đây là sơ đồ phân cấp chức năng của hệ thống MTBA theo từng tác nhân (Guest, Customer, Staff, Admin):
 
 ```mermaid
 graph TD
@@ -62,26 +79,26 @@ graph TD
 
     %% Use Cases Customer
     subgraph UC_Customer [Nhóm Khách Hàng]
-        UC5(Quản lý thông tin cá nhân / Đổi mật khẩu)
-        UC6(Đặt vé trực tuyến: Chọn lịch, chọn ghế)
-        UC7(Thanh toán trực tuyến VietQR / VNPay)
-        UC8(Nhận email thông báo xác nhận vé)
-        UC9(Xem lịch sử giao dịch đặt vé)
+        UC5(Quản lý tài khoản cá nhân)
+        UC6(Đặt vé: Chọn lịch chiếu & ghế)
+        UC7(Thanh toán trực tuyến VietQR)
+        UC8(Nhận email xác nhận vé)
+        UC9(Xem lịch sử đặt vé & mã QR)
     end
 
     %% Use Cases Staff
     subgraph UC_Staff [Nhóm Nhân Viên POS]
-        UC10(Đặt vé trực tiếp tại quầy cho khách)
-        UC11(Đồng bộ màn hình phụ POS2 hiển thị cho khách)
+        UC10(Đặt vé trực tiếp tại quầy)
+        UC11(Đồng bộ màn hình phụ POS2 cho khách)
     end
 
     %% Use Cases Admin
     subgraph UC_Admin [Nhóm Quản Trị Viên]
-        UC12(Thống kê doanh thu, vé bán, người dùng)
+        UC12(Thống kê doanh thu & Dashboard)
         UC13(Quản lý phim, rạp, phòng chiếu & ghế)
         UC14(Quản lý lịch chiếu - Kiểm tra trùng giờ)
-        UC15(Quản lý người dùng, phân quyền & khóa tài khoản)
-        UC16(Quản lý giá vé, tin tức & sự kiện khuyến mãi)
+        UC15(Quản lý người dùng & phân quyền)
+        UC16(Quản lý giá vé, tin tức & sự kiện)
     end
 
     Guest --> UC1
@@ -105,8 +122,7 @@ graph TD
     Admin --> UC16
 ```
 
-### 1.1. Sơ đồ Use Case chi tiết vai trò Admin (Quản trị viên)
-Dưới đây là sơ đồ đặc tả các phân hệ quản lý và nghiệp vụ kiểm tra chặt chẽ dành riêng cho Admin:
+**Sơ đồ Use Case chi tiết — Vai trò Admin (bao gồm nghiệp vụ include):**
 
 ```mermaid
 graph TD
@@ -122,8 +138,11 @@ graph TD
     Admin --> UC28(Quản lý Tin tức, Sự kiện & Khuyến mãi)
 ```
 
-### 2. Mô hình Thực thể Kết hợp (ERD)
-Sơ đồ ERD biểu diễn mối quan hệ giữa các bảng cơ sở dữ liệu trọng tâm được cấu hình tại [schema.prisma](file:///c:/Users/Simsimi/OneDrive/M%C3%A1y%20t%C3%ADnh/MTBA/code/backend/prisma/schema.prisma):
+---
+
+### 3.2. Mô hình Thực thể Kết hợp (ERD)
+
+Sơ đồ ERD biểu diễn mối quan hệ giữa các bảng trọng tâm, được định nghĩa trong [schema.prisma](file:///c:/Users/Simsimi/OneDrive/Máy tính/MTBA/code/backend/prisma/schema.prisma):
 
 ```mermaid
 erDiagram
@@ -134,18 +153,16 @@ erDiagram
         String email UK
         String password
         String phone UK
-        String address
         user_status status
         DateTime created_at
-        DateTime updated_at
     }
     role {
         Int id PK
         role_role_name role_name UK
     }
     userrole {
-        Int user_id PK, FK
-        Int role_id PK, FK
+        Int user_id FK
+        Int role_id FK
     }
     theater {
         Int id PK
@@ -172,13 +189,6 @@ erDiagram
         Boolean is_booked
         seat_type type
     }
-    showtime {
-        Int id PK
-        Int screen_id FK
-        Int movie_id FK
-        DateTime start_time
-        DateTime end_time
-    }
     movie {
         Int id PK
         String title
@@ -193,12 +203,19 @@ erDiagram
         String genre_name
     }
     moviegenre {
-        Int movie_id PK, FK
-        Int genre_id PK, FK
+        Int movie_id FK
+        Int genre_id FK
     }
     movieroomtype {
-        Int movie_id PK, FK
-        Int roomtype_id PK, FK
+        Int movie_id FK
+        Int roomtype_id FK
+    }
+    showtime {
+        Int id PK
+        Int screen_id FK
+        Int movie_id FK
+        DateTime start_time
+        DateTime end_time
     }
     ticketprice {
         Int id PK
@@ -212,9 +229,9 @@ erDiagram
     booking {
         Int id PK
         Int user_id FK
+        Int showtime_id FK
         Int total_seat
         Float total_price_movie
-        Int showtime_id FK
         DateTime created_at
     }
     bookingseat {
@@ -265,8 +282,65 @@ erDiagram
     festival ||--o{ news : "contains"
 ```
 
-### 3. Sơ đồ Kiến trúc (Architecture Diagram)
-Dự án được xây dựng theo mô hình kiến trúc 3 lớp (3-Tier Architecture) giúp chia tách rõ ràng các tầng giao diện, logic nghiệp vụ và lưu trữ:
+### 3.2.1. Luồng dữ liệu đặt vé chi tiết qua các thực thể (Booking Data Flow)
+
+*Kính thưa Hội đồng, để làm rõ cách các bảng dữ liệu phối hợp xử lý trong quá trình khách hàng thực hiện một giao dịch đặt vé, dữ liệu sẽ đi qua các thực thể trong ERD theo luồng như sau:*
+
+1. **Khởi tạo ngữ cảnh (Movie → Showtime → Seat):**
+   * Hệ thống truy vấn phim (`movie`) và phòng chiếu (`screen`) để xác định các suất chiếu cụ thể (`showtime`).
+   * Khi khách hàng xem sơ đồ phòng chiếu, hệ thống tải danh sách các ghế (`seat`) thuộc phòng (`screen_id`) của suất chiếu đó để hiển thị trạng thái trống/đã được giữ.
+
+2. **Xác định giá vé (Ticket Price):**
+   * Dựa trên loại ghế khách chọn (`seat.type`: Standard, VIP, Sweetbox) kết hợp cấu hình phòng (`roomtype_id`) và khung giờ suất chiếu (`showtime.start_time`), hệ thống truy vấn bảng `ticketprice` tương ứng để lấy ra giá vé chính xác cho từng ghế.
+
+3. **Tạo giao dịch đặt vé (User → Booking → Booking Seat):**
+   * Sau khi kiểm tra hợp lệ (không vượt quá 8 ghế), một bản ghi mới được ghi nhận vào bảng `booking` liên kết với tài khoản khách hàng (`user_id`) và suất chiếu (`showtime_id`).
+   * Đồng thời, danh sách các ghế được chọn sẽ được lưu vào bảng trung gian `bookingseat` (liên kết `booking_id` với các `seat_id` tương ứng). Lúc này, trạng thái của các ghế liên quan tạm thời được khóa ở mức ứng dụng (soft-lock).
+
+4. **Xử lý thanh toán (Booking → Payment):**
+   * Một bản ghi thanh toán được tạo trong bảng `payment` liên kết với `booking_id` vừa tạo, mang trạng thái mặc định ban đầu là `PENDING` (chờ thanh toán).
+   * Khi nhận được tín hiệu Webhook/Active Polling từ cổng SePay xác nhận chuyển khoản thành công với nội dung chứa mã đơn vé và số tiền khớp nhau:
+     * Trạng thái `payment.payment_status` chuyển thành `COMPLETED`.
+     * Ghế ngồi trong bảng `seat` chính thức được chuyển sang trạng thái đã bán (`is_booked = true`).
+     * Đơn hàng hoàn tất và email vé QR được kích hoạt gửi tới người dùng.
+
+5. **Kịch bản đặc thù 1: Xử lý vé quá hạn & Trùng ghế khi thanh toán trễ (Expired Booking / Seat Overlap)**
+   * Nếu khách hàng chuyển khoản trễ khi bộ đếm giữ ghế đã về 0, bản ghi `booking` đã bị chuyển sang trạng thái quá hạn.
+   * Khi Webhook của SePay kích hoạt, hệ thống sẽ thực hiện một lệnh truy vấn đối soát: kiểm tra xem các `seat_id` trong `bookingseat` thuộc đơn này đã bị một `booking` thành công (`payment_status = COMPLETED`) khác mua mất chưa.
+   * **Trường hợp chưa bị trùng:** Hệ thống cập nhật trạng thái `payment.payment_status = COMPLETED`, đổi `is_booked = true` cho các ghế đó, cứu đơn thành công.
+   * **Trường hợp đã bị trùng:** Hệ thống đánh dấu giao dịch thanh toán thất bại (`payment_status = FAILED`), giữ nguyên trạng thái ghế của người đặt sau và kích hoạt quy trình hoàn tiền (Refund).
+
+6. **Kịch bản đặc thù 2: Đặt vé trực tiếp tại quầy của Nhân viên (POS Staff Booking)**
+   * Nhân viên POS đăng nhập bằng tài khoản thuộc nhóm `user` liên kết với `userrole` là `ROLE_STAFF`.
+   * Luồng tạo đơn `booking` và `bookingseat` diễn ra tương tự khách hàng trực tuyến.
+   * Khác biệt ở phương thức thanh toán: Bản ghi `payment.payment_method` được thiết lập là `CASH` (tiền mặt) hoặc `TRANSFER` (chuyển khoản quầy). Trạng thái đơn được chuyển ngay sang `COMPLETED` mà không cần đợi Webhook từ SePay nếu nhân viên xác nhận đã nhận đủ tiền mặt.
+
+7. **Kịch bản đặc thù 3: Admin quản lý và kiểm tra trùng lịch chiếu (Admin Showtime Collision)**
+   * Admin thao tác thêm/sửa suất chiếu trong bảng `showtime`.
+   * Trước khi lưu bản ghi vào MySQL, hệ thống truy vấn bảng `showtime` để đối chiếu: Tìm các suất chiếu có cùng `screen_id` mà khoảng thời gian (`start_time`, `end_time`) bị chồng chéo với suất chiếu mới (`new_start_time < existing_end_time` và `new_end_time > existing_start_time`).
+   * Nếu phát hiện trùng lặp, hệ thống chặn không ghi dữ liệu và ném ra lỗi `OVERLAP`.
+
+---
+
+**Giải thích các nhóm bảng trọng tâm:**
+
+| Nhóm | Các bảng | Vai trò |
+|---|---|---|
+| **Người dùng & Phân quyền** | `user`, `role`, `userrole` | Quản lý tài khoản và phân quyền 3 tầng (Admin/Staff/User) |
+| **Rạp & Phòng chiếu** | `theater`, `screen`, `roomtype`, `seat` | Cấu trúc vật lý của rạp, loại phòng, sơ đồ ghế |
+| **Phim & Thể loại** | `movie`, `genre`, `moviegenre`, `movieroomtype` | Thông tin phim, gán thể loại và loại phòng phù hợp |
+| **Đặt vé & Thanh toán** | `showtime`, `booking`, `bookingseat`, `payment`, `ticketprice` | Luồng nghiệp vụ đặt vé, giá cả, và xử lý giao dịch |
+| **Marketing** | `festival`, `news`, `promotion` | Quản lý tin tức, sự kiện chiếu phim và khuyến mãi |
+
+---
+
+### 3.3. Sơ đồ Kiến trúc & Triển khai (Architecture & Deployment Model)
+
+*Kính thưa Hội đồng, để hiện thực hóa các nghiệp vụ phức tạp của dự án MTBA, chúng em đã thiết kế hệ thống theo mô hình kiến trúc phân tầng rõ ràng, đảm bảo tính dễ bảo trì, bảo mật cao và khả năng mở rộng linh hoạt.*
+
+#### 1. Sơ đồ Kiến trúc Logic 3 Lớp (3-Tier Logical Architecture)
+
+*Đầu tiên, đây là sơ đồ kiến trúc 3 lớp (3-Tier Architecture) phân chia rõ ràng các phân vùng nhiệm vụ của hệ thống:*
 
 ```mermaid
 graph TB
@@ -300,83 +374,88 @@ graph TB
     NestJS -->|Sends Email Notifications| Mailer
 ```
 
-#### Phân tích chi tiết Sơ đồ Kiến trúc:
-*   **Tầng Giao Diện (Presentation Layer)**:
-    *   *Next.js 16 Client App Router*: Đóng vai trò là điểm tương tác trực tiếp với khách hàng. Sử dụng React Server Components (RSC) cho các trang tĩnh cần tối ưu hóa tốc độ tải trang và SEO (như danh sách phim, tin tức). Sử dụng Client Components cho các thành phần cần quản lý trạng thái phức tạp (sơ đồ ghế ngồi động, thanh toán quét mã QR).
-    *   *Màn hình phụ POS2 (Passive Display)*: Được thiết kế là một client tĩnh đặc biệt kết nối một chiều nhận dữ liệu trạng thái thông tin đơn vé từ nhân viên quầy POS thông qua giao thức WebSockets hoặc HTTP Polling liên tục, giúp loại bỏ hoàn toàn khả năng xảy ra lỗi lặp điều hướng vô hạn (endless routing loop).
-*   **Tầng Xử Lý Logic (Business Logic Layer)**:
-    *   *NestJS 11 Web Framework*: Đóng vai trò là hạt nhân điều phối toàn bộ nghiệp vụ (Backend API). Nhận các REST HTTP request từ Client, thực hiện kiểm tra dữ liệu đầu vào bằng validation DTO, bảo vệ các API riêng tư bằng JWT Auth Guard kết hợp phân quyền Roles Guard.
-    *   *Nghiệp vụ cốt lõi*: Xử lý kiểm tra chống trùng lịch chiếu phim (`Showtimes Overlap Check`), chặn đầu cơ (giới hạn tối đa 8 ghế/đơn đặt vé), mã hóa mật khẩu thông qua Bcryptjs kết hợp chuỗi Pepper tĩnh lấy từ biến môi trường.
-    *   *Prisma ORM Client*: Đóng vai trò là cầu nối truy vấn dữ liệu an toàn kiểu dữ liệu (Type-safe queries) giữa NestJS và MySQL.
-*   **Tầng Dữ Liệu (Database Layer)**:
-    *   *MySQL 8.x Database*: Lưu trữ toàn bộ dữ liệu quan hệ của hệ thống. Nhờ cơ chế ACID, MySQL bảo đảm độ nhất quán dữ liệu ở mức cao nhất, ngăn chặn tình trạng hai khách hàng đặt trùng một ghế trong cùng một thời điểm.
-*   **Tích Hợp Hệ Thống Bên Ngoài (External Services)**:
-    *   *SePay API (VietQR)*: Tích hợp Webhook kết hợp Active Polling để nhận và đối soát tự động giao dịch chuyển khoản VietQR dựa theo mã đơn vé (`bookingId`) và số tiền (`amount`), tự động hoàn tất vé quá hạn nếu ghế chưa bị trùng.
-    *   *SMTP Mail Service*: Gửi email tự động xác nhận thông tin vé kèm mã QR check-in ngay sau khi giao dịch thành công.
+**Giải thích nhanh 3 tầng chức năng:**
+* **Tầng Giao Diện**: Next.js 16 đảm nhận render phía máy chủ (SSR) cho các trang public để tối ưu SEO, còn React 19 Client Components quản lý trạng thái động (chọn ghế, giữ chỗ). Màn hình POS2 đồng bộ một chiều từ Server để đảm bảo an toàn giao dịch tại quầy.
+* **Tầng Xử Lý Logic**: NestJS 11 chịu trách nhiệm kiểm tra nghiệp vụ (không trùng lịch, chặn phe vé), mã hóa mật khẩu bảo mật cao (Salt & Pepper + Bcrypt), và tương tác DB thông qua Prisma ORM.
+* **Tầng Dữ Liệu**: MySQL 8.x đảm bảo tính nhất quán ACID tuyệt đối, loại bỏ rủi ro trùng lặp ghế.
 
 ---
 
-### 3.1. Sơ đồ Triển khai hệ thống trên AWS (AWS Deployment Diagram)
-Để vận hành hệ thống MTBA trong môi trường Production thực tế với độ sẵn sàng cao (High Availability), khả năng tự động co giãn (Auto Scaling) và bảo mật nghiêm ngặt, hệ thống được đề xuất triển khai trên nền tảng Amazon Web Services (AWS) theo sơ đồ sau:
+#### 2. Các Mô hình Triển khai Hệ thống (Deployment Models)
+
+*Để đáp ứng linh hoạt từ nhu cầu thử nghiệm thực tế với chi phí tối ưu cho đến môi trường vận hành chuyên nghiệp của doanh nghiệp lớn, hệ thống MTBA sẵn sàng cho 2 mô hình triển khai:*
+
+##### A. Mô hình đề xuất trên AWS (Enterprise Production Model)
+
+*Đối với môi trường sản xuất thực tế quy mô lớn, chúng em đề xuất mô hình triển khai bảo mật cao trên hạ tầng điện toán đám mây Amazon Web Services (AWS) tận dụng VPC và Multi-AZ:*
 
 ```mermaid
 graph TB
-    ClientApp[Khách hàng / Máy POS Nhân viên / POS2] -->|HTTPS Requests| Route53[AWS Route 53 - DNS Routing]
-    
-    subgraph VPC [Amazon VPC - Virtual Private Cloud]
-        subgraph Public_Subnets [Public Subnets - Mạng Công Cộng]
-            ALB[Application Load Balancer]
-            Amplify[AWS Amplify - Host Next.js Client Static]
+    %% Client & Routing
+    Client[Khách hàng / Nhân viên POS / POS2] -->|HTTPS Requests| Route53[AWS Route 53 - DNS]
+    Route53 -->|Forward Traffic| ALB[Application Load Balancer]
+
+    subgraph VPC ["Amazon VPC (Virtual Private Cloud)"]
+        subgraph Public_Subnet ["Public Subnet (Mạng Công Cộng - Nhận Traffic)"]
+            ALB
+            Bastion[Bastion Host - SSH Gateway]
         end
         
-        subgraph Private_Subnets [Private Subnets - Mạng Nội Bộ Bảo Mật]
-            ECS[ECS Fargate - Docker Containers NestJS Backend]
-            RDS[(Amazon RDS MySQL - Multi-AZ Database)]
+        subgraph Private_Subnet ["Private Subnet (Mạng Nội Bộ Bảo Mật - Chứa Logic & DB)"]
+            %% EC2 Frontend
+            subgraph EC2_Frontend ["EC2 Instance: Frontend (Presentation Layer)"]
+                NginxFE["Nginx (Reverse Proxy & SSL)"]
+                NextJS_Prod["Next.js 16+ App (Port 3000)"]
+                NginxFE -->|Local Proxy| NextJS_Prod
+            end
+
+            %% EC2 Backend
+            subgraph EC2_Backend ["EC2 Instance: Backend (Business Logic Layer)"]
+                NginxBE["Nginx (Reverse Proxy)"]
+                NestJS_Prod["NestJS 11+ App (Port 3001)"]
+                Prisma_Prod["Prisma ORM Client"]
+                
+                NginxBE -->|Local Proxy| NestJS_Prod
+                NestJS_Prod --- Prisma_Prod
+            end
+
+            %% Database Layer
+            RDS[("Amazon RDS - MySQL 8.x Database (Multi-AZ)")]
         end
     end
+
+    subgraph ExternalServices ["Hạ tầng & Dịch vụ bên ngoài"]
+        SePay_Prod["SePay VietQR (Webhook + Active Polling)"]
+        Mailer_Prod["SMTP Mail Service"]
+    end
+
+    %% Routing to instances
+    ALB -->|HTTPS Port 443 -> Port 80/443| NginxFE
+    ALB -->|HTTPS Port 8000 -> Port 80/443| NginxBE
     
-    Route53 -->|Static / SSR Assets| Amplify
-    Route53 -->|API Traffic / Dynamic requests| ALB
-    ALB -->|Forward Port 3001| ECS
-    ECS -->|Prisma Client TLS Connection| RDS
-    
-    %% Config & External integration
-    ECS -->|Load environment variables| SecretsManager[AWS Secrets Manager / SSM Parameter Store]
-    ECS -->|Sends Event logs| CloudWatch[AWS CloudWatch - Monitoring & Logging]
-    SePay[SePay VietQR Gateway] -->|Webhook callback realtime| ECS
-    ECS -->|SMTP Emails| SES[Amazon SES / SMTP Mail Service]
+    %% Communication between layers
+    NextJS_Prod -->|"REST API (fetch) qua Public Domain"| ALB
+    Prisma_Prod -->|Prisma Client TLS Connection| RDS
+    SePay_Prod -->|"Webhook POST /payments-webhook"| ALB
+    NestJS_Prod -->|"Gửi email xác nhận vé"| Mailer_Prod
 ```
 
-#### Phân tích chi tiết mô hình Deploy trên AWS:
-1.  **AWS Route 53 & AWS Amplify**:
-    *   *AWS Route 53*: Đóng vai trò là dịch vụ quản lý DNS, chịu trách nhiệm định tuyến người dùng đến các endpoint phù hợp (Amplify cho giao diện tĩnh và Application Load Balancer cho các request API).
-    *   *AWS Amplify (Frontend Next.js)*: Tự động biên dịch và phân phối mã nguồn Next.js. Amplify tích hợp sẵn CDN toàn cầu giúp phân phối các tệp tin tĩnh (JS, CSS, hình ảnh) đến khách hàng với độ trễ cực thấp.
-2.  **Amazon VPC & Private Subnets (Bảo mật mạng)**:
-    *   Toàn bộ Backend NestJS và Database MySQL được cô lập hoàn toàn bên trong các **Private Subnets** (Mạng nội bộ) của **Amazon VPC** (Virtual Private Cloud). Các thành phần này không có IP công cộng và không thể bị truy cập trực tiếp từ Internet, giúp triệt tiêu các cuộc tấn công mạng trực tiếp.
-3.  **Application Load Balancer (ALB)**:
-    *   Đứng ở **Public Subnet** để tiếp nhận các REST API requests từ Next.js Client. ALB chịu trách nhiệm giải mã SSL/TLS (HTTPS) và phân phối các request API vào các container NestJS chạy dưới mạng nội bộ, đồng thời thực hiện cơ chế lọc traffic cơ bản.
-4.  **Amazon ECS Fargate (Tầng Backend container)**:
-    *   Backend NestJS được đóng gói thành các Docker Image và chạy trong **Amazon ECS (Elastic Container Service)** với chế độ chạy **AWS Fargate** (Serverless container). 
-    *   Cấu hình **Auto Scaling** dựa trên mức độ sử dụng CPU/RAM để tự động tăng hoặc giảm số lượng task (container) đang chạy, đảm bảo hệ thống không bị sập khi lượng khách đặt vé tăng đột biến (ví dụ: giờ cao điểm ra mắt phim bom tấn).
-5.  **Amazon RDS MySQL (Tầng lưu trữ)**:
-    *   Sử dụng dịch vụ **Amazon RDS (Relational Database Service) MySQL**. 
-    *   Cấu hình **Multi-AZ (Multiple Availability Zones)**: RDS tự động đồng bộ dữ liệu sang một vùng dự phòng độc lập vật lý khác. Nếu vùng chính gặp sự cố thiên tai hoặc mất điện, RDS tự động failover (chuyển đổi) sang vùng dự phòng trong vài giây để hệ thống hoạt động không bị gián đoạn.
-6.  **AWS Secrets Manager & CloudWatch**:
-    *   *AWS Secrets Manager*: Quản lý tập trung các thông tin nhạy cảm của hệ thống như mật khẩu DB (`DATABASE_URL`), JWT secret key, khóa bí mật băm mật khẩu `PASSWORD_PEPPER`, và mã token webhook của SePay `SEPAY_API_TOKEN`. ECS Fargate sẽ load động các cấu hình này vào biến môi trường khi khởi chạy thay vì lưu cứng trong source code.
-    *   *AWS CloudWatch*: Giám sát tài nguyên phần cứng, thu thập logs thời gian thực từ các task ECS để hỗ trợ đội ngũ phát triển debug và bảo trì hệ thống.
+**Phân tích chi tiết mô hình AWS:**
+* **Bảo mật mạng (Amazon VPC)**: Toàn bộ máy chủ EC2 chạy mã nguồn ứng dụng và Amazon RDS MySQL Database đều được cô lập hoàn toàn trong **Private Subnet**, không gán IP public. Lưu lượng từ Internet chỉ đi qua Nginx thông qua **Application Load Balancer (ALB)** đặt tại **Public Subnet**.
+* **Độ tin cậy & Sẵn sàng cao (High Availability)**: Sử dụng **Amazon RDS Multi-AZ** tự động nhân bản dữ liệu thời gian thực sang vùng độc lập vật lý khác để tự động failover lập tức khi xảy ra sự cố phần cứng.
+* **Quản lý cấu hình**: Biến môi trường nhạy cảm (JWT Secret, API Key, Pepper) được bảo vệ bằng AWS Secrets Manager/SSM Parameter Store, được tải động khi chạy tiến trình.
 
----
+##### B. Mô hình triển khai thực tế trên VPS (Actual VPS Deployment)
 
-### 3.2. Sơ đồ Triển khai thực tế trên VPS (Actual VPS Deployment Diagram)
-Để vận hành hệ thống MTBA thử nghiệm thực tế với chi phí tối ưu và dễ dàng phát triển, hệ thống được triển khai trên máy chủ ảo VPS độc lập chạy hệ điều hành Ubuntu Server. Dưới đây là sơ đồ chi tiết kiến trúc triển khai thực tế của hệ thống:
+*Để phục vụ chạy thử nghiệm, báo cáo đồ án và tối ưu hóa chi phí vận hành ở mức thấp nhất, chúng em đã đóng gói và triển khai thực tế toàn bộ hệ thống trên một máy chủ ảo **VPS Ubuntu** độc lập sử dụng bộ công cụ **PM2** và **Nginx**:*
 
 ```mermaid
 graph TD
-    Client[Khách hàng / Nhân viên POS / POS2] -->|Cổng 80/443 HTTP/HTTPS| Nginx["Nginx (Reverse Proxy & SSL termination)"]
+    Client[Khách hàng / Nhân viên POS / POS2] -->|Cổng 80/443 HTTP/HTTPS| NginxBE["Nginx (Reverse Proxy & SSL termination)"]
     
     subgraph VPS [Máy chủ ảo VPS - Ubuntu OS]
-        Nginx -->|Proxy cổng 3000| NextJS["Next.js Frontend (Port 3000)"]
-        Nginx -->|Proxy cổng 3001| NestJS["NestJS Backend (Port 3001)"]
+        NginxBE -->|Proxy chuyển tiếp /| NextJS["Next.js Frontend (Port 3000)"]
+        NginxBE -->|Proxy chuyển tiếp /api/| NestJS["NestJS Backend (Port 3001)"]
         
         subgraph PM2 ["PM2 (Process Manager)"]
             NextJS
@@ -384,133 +463,207 @@ graph TD
         end
     end
 
-    subgraph External ["Hạ tầng & Dịch vụ ngoài"]
+    subgraph ExternalServices_VPS ["Hạ tầng & Dịch vụ ngoài"]
         NestJS -->|Kết nối Prisma Client| TiDB[("TiDB Cloud MySQL")]
         NestJS -->|Gửi Mail OTP/Vé| SMTP["SMTP Server (Gmail)"]
-        SePay["Cổng SePay VietQR"] -->|Webhook callback| Nginx
+        SePay["Cổng SePay VietQR"] -->|Webhook callback| NginxBE
     end
 ```
 
-#### Phân tích chi tiết mô hình Deploy trên VPS:
-1. **Nginx (Web Server / Reverse Proxy & SSL)**:
-    * **Reverse Proxy**: Nginx tiếp nhận các request từ ngoài mạng Internet trên cổng mặc định 80 (HTTP) và 443 (HTTPS) sau đó chuyển tiếp (forward) các request tương ứng vào các dịch vụ chạy nội bộ. Cụ thể, các request trang chính `/` sẽ chuyển vào Next.js (cổng 3000), và các request API `/api/` sẽ chuyển thẳng vào NestJS (cổng 3001) bằng cơ chế rewrite và proxy pass của Nginx (loại bỏ tiền tố `/api/` trước khi gửi đến NestJS).
-    * **SSL Termination**: Nginx kết hợp với Certbot (Let's Encrypt) để cài đặt chứng chỉ SSL tự động, mã hóa toàn bộ dữ liệu truyền tải qua giao thức HTTPS bảo mật, đáp ứng yêu cầu truyền thông tin an toàn của các cổng thanh toán.
-2. **PM2 (Node.js Process Manager)**:
-    * **Duy trì dịch vụ (Daemon Mode)**: Giúp chạy ẩn ứng dụng Next.js và NestJS dưới nền hệ thống mà không cần giữ cửa sổ dòng lệnh terminal luôn mở.
-    * **Khởi phục lỗi tự động (Auto-restart)**: Theo dõi trạng thái của các tiến trình. Nếu tiến trình bị crash do lỗi ngoại lệ chưa bắt được hoặc do rò rỉ bộ nhớ, PM2 tự động khởi động lại trong vòng vài mili-giây.
-    * **Startup System**: Tích hợp với dịch vụ `systemd` của Linux để tự động khôi phục các tiến trình ngay sau khi hệ thống VPS khởi động lại hoặc mất nguồn điện đột ngột.
-3. **Prisma ORM & Client**:
-    * Đóng vai trò đồng bộ trực tiếp cấu trúc dữ liệu (`schema.prisma`) từ local lên VPS database thông qua lệnh `npx prisma db push`, giúp tự động đồng bộ hóa các bảng mà không cần quản lý các file migration thủ công phức tạp trong giai đoạn phát triển nhanh.
-4. **TiDB Cloud (Database Service)**:
-    * Cơ sở dữ liệu MySQL chạy trên nền đám mây của TiDB giúp VPS giảm thiểu tải CPU/RAM cho việc vận hành database nội bộ, đồng thời tận dụng hiệu năng cao của hạ tầng điện toán đám mây.
+**Phân tích chi tiết mô hình VPS thực tế:**
+* **Nginx (Reverse Proxy & SSL)**: Tiếp nhận lưu lượng trên cổng 80/443, tự động phân giải chứng chỉ SSL (HTTPS Let's Encrypt) thông qua Certbot. Nginx điều hướng request trang chủ `/` sang Next.js (port 3000) và các API `/api/` trực tiếp đến NestJS (port 3001) sau khi đã viết lại (rewrite) URL.
+* **PM2 Process Manager**: Giúp duy trì các tiến trình Node.js chạy ngầm liên tục dưới dạng daemon, tự động khởi động lại lập tức (autorestart) khi code bị crash hoặc khi VPS bị reboot.
+* **TiDB Cloud Database**: Cơ sở dữ liệu MySQL Serverless phân tán trên đám mây, giúp giảm tải tài nguyên CPU/RAM cho VPS Ubuntu của chúng em nhưng vẫn đảm bảo tính tin cậy ACID cao.
 
 ---
 
-### 4. Công nghệ sử dụng
 
-#### 💡 Nguyên tắc lựa chọn: Sử dụng Framework thay vì Thư viện tự do
-Trong quá trình thiết kế hệ thống MTBA, đội ngũ phát triển quyết định sử dụng các **Framework hoàn chỉnh (Next.js, NestJS)** thay vì các **Thư viện riêng lẻ (React, Express)** hoặc viết mã nguồn Node.js thuần. Lý do cốt lõi bao gồm:
-1.  **Inversion of Control (IoC - Đảo ngược điều khiển)**: Framework tự quản lý vòng đời của ứng dụng và điều hướng luồng chạy, bắt buộc lập trình viên viết code theo các quy chuẩn tốt nhất (Best Practices). Ngược lại, thư viện yêu cầu lập trình viên tự chắp vá các thư viện phụ (routing, state, build tools) dễ dẫn đến xung đột phiên bản và cấu trúc spaghetti.
-2.  **Chuẩn hóa cấu trúc dự án (Convention over Configuration)**: Việc sử dụng framework giúp toàn bộ thành viên trong nhóm thống nhất tuyệt đối về cấu trúc thư mục, cách quản lý route, gọi API và xử lý middleware, giúp giảm thiểu thời gian setup ban đầu và tối ưu hóa hiệu quả bảo trì dài hạn.
+### 3.4. Công nghệ sử dụng
+
+#### 💡 Nguyên tắc lựa chọn: Framework thay vì Thư viện tự do
+
+* **Next.js 16+ (App Router)**: Framework React tối ưu hóa SEO và tốc độ tải trang ban đầu (SSR + RSC) tốt hơn hẳn React Client-side Rendering truyền thống.
+* **NestJS 11+**: Ép buộc cấu trúc modular (SOLID, Dependency Injection), tránh tình trạng code hỗn loạn khi dự án mở rộng quy mô.
+* **Prisma ORM**: Đóng vai trò Single Source of Truth cho cơ sở dữ liệu qua file `schema.prisma`, tự động phát hiện lỗi type-safety từ lúc compile.
+* **MySQL 8.x**: Hệ quản trị CSDL quan hệ tin cậy, tuân thủ ACID giúp loại bỏ hoàn toàn khả năng bị trùng lặp giao dịch/ghế ngồi.
+
+**Bảng tổng hợp công nghệ:**
+
+| Tầng | Công nghệ | Phiên bản |
+|---|---|---|
+| Frontend | Next.js + React | 16+ / 19 |
+| Styling | Tailwind CSS | v4 |
+| Backend | NestJS + TypeScript | 11+ |
+| ORM | Prisma Client | Latest |
+| Database | MySQL | 8.x |
+| Auth | JWT + bcryptjs | — |
+| Payment | SePay VietQR (Webhook + Polling) | — |
+| Email | SMTP / Nodemailer | — |
+| Testing | Jest | — |
+| Package Mgmt | npm workspaces (Monorepo) | — |
 
 ---
 
-*   **Tầng Giao Diện (Presentation Layer - Frontend)**:
-    *   **Next.js 16+ (App Router)**: Nền tảng framework React hiện đại nhất.
-        *   *Tại sao chọn Next.js (Framework) thay vì React thuần (Thư viện)*: React chỉ là thư viện hỗ trợ render giao diện người dùng. Nếu dùng React thuần, dự án sẽ phải tự cấu hình Router (React Router), tự thiết lập Webpack/Vite và chỉ có thể render hoàn toàn ở phía Client (CSR) - điều này gây ảnh hưởng nghiêm trọng tới SEO của các trang thông tin phim và tin tức. Next.js cung cấp giải pháp toàn diện bao gồm cơ chế **React Server Components (RSC)** để kết xuất tĩnh phía máy chủ giúp tăng tốc độ tải trang ban đầu (First Contentful Paint) và tối ưu SEO, đồng thời vẫn hỗ trợ **Client Components** cho các trang tương tác cao như sơ đồ chọn ghế và thanh toán.
-        *   *Ứng dụng thực tiễn*: Triển khai luồng điều hướng mượt mà, tối ưu tài nguyên tải và quản lý router động (`/movies/[id]`, `/booking/[showtimeId]`).
-    *   **React 19**: Phiên bản thư viện giao diện mới nhất.
-        *   *Lý do lựa chọn*: Tối ưu hoá quá trình render lại (re-render) của các component, tích hợp tốt với cơ chế Server Actions và tối ưu state quản lý ghế ngồi trống thời gian thực.
-    *   **Tailwind CSS v4**: Thư viện styling theo hướng Utility-first thế hệ mới.
-        *   *Lý do lựa chọn*: Sử dụng hệ thống theme mới dựa trên CSS Variables giúp dễ dàng tùy biến giao diện tối/sáng (Dark Mode) và tạo hiệu ứng Glassmorphism hiện đại cho các khối thẻ. Hỗ trợ xây dựng giao diện hoàn toàn Responsive từ thiết bị di động của khách hàng cho đến màn hình tablet POS cỡ lớn của nhân viên và màn hình Passive Display POS2.
+## Nội dung 4: Phân tích So sánh & Tính ứng dụng thực tế
 
-*   **Tầng Xử Lý Logic (Business Logic Layer - Backend)**:
-    *   **NestJS 11+**: Framework Node.js được thiết kế theo kiến trúc hướng đối tượng (OOP).
-        *   *Tại sao chọn NestJS (Framework) thay vì Node.js / Express thuần (Thư viện)*: 
-            *   *Tránh hỗn loạn kiến trúc (Architecture Enforcement)*: Node.js/Express thuần là thư viện routing cực kỳ tự do và không áp đặt bất kỳ kiến trúc thư mục nào. Khi dự án phình to với hàng chục phân hệ quản lý phức tạp (Movie, Showtime, Screen, Booking, User, Payment, News...), Express sẽ trở nên vô cùng lộn xộn nếu không có cấu trúc quản lý chặt chẽ. NestJS giải quyết triệt để vấn đề này bằng cách ép buộc thiết kế theo các **Modules riêng biệt**, áp dụng nguyên lý SOLID và kiến trúc hướng đối tượng (OOP) vững chắc.
-            *   *Tích hợp Dependency Injection (DI) & Providers*: Giúp tự động quản lý vòng đời của các Services, giảm thiểu sự phụ thuộc trực tiếp (tight coupling) và dễ dàng giả lập (mock) dữ liệu khi viết Unit Test.
-            *   *Hệ sinh thái xử lý trung gian hoàn chỉnh*: Cung cấp sẵn hệ thống `Pipes` để tự động hóa validate dữ liệu đầu vào (DTO) ở Controller, `Guards` để phân quyền bảo mật cấp API, và `Exception Filters` giúp quản lý và định dạng lỗi tập trung thay vì lặp đi lặp lại code try-catch.
-        *   *Ứng dụng thực tiễn*:
-            *   *Controller*: Chịu trách nhiệm tiếp nhận request, kiểm tra định dạng dữ liệu đầu vào thông qua `ValidationPipe` cùng Class-Validator DTOs, ngăn chặn dữ liệu bẩn.
-            *   *Service*: Nơi xử lý toàn bộ logic nghiệp vụ cốt lõi như kiểm tra chống trùng lịch chiếu (`Showtimes Overlap Check`), giới hạn đặt tối đa 8 ghế, tính toán tổng số tiền dựa theo khung giờ ngày/đêm và loại ghế.
-            *   *Guards*: Sử dụng `JwtAuthGuard` kết hợp `RolesGuard` để phân quyền chặt chẽ các API mật thiết dành riêng cho Admin hoặc Staff dựa trên vai trò người dùng trong cơ sở dữ liệu.
-    *   **Prisma Client**: Công cụ ORM (Object-Relational Mapping) thế hệ mới cho Node.js và TypeScript.
-        *   *Lý do lựa chọn*: Tự động sinh kiểu dữ liệu (auto-generated types) dựa trên schema DB giúp ngăn ngừa lỗi truy vấn ngay từ thời điểm viết code (compile-time). Hỗ trợ các câu lệnh truy vấn phức tạp (Join, Aggregate) giữa các bảng `booking`, `showtime`, `screen`, `payment` một cách nhanh chóng và an toàn.
-    *   **TypeScript**: Ngôn ngữ lập trình mã nguồn mở phát triển trên nền JavaScript.
-        *   *Lý do lựa chọn*: Giúp định nghĩa kiểu dữ liệu chặt chẽ từ Frontend sang Backend, giảm thiểu tối đa các lỗi runtime phổ biến như `null` hoặc `undefined`.
+*Tuy nhiên, nếu chỉ dừng lại ở việc đáp ứng các chức năng này thì MTBA sẽ không có gì khác biệt so với hàng tá ứng dụng ngoài kia. Điểm làm nên giá trị cốt lõi nằm ở khả năng giải quyết trực tiếp các vấn đề mà đối thủ chưa làm tốt.*
 
-*   **Cơ Sở Dữ Liệu (Database Layer)**:
-    *   **MySQL 8.x**: Hệ quản trị cơ sở dữ liệu quan hệ (RDBMS) mạnh mẽ và phổ biến.
-        *   *Lý do lựa chọn*: Đảm bảo tính toàn vẹn dữ liệu cực kỳ khắt khe theo tiêu chuẩn ACID (Atomicity, Consistency, Isolation, Durability) - điều tối quan trọng trong các nghiệp vụ giao dịch tài chính và đặt vé xem phim để tránh tình trạng hai khách hàng đặt trùng một ghế trong cùng một thời điểm.
+### Vấn đề 1: Trải nghiệm thanh toán tại quầy (Passive Display Sync)
+* **Thực trạng:** Ở CGV/Lotte, màn hình phụ chủ yếu chiếu quảng cáo. Nhân viên phải in bill nháp có mã QR hoặc dùng máy POS rời.
+* **Giải pháp của MTBA:** **Đồng bộ hoá thời gian thực một chiều**. Màn hình phụ cập nhật lập tức theo tay Staff bấm, tự động render mã VietQR.
+* **Giá trị thực tế:** Rút ngắn ít nhất 15-20 giây cho mỗi giao dịch tại quầy.
 
-*   **Bảo Mật & Tích Hợp Hệ Thống**: 
-    *   **Mã Hóa Mật Khẩu (Bcryptjs & Pepper)**:
-        *   *Cơ chế hoạt động*: Thay vì chỉ băm (hash) mật khẩu bằng Salt mặc định của Bcryptjs, hệ thống kết hợp thêm một chuỗi bí mật tĩnh gọi là **Pepper** (`PASSWORD_PEPPER`) được cấu hình duy nhất trong biến môi trường `.env` phía Server. Mật khẩu trước khi băm sẽ được ghép nối: `password + PEPPER`. Điều này ngăn chặn việc hacker có được database cũng không thể dùng bảng Rainbow Table để giải mã mật khẩu nếu không có chuỗi Pepper.
-    *   **Xác Thực Không Trạng Thái (JWT - JSON Web Token)**:
-        *   *Cơ chế hoạt động*: Sau khi người dùng đăng nhập thành công, Server ký và cấp một Access Token mã hóa chứa thông tin định danh và vai trò người dùng. Token này được lưu ở `localStorage` phía Frontend và đính kèm vào header `Authorization: Bearer <token>` trong các request gọi API tiếp theo để Server xác thực mà không cần truy vấn lại bảng session trong database.
-    *   **Tích Hợp Cổng Thanh Toán VietQR (SePay API)**:
-        *   *Cơ chế hoạt động*:
-            *   *Active Polling*: Frontend định kỳ gọi API quét trạng thái giao dịch nhằm cập nhật nhanh cho người dùng.
-            *   *Webhook Callback*: Cổng SePay tự động bắn một HTTP POST request chứa chi tiết giao dịch về endpoint `/payments-webhook` của Backend. Backend tiến hành xác thực webhook bằng token bảo mật `SEPAY_API_TOKEN` từ header. Sau khi khớp mã giao dịch (chứa `bookingId`) và số tiền, hệ thống cập nhật trạng thái đơn vé và giải phóng trạng thái giữ ghế trống.
+### Vấn đề 2: Nút thắt thanh toán Online (SePay VietQR vs Cổng trung gian)
+* **Thực trạng:** Dùng VNPay/MoMo khách phải qua chuỗi redirect: App → Xác nhận → App rạp. Rất dễ rớt mạng.
+* **Giải pháp của MTBA:** Tích hợp trực tiếp **SePay VietQR** — khách dùng *bất kỳ* app ngân hàng nào để quét mã, không bị chuyển hướng (no redirect).
+* **Giá trị thực tế:** Giảm hẳn tỷ lệ bỏ dở đơn hàng (Drop-off rate).
 
+### Vấn đề 3: Bài toán "Tiền đến nhưng Ghế đã mất" (Expired Bookings)
+* **Thực trạng:** Khách chuyển tiền khi bộ đếm giữ ghế đã về 0 → "bị trừ tiền nhưng không có vé".
+* **Giải pháp của MTBA:** **Logic tự động cứu đơn trên Webhook**: Tiền về trễ → quét lại ghế → nếu ghế còn: chốt đơn; nếu ghế mất: báo lỗi cần hoàn tiền.
+* **Giá trị thực tế:** Ghi điểm tuyệt đối về Chăm sóc Khách hàng, tiết kiệm chi phí nhân sự xử lý sự cố.
 
+### Vấn đề 4: Chống phe vé đầu cơ (Anti-scalping)
+* **Thực trạng:** "Phe vé" dùng bot ôm hàng loạt ghế VIP.
+* **Giải pháp của MTBA:** Rule cứng Backend: **Giới hạn tối đa 8 vé / 1 giao dịch**.
+* **Giá trị thực tế:** Chặn bot mua vé. Khách đoàn (muốn mua 20-30 vé) được linh hoạt chuyển đến quầy POS để Staff hỗ trợ.
 
-## 📌 Nội dung 4: Quản lý Dự án với Agile/Scrum (Project Management)
+---
 
-### 1. Product Backlog & User Stories
-Dưới đây là danh sách các tính năng cốt lõi được định nghĩa dưới dạng các User Story phục vụ quá trình phát triển sản phẩm:
+## Nội dung 5: Kiến trúc Kỹ thuật Chuyên sâu (Technical Deep Dive)
 
-| ID | Vai trò (Actor) | Mong muốn (User Story) | Lý do (Benefit) | Độ ưu tiên |
-| :--- | :--- | :--- | :--- | :--- |
-| **US01** | Khách vãng lai | Đăng ký tài khoản bằng email/số điện thoại | Để bắt đầu sử dụng các dịch vụ đặt vé của hệ thống. | High |
-| **US02** | Khách hàng | Xem danh sách phim đang chiếu và sắp chiếu | Để cập nhật và tìm kiếm phim phù hợp với sở thích. | High |
-| **US03** | Khách hàng | Chọn lịch chiếu và ghế trống trên sơ đồ phòng | Để giữ chỗ ngồi mong muốn trong phòng chiếu. | High |
-| **US04** | Khách hàng | Đặt vé tối đa 8 ghế cho mỗi giao dịch | Để tránh tình trạng đầu cơ vé hoặc lỗi hệ thống do đặt quá nhiều. | Medium |
-| **US05** | Khách hàng | Thanh toán vé qua mã VietQR (SePay) | Để giao dịch nhanh chóng và tiện lợi mà không cần nhập số thẻ. | High |
-| **US06** | Khách hàng | Nhận email hóa đơn sau khi đặt vé thành công | Để xác nhận thông tin vé và dùng làm thẻ vào phòng chiếu. | Medium |
-| **US07** | Nhân viên | Nhập đơn đặt vé trực tiếp tại quầy POS | Để phục vụ những khách hàng mua vé trực tiếp tại rạp. | High |
-| **US08** | Nhân viên | Đồng bộ thông tin đặt vé lên màn hình phụ POS2 | Để khách hàng đối chiếu thông tin ghế và tổng số tiền thanh toán. | Medium |
-| **US09** | Admin | Xem các chỉ số thống kê doanh thu và lượng vé bán | Để đánh giá hiệu quả kinh doanh của các bộ phim và các rạp. | High |
-| **US10** | Admin | Tạo và quản lý suất chiếu (`showtime`) | Để vận hành lịch chiếu phim hàng ngày mà không lo bị trùng giờ chiếu. | High |
-| **US11** | Admin | Quản lý danh mục phim, phòng chiếu và giá vé | Để cập nhật các thông tin dịch vụ của rạp phim linh hoạt. | High |
+*Kính thưa Hội đồng, sau khi đã trình bày bài toán thực tế, em xin phép đi sâu vào phần mà chúng em tự hào nhất — kiến trúc kỹ thuật phía sau.*
 
-### 2. Quá trình chạy Sprint
-Dự án được triển khai qua **4 Sprints** chính, mỗi Sprint kéo dài trong vòng 2 tuần:
+### 5.1. Luồng Đặt Vé và Thanh Toán (Happy Path)
 
-#### 🏃‍♂️ Sprint 1: Khởi động dự án, thiết kế DB & Cấu trúc mã nguồn
-*   **Thời gian**: Tuần 1 - Tuần 2
-*   **Sprint Goal**: Thiết lập hạ tầng monorepo, hoàn thành thiết kế Schema cơ sở dữ liệu và triển khai API xác thực (Đăng ký, Đăng nhập, Phân quyền).
-*   **User Stories thực hiện**: US01.
-*   **Kết quả đạt được**:
-    *   Khởi tạo cấu trúc monorepo với npm workspaces cho `code/frontend` và `code/backend`.
-    *   Đồng bộ DB qua [schema.prisma](file:///c:/Users/Simsimi/OneDrive/M%C3%A1y%20t%C3%ADnh/MTBA/code/backend/prisma/schema.prisma) thành công lên MySQL.
-    *   Hoàn thành `AuthModule` sử dụng JWT, `bcryptjs` kết hợp `PASSWORD_PEPPER` để bảo vệ tài khoản.
+1. **Chọn phim & suất chiếu** → Hệ thống hiển thị sơ đồ ghế real-time.
+2. **Chọn ghế** → Backend tạm giữ ghế (soft-lock), bắt đầu đếm ngược.
+3. **Xác nhận hóa đơn** → Backend tạo bản ghi `Booking` trạng thái `PENDING`, sinh mã VietQR với nội dung chuyển khoản chứa `bookingId`.
+4. **Khách quét mã QR** → SePay nhận tiền, bắn Webhook đến `/payments-webhook`.
+5. **Webhook xử lý** → Backend trích xuất `bookingId`, so khớp số tiền, cập nhật trạng thái `PAID`, gửi email vé QR cho khách.
 
-#### 🏃‍♂️ Sprint 2: Xây dựng các chức năng cốt lõi (Phim, Lịch chiếu, Tìm kiếm)
-*   **Thời gian**: Tuần 3 - Tuần 4
-*   **Sprint Goal**: Xây dựng thành công các API quản lý phim, phòng chiếu, suất chiếu (có kiểm tra overlap) và hoàn thiện giao diện xem danh sách phim của khách hàng.
-*   **User Stories thực hiện**: US02, US10, US11.
-*   **Kết quả đạt được**:
-    *   Xây dựng thuật toán kiểm tra overlap suất chiếu trong `ShowtimeService` (Nếu `new_start_time < existing_end_time` và `new_end_time > existing_start_time` tại cùng một `screen_id` thì chặn và báo lỗi).
-    *   Hoàn thiện trang chủ và trang chi tiết phim trên giao diện Client.
-    *   Hỗ trợ tìm kiếm, lọc phim theo thể loại, ngày chiếu.
+> **Điểm đặc biệt:** Song song với Webhook, hệ thống chạy **Active Polling** định kỳ gọi API SePay — làm "lưới an toàn" khi Webhook bị trễ.
 
-#### 🏃‍♂️ Sprint 3: Tích hợp Đặt vé, Thanh toán SePay & Đồng bộ POS
-*   **Thời gian**: Tuần 5 - Tuần 6
-*   **Sprint Goal**: Triển khai nghiệp vụ đặt ghế trực quan (giới hạn 8 vé), tích hợp cổng thanh toán tự động SePay VietQR và xây dựng cơ chế đồng bộ màn hình phụ POS2.
-*   **User Stories thực hiện**: US03, US04, US05, US06, US07, US08.
-*   **Kết quả đạt được**:
-    *   Xây dựng API đặt vé kiểm tra giới hạn 8 vé (`BadRequestException` với thông báo `SEAT_LIMIT_EXCEEDED`).
-    *   Tích hợp thành công Webhook `/payments-webhook` nhận dữ liệu giao dịch từ SePay, tự động kiểm tra xem ghế đã bị mua bởi đơn đặt vé thành công khác chưa trước khi chuyển đổi trạng thái `COMPLETED` cho đơn hàng quá hạn thanh toán.
-    *   Hoàn thiện cơ chế đồng bộ một chiều từ Staff lên server để hiển thị tại Client POS2 mà không làm xảy ra hiện tượng endless routing loop.
-    *   Cấu hình gửi email xác nhận đặt vé qua SMTP.
+### 5.2. Cơ chế Passive Display Sync (Đồng bộ màn hình POS)
 
-#### 🏃‍♂️ Sprint 4: Dashboard Quản trị, Viết Unit Test & Bàn giao hệ thống
-*   **Thời gian**: Tuần 7 - Tuần 8
-*   **Sprint Goal**: Hoàn thiện toàn bộ trang quản trị của Admin, đạt độ bao phủ Unit Test cho các nghiệp vụ chính, tối ưu hóa bảo mật và bàn giao sản phẩm.
-*   **User Stories thực hiện**: US09.
-*   **Kết quả đạt được**:
-    *   Hoàn thiện giao diện Admin Dashboard với các biểu đồ thống kê doanh thu theo ngày/tháng/năm, thống kê số lượng vé bán ra theo từng rạp và từng phim.
-    *   Hoàn thành bộ Unit Test bằng Jest cho các chức năng Đăng ký, Đăng nhập, Cập nhật thông tin và nghiệp vụ Đặt vé.
-    *   Chuẩn hóa tất cả API cập nhật thành phương thức `@Put(':id')` để đồng nhất cấu trúc thiết kế.
-    *   Loại bỏ toàn bộ mã cứng (magic strings) khỏi Backend bằng cách quy hoạch tập trung các thông báo lỗi vào [error-messages.constant.ts](file:///c:/Users/Simsimi/OneDrive/M%C3%A1y%20t%C3%ADnh/MTBA/code/backend/src/common/constants/error-messages.constant.ts).
+* **Vấn đề:** Nếu cả hai thiết bị (Staff và màn hình khách) cùng đồng bộ pathname hai chiều → vòng lặp điều hướng vô hạn (endless routing ping-pong).
+* **Giải pháp:** Đồng bộ **một chiều có kiểm soát**:
+  * Staff thao tác → `pushState(currentPath)` → ghi lên server.
+  * Màn hình khách → polling lấy pathname từ server → `router.replace()`.
+  * Màn hình khách **tuyệt đối không** ghi ngược pathname lên server.
+  * Truyền `currentPath` tường minh khi gọi `pushState` → loại bỏ race condition.
+
+### 5.3. Bảo mật Mật khẩu (Salt & Pepper + bcrypt)
+
+```
+Mật khẩu gốc  +  PASSWORD_PEPPER (biến môi trường)
+                        ↓
+              bcrypt.hash(password + pepper)
+                        ↓
+              Lưu vào Database (hash)
+```
+
+Pepper được lấy từ `process.env.PASSWORD_PEPPER` — **ngay cả khi Database bị lộ hoàn toàn**, kẻ tấn công vẫn không thể crack mật khẩu vì thiếu Pepper.
+
+---
+
+## Nội dung 6: Demo Trực tiếp (Live Demo)
+
+*Kính thưa Hội đồng, em xin phép thực hiện demo trực tiếp hệ thống.*
+
+> **Lưu ý:** Mở sẵn 3 tab — (1) Trang khách hàng, (2) Trang POS Staff, (3) Màn hình Passive Display — trên 2 thiết bị hoặc 2 cửa sổ trình duyệt khác nhau.
+
+### Demo 1: Luồng Đặt vé Online (User Journey)
+1. ▶ Mở trang chủ → Cuộn fullpage scroll-snap để duyệt phim đang chiếu.
+2. ▶ Chọn phim → Xem trailer và thông tin chi tiết.
+3. ▶ Chọn suất chiếu → Chọn ghế (VIP + Standard) → Tối đa 8 ghế.
+4. ▶ Xác nhận đơn → Hệ thống sinh mã VietQR.
+5. ▶ Dùng điện thoại quét mã QR → Chuyển khoản → Màn hình tự động cập nhật thành `PAID`.
+6. ▶ Vào mục "Vé của tôi" → Hiển thị mã QR vé để check-in.
+
+### Demo 2: Luồng POS tại Quầy (Staff + Passive Display)
+1. ▶ Staff đăng nhập trang POS → Giao diện fullpage scroll-snap xuất hiện.
+2. ▶ Mở màn hình khách (Passive Display) trên thiết bị thứ 2 → **Tự động kết nối và hiển thị đồng bộ**.
+3. ▶ Staff vuốt (scroll) chọn phim → Màn hình khách cập nhật theo tức thì.
+4. ▶ Staff chọn ghế cho khách → Màn hình khách hiển thị vị trí ghế đã chọn.
+5. ▶ Staff xác nhận → Màn hình khách hiển thị mã QR VietQR → Khách tự quét.
+6. ▶ Tiền về → Màn hình khách tự chuyển sang "Thanh toán thành công".
+
+### Demo 3: Tính năng Admin Dashboard
+1. ▶ Đăng nhập Admin → Xem Dashboard biểu đồ doanh thu theo ngày/tháng.
+2. ▶ Thêm lịch chiếu mới → Cố tình nhập giờ trùng → Hệ thống **từ chối và hiển thị cảnh báo trùng lịch**.
+3. ▶ Quản lý giá vé → Cập nhật giá theo loại ghế và thời điểm chiếu.
+
+---
+
+## Nội dung 7: Kết luận & Hướng Phát triển Tương lai
+
+*Kính thưa Hội đồng, để tổng kết lại toàn bộ những gì chúng em đã trình bày:*
+
+### 7.1. Những gì MTBA đã đạt được
+
+| Tiêu chí | Kết quả |
+|---|---|
+| Kiến trúc | Monorepo hiện đại (Next.js 16+ / NestJS 11+), tách biệt rõ ràng, dễ mở rộng |
+| Tính năng cốt lõi | Đặt vé online, POS tại quầy, Passive Display, thanh toán VietQR tự động |
+| Bảo mật | JWT + Salt & Pepper + bcrypt, phân quyền 3 tầng (Admin/Staff/User) |
+| Trải nghiệm | Giao diện Fullpage Scroll-snap, Custom Dialog, không dùng `alert()` thô |
+| Chống đầu cơ | Giới hạn cứng 8 vé/giao dịch tại tầng Backend |
+| Xử lý rủi ro | Logic cứu đơn quá hạn, kiểm tra trùng lịch chiếu, xử lý Idempotency Webhook |
+
+### 7.2. Hướng Phát triển Tương lai
+
+1. **Push Notification**: Nhắc nhở khách 30 phút trước suất chiếu qua email/app.
+2. **Loyalty Points**: Tích điểm theo số vé đã mua, đổi điểm lấy vé miễn phí.
+3. **AI Recommendation**: Dùng lịch sử xem phim để gợi ý phim phù hợp.
+4. **CI/CD & Cloud**: Đóng gói Docker, deploy trên Railway/Vercel/AWS với pipeline tự động.
+5. **Mobile App**: Phát triển app iOS/Android bằng React Native, tái sử dụng toàn bộ Backend API.
+6. **Hoàn tiền tự động**: Tự động hoàn tiền khi xảy ra xung đột ghế trong kịch bản thanh toán trễ.
+
+---
+
+*Lời kết:*
+
+**MTBA** không chỉ là một đồ án tốt nghiệp. Đó là minh chứng cho thấy với kiến trúc đúng đắn, công nghệ phù hợp và tư duy giải quyết vấn đề thực tế, sinh viên hoàn toàn có thể xây dựng một sản phẩm có giá trị thương mại thực sự, sẵn sàng cạnh tranh với các giải pháp hiện có trên thị trường.
+
+**Chúng em xin chân thành cảm ơn Hội đồng Giám khảo và Quý Thầy Cô đã lắng nghe. Nhóm chúng em xin kính mời Hội đồng đặt câu hỏi.**
+
+---
+
+## Nội dung 8: Phần Hỏi & Đáp — Q&A (Dự đoán câu hỏi)
+
+### ❓ Câu hỏi 1: "Tại sao không dùng WebSocket cho Passive Display thay vì polling?"
+
+**Trả lời gợi ý:**
+> WebSocket là lựa chọn lý tưởng về mặt lý thuyết. Tuy nhiên, trong phạm vi đồ án, chúng em ưu tiên tính đơn giản và ổn định của Long-polling để tránh phụ thuộc thêm vào hạ tầng WebSocket server riêng. Nếu phát triển thêm, chúng em sẽ chuyển sang `Socket.IO` hoặc `SSE (Server-Sent Events)` để tối ưu băng thông.
+
+### ❓ Câu hỏi 2: "Làm sao đảm bảo tính nhất quán dữ liệu khi 2 người cùng chọn ghế trong cùng 1 thời điểm?"
+
+**Trả lời gợi ý:**
+> Chúng em xử lý bằng cơ chế **Soft-lock tại tầng Database**. Khi một người chọn ghế, Backend cập nhật trạng thái ghế thành `HELD` với timestamp. Người thứ hai query sẽ thấy ghế đó là `HELD` và không thể chọn. Sau khi hết thời gian giữ ghế mà không thanh toán, trạng thái tự động trở về `AVAILABLE`.
+
+### ❓ Câu hỏi 3: "Hệ thống xử lý thế nào nếu Webhook SePay bị gọi 2 lần cho cùng 1 giao dịch (duplicate event)?"
+
+**Trả lời gợi ý:**
+> Chúng em xử lý bằng **Idempotency** — trước khi cập nhật trạng thái Booking, Service kiểm tra xem `payment` đã có record với `transaction_id` tương ứng chưa. Nếu đã tồn tại, Webhook trả về thành công mà không thực hiện thay đổi nào, tránh ghi dữ liệu trùng lặp.
+
+### ❓ Câu hỏi 4: "Các API có được viết Unit Test đầy đủ không?"
+
+**Trả lời gợi ý:**
+> Chúng em đã viết Unit Test với Jest cho các nghiệp vụ quan trọng nhất: xác thực (đăng ký/đăng nhập), đặt vé (vượt giới hạn 8 ghế, đặt ghế trùng), kiểm tra trùng lịch chiếu (overlap), và Webhook thanh toán. Có thể chạy ngay bằng lệnh `npm run test -w code/backend`.
+
+### ❓ Câu hỏi 5: "Nếu sau này cần thay thế SePay bằng cổng thanh toán khác thì sao?"
+
+**Trả lời gợi ý:**
+> Chúng em đã cô lập toàn bộ logic tích hợp SePay trong `PaymentsService` riêng biệt. Nếu cần đổi cổng thanh toán, chỉ cần viết lại lớp Service đó mà không ảnh hưởng đến module đặt vé hay các module khác — đây chính là lợi ích của kiến trúc **Dependency Injection** mà NestJS cung cấp.
+
+### ❓ Câu hỏi 6: "Tại sao nhóm chọn Scrum/Agile mà không dùng quy trình thác nước (Waterfall)?"
+
+**Trả lời gợi ý:**
+> Dự án đặt vé có nhiều nghiệp vụ phức tạp liên quan đến nhau (đặt vé → thanh toán → webhook → email). Nếu dùng Waterfall, chúng em phải hoàn thành toàn bộ phân tích trước khi lập trình — rất dễ phát sinh sai sót muộn. Với Scrum, mỗi Sprint 2 tuần cho ra một tính năng hoàn chỉnh có thể demo và nhận phản hồi ngay, giúp điều chỉnh kịp thời trước khi đi quá xa.
+
+### ❓ Câu hỏi 7: "Tại sao nhóm chọn PM2 kết hợp Nginx thay vì chạy Docker trực tiếp trên VPS cho đồ án này?"
+
+**Trả lời gợi ý:**
+> Chạy trực tiếp qua PM2 và proxy qua Nginx là phương án tối ưu hóa tài nguyên phần cứng cho các gói VPS có cấu hình vừa và nhỏ (thường chỉ 1-2GB RAM). Phương pháp này giúp loại bộ overhead tài nguyên từ Docker runtime, giúp việc build ứng dụng Next.js trực tiếp trên VPS diễn ra nhanh chóng, mượt mà và tránh bị lỗi tràn bộ nhớ ảo (Swap Out-of-Memory). Ngoài ra, PM2 cung cấp khả năng tự khởi động lại tiến trình tức thì và tự khởi chạy cùng OS (systemd integration) cực kỳ ổn định.
+
